@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+
+# JavaScript dependencies and build output
+node_modules/
+dist/
+out/
+coverage/
+*.tsbuildinfo
+
+# VS Code extension testing and packages
+.vscode-test/
+*.vsix
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
