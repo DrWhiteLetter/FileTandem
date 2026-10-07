@@ -173,3 +173,12 @@ test('bundled SCP and GNU-list adapter work outside node_modules', { timeout: 30
     assert.ok((await api.listScp(await connection(2, api), { path: '/data' })).some(entry => entry.name === remote.slice('/data/'.length)));
   } finally { independent(`rm -f -- ${shellQuote(remote)}`); await rm(directory, { recursive: true, force: true }); }
 });
+test('production SCP owns its channel, streams empty/binary files and cancellation preserves shared transport', {timeout:30000},async () => {
+ const {streamScpFile}=await import('../../src/adapters/scp/transfer.js');const {withExec}=await import('../../src/adapters/scp/exec.js');const directory=await mkdtemp(join(tmpdir(),'xscp-m4-scp-')),session=await connection(),observed=observe(session),remote='/data/m4-'+randomUUID();
+ try {
+ const source=join(directory,'source');await writeFile(source,randomBytes(1024*1024+17));const upload=await streamScpFile(observed.session,{direction:'upload',local:source,remote});const download=await streamScpFile(observed.session,{direction:'download',local:join(directory,'copy'),remote});assert.deepEqual(upload,download);assert.equal(observed.closed,false);
+ const controller=new AbortController();await assert.rejects(streamScpFile(observed.session,{direction:'upload',local:source,remote:remote+'-abort',signal:controller.signal,onProgress:() => controller.abort()}));assert.equal(observed.closed,false);
+ const result=await withExec(observed.session,'printf alive',async channel => {channel.end();let result='';for await (const chunk of channel) result+=chunk;return result;},{closeSession:false});assert.equal(result,'alive');
+ await writeFile(source,'');const empty=await streamScpFile(observed.session,{direction:'upload',local:source,remote:remote+'-empty'});assert.equal(empty.bytes,0);assert.equal((await streamScpFile(observed.session,{direction:'download',local:join(directory,'empty'),remote:remote+'-empty'})).sha256,empty.sha256);
+ } finally {await withExec(session,`rm -f -- ${shellQuote(remote)} ${shellQuote(remote+'-abort')} ${shellQuote(remote+'-empty')}`,async ch => {ch.end();for await (const chunk of ch) void chunk;},{closeSession:false}).catch(() => {});await session.close();await rm(directory,{recursive:true,force:true});}
+});

@@ -1,3 +1,4 @@
+import { constants } from 'node:fs';
 import { open } from 'node:fs/promises';
 import { isAbsolute, posix } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -7,23 +8,23 @@ import { withExec } from './exec.js';
 /** Single regular file, one verified SSH session, no SFTP and no recursive SCP.
  * New destinations only. Failed transfers leave their own partial destination.
  */
-export async function transferScp(session, { direction, localPath, remotePath: path, signal, onProgress, timeout } = {}) {
+export async function transferScp(session, { direction, localPath, remotePath: path, signal, onProgress, timeout, closeSession=true } = {}) {
   let file;
   try {
     remotePath(path);
     if (!['upload', 'download'].includes(direction) || typeof localPath !== 'string' || !isAbsolute(localPath)
       || localPath.includes('\0') || (onProgress !== undefined && typeof onProgress !== 'function')) throw new TypeError('Ungültige SCP-Transferoptionen.');
     signal?.throwIfAborted();
-    file = await open(localPath, direction === 'upload' ? 'r' : 'wx', 0o600);
+    file = await open(localPath, direction === 'upload' ? constants.O_RDONLY | constants.O_NOFOLLOW : 'wx', 0o600);
     const info = await file.stat();
     if (!info.isFile()) throw new ScpError('SCP_NOT_REGULAR', 'SCP-Prototyp unterstützt nur reguläre Dateien.');
-    if (info.size > MAX_PROOF_BYTES) throw new ScpError('INVALID_SCP_SIZE', 'SCP-Prototyp unterstützt höchstens 1 GiB.');
+    if (!Number.isSafeInteger(info.size) || info.size > MAX_PROOF_BYTES) throw new ScpError('INVALID_SCP_SIZE', 'SCP-Dateigröße ist keine sichere Ganzzahl.');
     const name = posix.basename(path);
     // POSIX noclobber reserves a new destination before the SCP sink can truncate
     // it. This is not atomic publication or protection against a concurrent writer.
     const command = direction === 'upload'
       ? `umask 077; set -C; : > ${shellQuote(path)} && exec scp -t -- ${shellQuote(path)}`
-      : `exec scp -f -- ${shellQuote(path)}`;
+      : `if test ! -L ${shellQuote(path)} && test -f ${shellQuote(path)}; then exec scp -f -- ${shellQuote(path)}; else printf '\\002SCP-Quelle ist keine reguläre Datei.\\n'; exit 1; fi`;
     return await withExec(session, command, async channel => {
       const reader = new ScpReader(channel);
       const hash = createHash('sha256');
@@ -44,7 +45,7 @@ export async function transferScp(session, { direction, localPath, remotePath: p
           const chunk = buffer.subarray(0, bytesRead);
           await writeChannel(channel, chunk); progress(chunk);
         }
-        if ((await file.stat()).size !== info.size) throw new ScpError('SCP_SOURCE_CHANGED', 'SCP-Quellgröße wurde während des Transfers geändert.');
+        if (((await file.stat()).size !== info.size || (await file.stat()).mtimeMs !== info.mtimeMs)) throw new ScpError('SCP_SOURCE_CHANGED', 'SCP-Quellgröße wurde während des Transfers geändert.');
         await writeChannel(channel, Buffer.from([0]));
         await reader.ack();
       } else {
@@ -69,8 +70,11 @@ export async function transferScp(session, { direction, localPath, remotePath: p
       channel.end();
       await reader.eof();
       return { bytes, sha256: hash.digest('hex') };
-    }, { signal, timeout });
+    }, { signal, timeout, closeSession });
   } finally {
-    try { await file?.close(); } finally { await session.close(); }
+    try { await file?.close(); } finally { if (closeSession) await session.close(); }
   }
 }
+
+/** Production pipeline adapter: own exec resource, same verified shared transport. */
+export const streamScpFile=(session,{direction,local,remote,signal,onProgress}) => transferScp(session,{direction,localPath:local,remotePath:remote,signal,onProgress,timeout:300000,closeSession:false});

@@ -29,9 +29,21 @@ export function parseHeader(line, expectedName) {
   return { size, mode: match[1], name: match[3] };
 }
 
+/** Pull bounded reads instead of asyncIterator coalescing the SSH receive window. */
+async function* packets(stream) {
+  let failure;const remember=error => {failure=error;};stream.on('error',remember);
+  try {while (true) {
+    if (failure) throw failure;const data=stream.read(Math.min(CHUNK_BYTES,Math.max(1,stream.readableLength)));if (data) {yield data;continue;}
+    if (stream.readableEnded || stream.destroyed) return;
+    await new Promise((resolve,reject) => {
+      const done=error => {stream.removeListener('readable',ready);stream.removeListener('end',ready);stream.removeListener('close',ready);stream.removeListener('error',failed);error ? reject(error):resolve();};
+      const ready=() => done(),failed=error => done(error);stream.once('readable',ready);stream.once('end',ready);stream.once('close',ready);stream.once('error',failed);
+    });
+  }} finally {stream.removeListener('error',remember);}
+}
 /** Pull reader handles fragmented/coalesced SSH packets without whole-file buffers. */
 export class ScpReader {
-  constructor(stream) { this.iterator = stream[Symbol.asyncIterator](); this.chunk = Buffer.alloc(0); this.offset = 0; this.remaining=undefined; this.phase='control'; }
+  constructor(stream) { this.iterator = packets(stream)[Symbol.asyncIterator](); this.chunk = Buffer.alloc(0); this.offset = 0; this.remaining=undefined; this.phase='control'; }
   async readSome(max = CHUNK_BYTES) {
     if (!Number.isSafeInteger(max) || max < 1 || max > CHUNK_BYTES) throw new ScpError('SCP_READ_LIMIT','Ungültige Lesemenge.');
     if (this.phase === 'body') max=Math.min(max,this.remaining);
