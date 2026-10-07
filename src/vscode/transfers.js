@@ -7,7 +7,7 @@ export function registerTransfers(context,profileUI) {
   const changed=new vscode.EventEmitter();const ephemeral=new Map();
   const profiles={get:id => {try {return profileUI.profiles.get(id);} catch(error) {if (ephemeral.has(id)) return ephemeral.get(id);throw error;}}};
   let warned=false;const journal=new TransferJournal(join(context.globalStorageUri.fsPath,'transfers-v1.json'),message => {if (!warned) {warned=true;void vscode.window.showWarningMessage(message);}});
-  journal.ready=(async () => {let key=await context.secrets.get('xscp.journal.integrity.v1');if (!key) {key=randomBytes(32).toString('hex');await context.secrets.store('xscp.journal.integrity.v1',key);}if (!/^[a-f0-9]{64}$/.test(key)) throw new Error('Journal-Schlüssel ist ungültig.');journal.key=Buffer.from(key,'hex');})();
+  journal.ready=(async () => {let key=await context.secrets.get('xscp.journal.integrity.v1');if (!key) {key=randomBytes(32).toString('hex');await context.secrets.store('xscp.journal.integrity.v1',key);}if (!/^[a-f0-9]{64}$/.test(key)) throw new Error('Journal-Schlüssel ist ungültig.');journal.key=Buffer.from(key,'hex');})().catch(() => {journal.disabled=true;journal.onError('Transferjournal nicht verfügbar: VS-Code-SecretStorage prüfen. Keine gespeicherten Aufträge werden gestartet oder verändert.');});
   const engine=new TransferEngine({sessions:profileUI.sessions,profiles,choose:conflictDialog,guard:profileUI.guard,onChange:jobs => {journal.update(jobs);changed.fire();}});
   engine.ready=journal.load().then(jobs => engine.queue.restore(jobs));
   context.subscriptions.push(engine,changed);

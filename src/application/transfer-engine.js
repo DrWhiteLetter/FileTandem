@@ -35,8 +35,8 @@ export class TransferEngine {
     if (['symlink','other'].includes(job.kind)) return {skipped:true,reason:'Symlink/Spezialdatei übersprungen.'};
     const profile=this.profiles.get(job.profileId);if ((job.profileKey && job.profileKey!==profileIdentity(profile)) || ((job.protocol ?? 'sftp') !== profile.protocol) || serverIdentity(profile.host,profile.port).id !== job.server) throw Object.assign(new Error(),{publicMessage:'Profilziel wurde geändert; neuen Auftrag anlegen.'});
     if (this.sessions.matches && !this.sessions.matches(profile)) throw new Error('Profil wurde geändert; bitte erneut verbinden.');
-    const session=this.sessions.transport(job.profileId);if (session.endpoint?.id && session.endpoint.id !== job.server) throw new Error('Verbindung gehört zu einem anderen Server.');const files=await openRemoteFiles(session,profile.protocol,{signal});
-    try {
+    const session=this.sessions.transport(job.profileId);if (session.endpoint?.id && session.endpoint.id !== job.server) throw new Error('Verbindung gehört zu einem anderen Server.');const files=await openRemoteFiles(session,profile.protocol,{signal});const close=() => files.close();signal.addEventListener('abort',close,{once:true});if (signal.aborted) close();
+    try {signal.throwIfAborted();
       const target=job.direction === 'upload' ? targetFor(files):localTarget;
       const parent=job.parentId && this.queue.list().find(j => j.id === job.parentId);
       const initial=job.resumeFrom ? job.attempt.target:parent?.finalTarget ? (job.direction === 'upload' ? posix.join:join)(parent.finalTarget,job.name):job.target;
@@ -51,7 +51,7 @@ export class TransferEngine {
         const current=await source.stat(job.source);const metadata={mode:current.mode&0o777,modified:current.modified};
         const result=await transferFile(session,{...job,target:path,metadata},{target,source,identity:profileIdentity(profile),replace,signal,onProgress,stream:streamFor(profile.protocol),onCheckpoint:attempt => this.queue.checkpoint(job.id,attempt,this.key(job,attempt.target))});return {...result,finalTarget:path};
       },signal);
-    } finally {files.close();}
+    } finally {signal.removeEventListener('abort',close);files.close();}
   }
   async cleanup(id) {
     await this.ready;this.guard();const job=this.queue.list().find(j => j.id===id),a=job?.attempt;

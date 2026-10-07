@@ -26,7 +26,7 @@ export class TransferQueue {
         this.#jobs.set(job.id,{...current,bytes,resumedBytes:progress.resumedBytes ?? current.resumedBytes ?? 0,rate:(bytes-(progress.resumedBytes ?? 0))/Math.max(.001,(Date.now()-current.started)/1000)});if (Date.now()-this.#progressAt >= 100) {this.#progressAt=Date.now();this.#notify();}
       })).then(result => {
         const current=this.#jobs.get(job.id);this.#jobs.set(job.id,{...transition(current,controller.signal.aborted && !result?.committed ? 'cancelled':result?.skipped ? 'skipped':'completed'),...result, state:controller.signal.aborted && !result?.committed ? 'cancelled':result?.skipped ? 'skipped':'completed'});
-      },error => {const current=this.#jobs.get(job.id);this.#jobs.set(job.id,{...transition(current,this.#disposed ? 'interrupted':controller.signal.aborted || error.code === 'USER_CANCELLED' ? 'cancelled':'failed'),error:controller.signal.aborted ? 'Abgebrochen.':error.publicMessage ?? 'Transfer fehlgeschlagen; Quelle/Ziel und Verbindung prüfen.'});})
+      },error => {const current=this.#jobs.get(job.id);this.#jobs.set(job.id,{...transition(current,this.#disposed ? 'interrupted':controller.signal.aborted || error.code === 'USER_CANCELLED' ? 'cancelled':'failed'),errorCode:typeof error.code==='string' && /^[A-Z0-9_-]{1,64}$/.test(error.code) ? error.code:'TRANSFER_FAILED',error:controller.signal.aborted ? 'Abgebrochen.':error.publicMessage ?? 'Transfer fehlgeschlagen; Quelle/Ziel und Verbindung prüfen.'});})
         .finally(() => {this.#active.delete(job.id);this.#notify();this.#schedule();});
     }
   }
@@ -48,7 +48,7 @@ export class TransferQueue {
   retry(ids,idFactory,{resume=false}={}) {
     const retryable=this.validateRetry(ids,{resume});const mapping=new Map(retryable.map(j => [j.id,idFactory()]));const batchId=idFactory();
     for (const job of retryable) {
-      const copy={...job};for (const key of ['bytes','error','started','rate','state','sha256','committed','finalTarget','partialPath','resumedBytes','resumeFrom']) delete copy[key];
+      const copy={...job};for (const key of ['bytes','error','errorCode','started','rate','state','sha256','committed','finalTarget','partialPath','resumedBytes','resumeFrom']) delete copy[key];
       if (!resume) delete copy.attempt;else copy.resumeFrom=job.id;
       this.add({...copy,id:mapping.get(job.id),batchId,parentId:mapping.get(job.parentId) ?? job.parentId,retryOf:job.id});
     }

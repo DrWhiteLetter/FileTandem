@@ -1,4 +1,4 @@
-import { ScpError, remotePath, shellQuote, safeName } from './protocol.js';
+import { EXEC_ACTIVITY,ScpError, remotePath, shellQuote, safeName } from './protocol.js';
 import { withExec } from './exec.js';
 const decoder = new TextDecoder('utf-8', { fatal: true });
 const MAX_LIST_BYTES = 32 * 1024 * 1024;
@@ -28,7 +28,7 @@ export async function listScp(session, { path, signal, timeout, closeSession=tru
     return await withExec(session, command, async channel => {
       channel.end();
       const chunks = []; let bytes = 0;
-      for await (const chunk of channel) {
+      for await (const chunk of channel) {channel[EXEC_ACTIVITY]?.();
         bytes += chunk.length;
         if (bytes > MAX_LIST_BYTES) throw new ScpError('SCP_LIST_LIMIT', 'GNU-find-Liste überschreitet das Prototyp-Limit von 1 MiB.');
         chunks.push(chunk);

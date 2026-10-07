@@ -1,6 +1,6 @@
 # xScp
 
-Entwicklungsprototyp einer VS-Code-Desktop-Erweiterung für SFTP und SCP. M0 bis M3 sind implementiert: Start-Webview, SFTP-Streaming, echtes SCP, Authentifizierung und abgesicherter SFTP-Editor sind nachgewiesen. Die Commander-Ansicht bietet lokale und SFTP-Dateiverwaltung sowie Uploads, Downloads und Ordnertransfers mit Queue. [SFTP-Alpha 0.0.3 installieren und testen](docs/nachweise/M3-Alpha.md).
+Entwicklungsprototyp einer VS-Code-Desktop-Erweiterung für SFTP und SCP. M0 bis M4 sind implementiert: Start-Webview, SFTP-Streaming, echtes SCP, Authentifizierung und abgesicherter SFTP-Editor sind nachgewiesen. Die Commander-Ansicht bietet lokale und SFTP-Dateiverwaltung sowie Uploads, Downloads und Ordnertransfers mit Queue. [Version 0.0.4 installieren und testen](docs/nachweise/M4-Anleitung.md).
 
 ## Entwicklung
 
@@ -85,7 +85,7 @@ npm run test:sftp
 
 Die vier Integrationstests prüfen normale SFTP- und SFTP-only-Server: gut 32 MiB in beide Richtungen, unabhängiger OpenSSH-Hashvergleich, Leerdateien, Sonderzeichen im Dateinamen, Abbruch, vorhandene Ziele und fehlende Quellen. Der Server ohne SFTP wird ohne Shell-Fallback abgewiesen. Ein separater Bundle-Test prüft den Adapter außerhalb von `node_modules`.
 
-Ziele werden exklusiv neu angelegt (`wx`); vorhandene Dateien werden nicht überschrieben. Nach Abbruch/Fehler können Teil-Dateien zurückbleiben. Die SFTP-Alpha ergänzt atomare Veröffentlichung, Konfliktentscheidungen, Queue und Journal; geprüfte Wiederaufnahme folgt in M4. Fortschritt zählt durchgereichte Bytes und bestätigt keine dauerhafte Speicherung auf dem Server. [Nachweis und Grenzen](docs/nachweise/M0-05.md).
+Ziele werden exklusiv neu angelegt (`wx`); vorhandene Dateien werden nicht überschrieben. Nach Abbruch/Fehler können Teil-Dateien zurückbleiben. Die SFTP-Alpha ergänzt atomare Veröffentlichung, Konfliktentscheidungen, Queue und Journal; geprüfte SFTP-Fortsetzung ist seit M4 verfügbar. Fortschritt zählt durchgereichte Bytes und bestätigt keine dauerhafte Speicherung auf dem Server. [Nachweis und Grenzen](docs/nachweise/M0-05.md).
 
 ## Echtes SCP (M0-06)
 
@@ -100,7 +100,7 @@ Geprüft sind Linux/OpenSSH mit POSIX-Shell, vorhandenem `scp`, GNU find/coreuti
 
 Absolute POSIX-Pfade werden als einzelne Shell-Argumente quotiert, mit `--` von Optionen getrennt. Leerzeichen, Quotes, Unicode und Shell-Sonderzeichen funktionieren wörtlich. Steuerzeichen, Zeilenumbrüche, Backslashes, `.`/`..`-Komponenten und nicht verlustfrei darstellbare UTF-8-Namen werden für diesen SCP-Weg abgewiesen; dafür SFTP verwenden. Die GNU-Liste kann Namen mit Zeilenumbrüchen anzeigen und kennzeichnet sie als nicht transferierbar. Symlink-/Verzeichniseinträge werden nur angezeigt, nicht rekursiv übertragen.
 
-Der Prototyp unterstützt höchstens 1 GiB pro Datei, 4096 Bytes pro SCP-Header und 1 MiB pro Verzeichnisliste. Lokale Ziele entstehen exklusiv; Upload-Ziele werden mit Shell-`noclobber` reserviert. Vorhandene Dateien werden in den geprüften Fällen erhalten. Das ist noch keine atomare Veröffentlichung und schützt nicht vor gleichzeitigen Änderungen durch andere Serverprozesse. Bei Fehler/Abbruch können eigene Teil-Dateien bleiben. Vollständige Parser-Härtung, Integration, Rekursion und Finalisierung folgen in M4. [Nachweis und Grenzen](docs/nachweise/M0-06.md).
+Der ursprüngliche M0-Prototyp begrenzte Dateien auf 1 GiB und Verzeichnislisten auf 1 MiB. M4 erlaubt sichere ganzzahlige Dateigrößen einschließlich über 4 GiB und begrenzt Listen auf 32 MiB/10.000 Einträge; Header bleiben auf 4096 Bytes begrenzt. Lokale Ziele entstehen exklusiv; Upload-Ziele werden mit Shell-`noclobber` reserviert. Vorhandene Dateien werden in den geprüften Fällen erhalten. Das ist noch keine atomare Veröffentlichung und schützt nicht vor gleichzeitigen Änderungen durch andere Serverprozesse. Bei Fehler/Abbruch können eigene Teil-Dateien bleiben. Parser-Härtung, Integration, Rekursion und sichere Finalisierung sind seit M4 implementiert; die beschriebene M0-Probe bleibt als separater technischer Test bestehen. [Aktuelle Bedienung und Grenzen](docs/nachweise/M4-Anleitung.md). [Nachweis und Grenzen](docs/nachweise/M0-06.md).
 
 ## Authentifizierung und Packaging (M0-07)
 
@@ -151,7 +151,7 @@ npm run quality
 npm run package
 ```
 
-In VS Code Desktop ab 1.140.0: Erweiterungsansicht → Menü „…“ → „Aus VSIX installieren…“ → `out/xscp-0.0.3.vsix`. Dann die xScp-Activity-Bar öffnen oder **xScp: Dateimanager öffnen** über die Befehlspalette ausführen. Alternativ startet `npm start` den Entwicklungs-Host. Die aktuelle Commander-Ansicht liest das echte lokale Dateisystem und kann SFTP-Profile verbinden. Die ursprüngliche M1-Demo bleibt unter **xScp: Mock-Demo öffnen** verfügbar. Die SFTP-Transferknöpfe sind angebunden; [Alpha-Anleitung](docs/nachweise/M3-Alpha.md).
+In VS Code Desktop ab 1.140.0: Erweiterungsansicht → Menü „…“ → „Aus VSIX installieren…“ → `out/xscp-0.0.4.vsix`. Dann die xScp-Activity-Bar öffnen oder **xScp: Dateimanager öffnen** über die Befehlspalette ausführen. Alternativ startet `npm start` den Entwicklungs-Host. Die aktuelle Commander-Ansicht liest das echte lokale Dateisystem und kann SFTP-Profile verbinden. Die ursprüngliche M1-Demo bleibt unter **xScp: Mock-Demo öffnen** verfügbar. Die SFTP-Transferknöpfe sind angebunden; [Alpha-Anleitung](docs/nachweise/M3-Alpha.md).
 
 `npm run test:installed` installiert und testet die VSIX ausschließlich in einem temporären, anschließend entfernten Profil. Bei vorhandener VS-Code-Installation lässt sich `VSCODE_TEST_EXECUTABLE` auf die Programmdatei setzen; sonst wird die festgelegte Testversion geladen. Python 3 wird für die unabhängige ZIP-Prüfung benötigt.
 
@@ -166,7 +166,7 @@ Die GitHub-Actions-Datei führt Lint, Syntaxprüfung, Unit-/React-DOM-Tests, Bui
 
 Über das Profil-Kontextmenü lassen sich Profile bearbeiten, favorisieren, trennen und erneut verbinden. **xScp: Schnellverbindung** baut einen nicht gespeicherten Zugang auf. **xScp: Gespeicherte Anmeldung vergessen** entfernt ein gespeichertes Passwort/eine Passphrase. **xScp: Profile ohne Geheimnisse exportieren** öffnet ein JSON-Dokument mit Profilmetadaten.
 
-SFTP-only benötigt weder Shell noch VS Code Server. SCP-Profile sind modelliert und authentifizierbar; SCP-Dateiverwaltung folgt ausdrücklich in M4. Windows-POSIX-chmod und lokale UNC-Authorities werden derzeit verständlich verweigert. Pro Ordner sind vorerst 10.000 Einträge vorgesehen; Remote-Löschpläne sind auf 10.000 Einträge und Tiefe 100 begrenzt. SFTP v3 erlaubt keine transaktionale Absicherung gegen gleichzeitige externe Pfadänderungen; Typ-/Elternprüfungen erkennen Änderungen zwischen Schritten.
+SFTP-only benötigt weder Shell noch VS Code Server. Seit M4 bieten SCP-Profile ebenfalls Dateioperationen und Transfers über die explizite GNU/Linux-Shell-Anbindung. Windows-POSIX-chmod und lokale UNC-Authorities werden derzeit verständlich verweigert. Pro Ordner sind vorerst 10.000 Einträge vorgesehen; Remote-Löschpläne sind auf 10.000 Einträge und Tiefe 100 begrenzt. SFTP v3 erlaubt keine transaktionale Absicherung gegen gleichzeitige externe Pfadänderungen; Typ-/Elternprüfungen erkennen Änderungen zwischen Schritten.
 
 ```sh
 # Nur eigene isolierte Fixtures:
@@ -178,4 +178,10 @@ Diese Tests benötigen laufende Fixtures (siehe oben). Der zweite Test installie
 
 ## SFTP-Alpha (M3)
 
-Private VSIX: `out/xscp-0.0.3.vsix`. [Anleitung, Prüfergebnisse und Grenzen](docs/nachweise/M3-Alpha.md). Reproduzierbar: `npm run quality`, `npm run test:transfers` mit laufenden eigenen Fixtures, `npm run package`, `npm run test:browser:installed`. Der Installationstest verwendet zwei reguläre isolierte Fenster und prüft zusätzlich Upload nach Tab-Schließen, Ordner-Rundlauf sowie Journal und gezielten Retry nach Neustart.
+Private VSIX: `out/xscp-0.0.4.vsix`. [Anleitung, Prüfergebnisse und Grenzen](docs/nachweise/M3-Alpha.md). Reproduzierbar: `npm run quality`, `npm run test:transfers` mit laufenden eigenen Fixtures, `npm run package`, `npm run test:browser:installed`. Der Installationstest verwendet zwei reguläre isolierte Fenster und prüft zusätzlich Upload nach Tab-Schließen, Ordner-Rundlauf sowie Journal und gezielten Retry nach Neustart.
+
+## SCP und Wiederanlauf (M4)
+
+Version 0.0.4 verbindet echtes SCP mit Commander und Queue. SFTP-Teil-Dateien können ausdrücklich nach Quellen-/Präfixprüfung fortgesetzt werden; SCP startet vollständig neu. Eigene Partials lassen sich bestätigt bereinigen. Profile unterstützen außerdem Agent und interaktive Serveranmeldung. [Bedienung und Grenzen](docs/nachweise/M4-Anleitung.md) · [Abschluss](docs/nachweise/M4-Abschluss.md).
+
+Mit laufenden eigenen Fixtures prüft `npm run test:protocols` die gemeinsame Server-/Auth-/Transfermatrix. `npm run test:browser:installed` prüft die frische VSIX mit zwei regulären isolierten VS-Code-Starts, SFTP-only und SCP-only sowie SFTP-Fortsetzung nach Neustart.

@@ -1,7 +1,7 @@
-import { withExec } from './exec.js';import { ScpError,remotePath,shellQuote } from './protocol.js';
+import { withExec } from './exec.js';import { EXEC_ACTIVITY,ScpError,remotePath,shellQuote } from './protocol.js';
 const probes=new WeakMap();
 export async function collectExec(session,command,{signal,maxBytes=32*1024*1024,timeout=30000}={}) {
- return withExec(session,command,async channel => {channel.end();const chunks=[];let bytes=0;for await (const chunk of channel) {bytes+=chunk.length;if (bytes>maxBytes) throw new ScpError('SCP_OUTPUT_LIMIT','Shell-Ausgabe überschreitet die sichere Grenze.');chunks.push(chunk);}return Buffer.concat(chunks);},{signal,timeout,closeSession:false});
+ return withExec(session,command,async channel => {channel.end();const chunks=[];let bytes=0;for await (const chunk of channel) {channel[EXEC_ACTIVITY]?.();bytes+=chunk.length;if (bytes>maxBytes) throw new ScpError('SCP_OUTPUT_LIMIT','Shell-Ausgabe überschreitet die sichere Grenze.');chunks.push(chunk);}return Buffer.concat(chunks);},{signal,timeout,closeSession:false});
 }
 export async function probeScp(session,{signal}={}) {
  if (!probes.has(session)) {

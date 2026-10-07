@@ -186,3 +186,6 @@ test('production GNU metadata probes capabilities and preserves shared SSH trans
  const {probeScp,statScp}=await import('../../src/adapters/scp/metadata.js');const session=await connection();try {assert.equal((await probeScp(session)).browse,true);const entries=await listScp(session,{path:'/data',closeSession:false});assert.ok(entries.some(e => e.name==='server-marker.txt'));assert.equal((await statScp(session,'/data/server-marker.txt')).kind,'file');await assert.rejects(statScp(session,'/data/nonexistent-'+randomUUID()),{code:'ENOENT'});} finally {await session.close();}
  const restricted=await connection(1);try {await assert.rejects(probeScp(restricted),{code:'SCP_CAPABILITIES'});} finally {await restricted.close();}
 });
+test('shared exec uses an inactivity deadline and releases timed-out channels',{timeout:5000},async () => {
+ const {collectExec}=await import('../../src/adapters/scp/metadata.js');const session=await connection();try {assert.equal((await collectExec(session,'for i in 1 2 3 4; do printf x; sleep 0.12; done',{timeout:250})).toString(),'xxxx');await assert.rejects(collectExec(session,'sleep 1',{timeout:100}),{code:'SCP_TIMEOUT'});assert.equal((await collectExec(session,'printf alive')).toString(),'alive');} finally {await session.close();}
+});

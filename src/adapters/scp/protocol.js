@@ -1,3 +1,4 @@
+export const EXEC_ACTIVITY=Symbol('xscp.exec.activity');
 export const CHUNK_BYTES = 64 * 1024;
 export const MAX_FILE_BYTES = Number.MAX_SAFE_INTEGER;
 export const MAX_PROOF_BYTES = MAX_FILE_BYTES; // Legacy probe import; production sizes remain exact integers.
@@ -43,7 +44,7 @@ async function* packets(stream) {
 }
 /** Pull reader handles fragmented/coalesced SSH packets without whole-file buffers. */
 export class ScpReader {
-  constructor(stream) { this.iterator = packets(stream)[Symbol.asyncIterator](); this.chunk = Buffer.alloc(0); this.offset = 0; this.remaining=undefined; this.phase='control'; }
+  constructor(stream) { this.iterator = packets(stream)[Symbol.asyncIterator](); this.chunk = Buffer.alloc(0); this.offset = 0; this.remaining=undefined; this.phase='control'; this.touch=stream[EXEC_ACTIVITY]; }
   async readSome(max = CHUNK_BYTES) {
     if (!Number.isSafeInteger(max) || max < 1 || max > CHUNK_BYTES) throw new ScpError('SCP_READ_LIMIT','Ungültige Lesemenge.');
     if (this.phase === 'body') max=Math.min(max,this.remaining);
@@ -57,7 +58,7 @@ export class ScpReader {
     const end = Math.min(this.chunk.length, this.offset + max);
     const result = this.chunk.subarray(this.offset, end); this.offset = end;
     if (this.phase === 'body') {this.remaining-=result.length;if (!this.remaining) this.phase='completion';}
-    return result;
+    this.touch?.();return result;
   }
   async byte() {
     const data = await this.readSome(1);
@@ -95,4 +96,4 @@ export class ScpReader {
     if (await this.readSome(1)) throw new ScpError('SCP_TRAILING_DATA', 'Zusätzliche SCP-Daten nach der angeforderten Datei.');
   }
 }
-export const writeChannel = (channel, data) => new Promise((resolve, reject) => channel.write(data, error => error ? reject(error) : resolve()));
+export const writeChannel = (channel, data) => new Promise((resolve, reject) => channel.write(data, error => {if (error) reject(error);else {channel[EXEC_ACTIVITY]?.();resolve();}} ));

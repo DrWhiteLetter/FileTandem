@@ -19,3 +19,9 @@ test('queue resume after interruption is explicit, obsolete profiles block it an
  } finally {restored.dispose();}
  } finally {engine.dispose();if (partial) await files.call('unlink',partial).catch(() => {});if (remote) await files.call('unlink',remote).catch(() => {});files.close();await session.close();await rm(directory,{recursive:true,force:true});}
 });
+test('abort during remote source hashing closes only the owned metadata channel',{timeout:5000},async () => {
+ const {TransferEngine}=await import('../../src/application/transfer-engine.js');const session=await fixture(),files=await RemoteFiles.open(session),remote='/data/m4-hash-abort-'+randomUUID(),directory=await mkdtemp(join(tmpdir(),'xscp-hash-abort-'));await files.call('writeFile',remote,Buffer.from('source'));let pendingRead;
+ const wrapped={...session,sftp:callback => session.sftp((error,channel) => {if (channel) {const read=channel.read.bind(channel);channel.read=(...args) => {pendingRead=() => read(...args);};}callback(error,channel);})};const profile={id:'p',host:'127.0.0.1',port:Number(process.env.XSCP_SSH_PORT_BASE ?? 22220)+1,username:'fixture',protocol:'sftp'};const engine=new TransferEngine({sessions:{transport:() => wrapped},profiles:{get:() => profile},choose:async () => ({choice:'replace'})});
+ try {const batch=await engine.submit('p','download',[remote],directory);while (!pendingRead) await new Promise(r => setTimeout(r,1));engine.queue.cancel(batch.ids[0]);await engine.queue.idle();assert.equal(engine.queue.list()[0].state,'cancelled');assert.ok((await files.list('/data')).entries.length);assert.ok(!engine.queue.list()[0].attempt,'No partial was created before the source check completed');}
+ finally {engine.dispose();await files.call('unlink',remote).catch(() => {});files.close();await session.close();await rm(directory,{recursive:true,force:true});}
+});

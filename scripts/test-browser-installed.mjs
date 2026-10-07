@@ -22,20 +22,21 @@ try {
   await writeFile(join(user,'User','settings.json'),JSON.stringify({'window.restoreWindows':'none','workbench.startupEditor':'none','security.workspace.trust.emptyWindow':true}));
   await writeFile(marker,content,{mode:0o600});
   await writeFile(join(harness,'package.json'),JSON.stringify({name:'browser-harness',publisher:'xscp-test',version:'0.0.1',engines:{vscode:'^1.140.0'},main:'./main.cjs',activationEvents:['onStartupFinished'],extensionKind:['ui']}));
-  await copyFile(join(source,'transfers.cjs'),join(harness,'transfers.cjs'));await copyFile(join(source,'smoke.cjs'),join(harness,'smoke.cjs'));await copyFile(join(source,'browser.cjs'),join(harness,'browser.cjs'));
+  await copyFile(join(source,'protocols.cjs'),join(harness,'protocols.cjs'));await copyFile(join(source,'transfers.cjs'),join(harness,'transfers.cjs'));await copyFile(join(source,'smoke.cjs'),join(harness,'smoke.cjs'));await copyFile(join(source,'browser.cjs'),join(harness,'browser.cjs'));
   await writeFile(join(harness,'main.cjs'),`exports.activate=async () => { const fs=require('node:fs/promises');try {await require('./smoke.cjs').run();await fs.writeFile(process.env.XSCP_TEST_RESULT,JSON.stringify({ok:true}));} catch(error) {await fs.writeFile(process.env.XSCP_TEST_RESULT,JSON.stringify({ok:false,error:error.stack}));} };`);
   const installed=spawnSync(cli,['--user-data-dir',user,'--extensions-dir',extensions,'--install-extension',vsix,'--force'],{env:environment,encoding:'utf8',timeout:120000,shell:process.platform === 'win32'});
   if (installed.error || installed.status !== 0) throw installed.error ?? new Error(installed.stderr);
   const expected=(await readFile(join(fixture,'servers/sftp-only/host_ed25519.pub'),'utf8')).split(' ')[1];
+  const scpExpected=(await readFile(join(fixture,'servers/scp/host_ed25519.pub'),'utf8')).split(' ')[1];
   for (const phase of ['write','restart']) {
     const resultPath=join(directory,`${phase}.json`);
-    child=spawn(executable,['--user-data-dir',user,'--extensions-dir',extensions,'--new-window','--skip-welcome','--skip-release-notes'],{env:{...environment,XSCP_TEST_RESULT:resultPath,XSCP_PROOF_FILE:marker,XSCP_PROOF_SHA256:createHash('sha256').update(content).digest('hex'),XSCP_PROOF_HOST:hostname(),XSCP_EXPECT_REMOTE:'local',XSCP_INSTALLED_EXTENSIONS:extensions,XSCP_M2_PHASE:phase,XSCP_M2_KEY:join(fixture,'client_ed25519'),XSCP_M2_EXPECTED_KEY:expected,XSCP_M2_PORT:String(Number(process.env.XSCP_SSH_PORT_BASE ?? 22220)+1)},stdio:['ignore','ignore','ignore']});
+    child=spawn(executable,['--user-data-dir',user,'--extensions-dir',extensions,'--new-window','--skip-welcome','--skip-release-notes'],{env:{...environment,XSCP_TEST_RESULT:resultPath,XSCP_PROOF_FILE:marker,XSCP_PROOF_SHA256:createHash('sha256').update(content).digest('hex'),XSCP_PROOF_HOST:hostname(),XSCP_EXPECT_REMOTE:'local',XSCP_INSTALLED_EXTENSIONS:extensions,XSCP_M2_PHASE:phase,XSCP_M4_SCP_KEY:scpExpected,XSCP_M4_SCP_PORT:String(Number(process.env.XSCP_SSH_PORT_BASE ?? 22220)+2),XSCP_M2_KEY:join(fixture,'client_ed25519'),XSCP_M2_EXPECTED_KEY:expected,XSCP_M2_PORT:String(Number(process.env.XSCP_SSH_PORT_BASE ?? 22220)+1)},stdio:['ignore','ignore','ignore']});
     let exited=false;const closed=new Promise(resolve => child.once('exit',() => {exited=true;resolve();}));child.on('error',() => {});
     let result;const deadline=Date.now()+45000;
     try {
       while (Date.now() < deadline && !exited) {try {result=JSON.parse(await readFile(resultPath,'utf8'));break;} catch {}await new Promise(resolve => setTimeout(resolve,100));}
       if (!result?.ok) throw new Error(result?.error ?? `Normaler VS-Code-Test ${phase} lieferte kein Ergebnis.`);
-      console.log(`M2/M3: normaler isolierter VS-Code-Start ${phase} bestanden.`);
+      console.log(`M2/M3/M4: normaler isolierter VS-Code-Start ${phase} bestanden.`);
     } finally {if (!exited) child.kill('SIGTERM');await closed;child=undefined;}
   }
 } finally {child?.kill('SIGTERM');await rm(directory,{recursive:true,force:true});}

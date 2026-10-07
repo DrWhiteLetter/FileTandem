@@ -26,6 +26,7 @@ exports.run=async api => {
   await vscode.workspace.fs.rename(old,target,{overwrite:false});
   await vscode.workspace.fs.delete(target,{recursive:true,useTrash:true});
   await vscode.workspace.fs.delete(existing,{recursive:true,useTrash:true});
+  await require('./protocols.cjs').run(api,local);
   await require('./transfers.cjs').run(api,id,local);
   console.log(`M2-09 ${process.env.XSCP_M2_PHASE}: persisted favorite/profile/trust, SFTP-only Commander, disconnect/reconnect, local rename conflict and real OS trash passed.`);
 };
