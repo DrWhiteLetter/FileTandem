@@ -1,6 +1,6 @@
 # xScp
 
-Entwicklungsprototyp einer VS-Code-Desktop-Erweiterung für SFTP und SCP. M0-01 liefert den Startbefehl und ein minimales React-Webview; Dateiübertragungen sind noch nicht implementiert.
+Entwicklungsprototyp einer VS-Code-Desktop-Erweiterung für SFTP und SCP. M0-01 liefert den Startbefehl und ein minimales React-Webview; M0-05 weist SFTP-Streaming im Adapter nach. Die Dateimanager-Oberfläche bietet noch keine Transfers.
 
 ## Entwicklung
 
@@ -59,7 +59,7 @@ Auf diesem Mac wurde dafür das separate Colima-Profil `xscp` eingerichtet; nach
 
 ## SSH-Host-Key-Prüfung (M0-04)
 
-**xScp: SSH-Host-Key prüfen** in der Befehlspalette startet einen minimalen SSH-Nachweis: Host, Port, Benutzer und eine lokale unverschlüsselte private Testschlüsseldatei auswählen. Für die Fixtures `127.0.0.1`, Port `22220`/`22221`/`22222`, Benutzer `fixture` und `test/fixtures/ssh/.runtime/client_ed25519` verwenden. Der Befehl authentifiziert sich und schließt die Verbindung anschließend wieder; Dateioperationen folgen in M0-05/M0-06.
+**xScp: SSH-Host-Key prüfen** in der Befehlspalette startet einen minimalen SSH-Nachweis: Host, Port, Benutzer und eine lokale unverschlüsselte private Testschlüsseldatei auswählen. Für die Fixtures `127.0.0.1`, Port `22220`/`22221`/`22222`, Benutzer `fixture` und `test/fixtures/ssh/.runtime/client_ed25519` verwenden. Der Befehl authentifiziert sich und schließt die Verbindung anschließend wieder; SFTP-Streaming ist separat in M0-05 nachgewiesen; SCP folgt in M0-06.
 
 Ein unbekannter Host-Key wird mit Algorithmus und OpenSSH-SHA-256-Fingerprint im nativen Dialog angezeigt. Den Fingerprint unabhängig vergleichen, dann ausdrücklich **Vertrauen und verbinden** wählen. **Ablehnen** oder Schließen des Dialogs beendet die Verbindung. Für die kontrollierten Fixtures zeigt `ssh-keygen -lf test/fixtures/ssh/.runtime/servers/<variante>/host_ed25519.pub` den erwarteten Fingerprint.
 
@@ -73,3 +73,16 @@ npm test               # Unit-Tests plus Build und echter Extension-Host-Smoke-T
 ```
 
 Die Integrationstests ändern ausschließlich Schlüssel innerhalb eigener Fixture-Container und stellen die Originalschlüssel anschließend wieder her. Sie verwenden einen eigenen Test-Trust-Speicher, nicht den Trust-Speicher deines VS-Code-Profils. `ssh2` wird in das Host-Bundle eingebunden; optionale native Beschleuniger sind nicht Teil der VSIX. Bibliothekslizenzen stehen in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Details und Grenzen: [M0-04-Nachweis](docs/nachweise/M0-04.md).
+
+## SFTP-Streaming (M0-05)
+
+Der technische Adapter `src/adapters/sftp/transfer.js` streamt Upload und Download auf einer durch `connectSsh` verifizierten Sitzung. Er benötigt ausschließlich SFTP, keine Shell. 64-KiB-Puffer und Node-Pipeline sorgen für Backpressure; das Ergebnis enthält Bytezahl und SHA-256. `AbortSignal` bricht den Transfer ab. Jede Operation schließt ihre Streams und die eigene SSH-Sitzung, auch bei Fehlern. Absolute lokale und entfernte Pfade sind erforderlich.
+
+```sh
+# Nach fixtures:start, mit laufender lokaler Docker-Laufzeit:
+npm run test:sftp
+```
+
+Die vier Integrationstests prüfen normale SFTP- und SFTP-only-Server: gut 32 MiB in beide Richtungen, unabhängiger OpenSSH-Hashvergleich, Leerdateien, Sonderzeichen im Dateinamen, Abbruch, vorhandene Ziele und fehlende Quellen. Der Server ohne SFTP wird ohne Shell-Fallback abgewiesen. Ein separater Bundle-Test prüft den Adapter außerhalb von `node_modules`.
+
+Ziele werden exklusiv neu angelegt (`wx`); vorhandene Dateien werden nicht überschrieben. Nach Abbruch/Fehler können Teil-Dateien zurückbleiben. Atomare Veröffentlichung, Wiederaufnahme, Konfliktentscheidungen, Queue und die Transfer-Oberfläche folgen in M3. Fortschritt zählt durchgereichte Bytes und bestätigt keine dauerhafte Speicherung auf dem Server. [Nachweis und Grenzen](docs/nachweise/M0-05.md).

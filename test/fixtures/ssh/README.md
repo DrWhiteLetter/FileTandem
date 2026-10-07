@@ -78,7 +78,7 @@ Die App-Host-Key-Prüfung ist in M0-04 implementiert; `npm run test:host-keys` n
 4. SCP: SFTP-Subsystem ausdrücklich abgewiesen; Upload und Download mit `scp -O` bytegleich; GNU find/coreutils vorhanden.
 5. Jede Variante weist einen anderen, ebenfalls nur für Tests erzeugten Client-Key mit einem konkreten Public-Key-Authentifizierungsfehler zurück.
 
-Dies ist ein Fixture-Smoke-Test mit den OpenSSH-Clients. Die xScp-/ssh2-Implementierung, Streaming/Abbruch, SCP-Parser und Authentifizierungsmatrix werden in M0-04 bis M0-07 geprüft.
+Dies ist ein Fixture-Smoke-Test mit den OpenSSH-Clients. Die xScp-/ssh2-Host-Key-Prüfung ist in M0-04 geprüft; `npm run test:sftp` weist Streaming/Abbruch in M0-05 nach. SCP-Parser und Authentifizierungsmatrix folgen in M0-06/M0-07.
 
 ## Isolation und Packaging
 
