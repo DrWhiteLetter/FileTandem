@@ -124,7 +124,8 @@
     "test:editor": "node --test test/integration/editor.test.js && npm run build && node scripts/test-editor.mjs",
     "test:editor:remote": "npm run build && node scripts/test-editor.mjs --remote",
     "lint": "eslint .",
-    "quality": "npm run lint && npm run check && npm run test:unit && npm run build"
+    "quality": "npm run lint && npm run check && npm run test:unit && npm run test:webview && npm run build",
+    "test:webview": "node --test test/webview/*.test.js"
   },
   "dependencies": {
     "react": "19.3.0",
@@ -136,7 +137,8 @@
     "@vscode/test-electron": "3.1.0",
     "esbuild": "0.28.2",
     "eslint": "10.12.0",
-    "globals": "17.13.0"
+    "globals": "17.13.0",
+    "jsdom": "27.4.0"
   },
   "extensionKind": [
     "ui"
