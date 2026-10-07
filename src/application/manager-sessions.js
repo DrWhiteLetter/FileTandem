@@ -3,8 +3,10 @@ export class ManagerSessions {
   #sessions = new Map();
   create(id, location, scenario = 'ready') {
     if (this.#sessions.has(id)) throw new Error('Sitzung bereits vorhanden.');
+    if (this.#sessions.size >= 100) this.#sessions.delete(this.#sessions.keys().next().value);
     this.#sessions.set(id, { location: { local: location.local === true, remoteWindow: location.windowRemoteName !== null }, scenario: SCENARIOS.includes(scenario) ? scenario : 'ready', requests: new Set() });
   }
+  has(id) { return this.#sessions.has(id); }
   handle(id, message) {
     const session = this.#sessions.get(id);
     if (!session || !validateRequest(message,id) || session.requests.has(message.id)) return undefined;

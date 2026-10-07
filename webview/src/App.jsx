@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react';
 import { sortEntries } from '../../src/domain/file-entry.js';
 import { DEMO_ROOTS, DEMO_FOLDERS, demoParent } from '../../src/domain/demo-files.js';
 import { SCENARIOS, validateResponse } from '../../src/shared/messages.js';
+import { restoreViewState } from '../../src/shared/view-state.js';
 const labels = { ready:'Bereit',loading:'Laden',empty:'Leer',error:'Fehler',disconnected:'Getrennt' };
 const bytes = size => size < 1024 ? `${size} B` : `${(size/1024).toLocaleString('de-DE',{ maximumFractionDigits:1 })} KiB`;
-function Pane({side,path,onNavigate,mode,hidden}) {
+function Pane({side,path,onNavigate,mode,hidden,sort,setSort}) {
   const [selection,setSelection] = useState([]);
   const [filter,setFilter] = useState('');
-  const [sort,setSort] = useState({column:'name',direction:'asc'});
   useEffect(() => setSelection([]),[path,mode]);
   const source = mode === 'ready' ? DEMO_FOLDERS[side][path] ?? [] : [];
   const entries = sortEntries(source.filter(e => (hidden || !e.name.startsWith('.')) && e.name.toLocaleLowerCase().includes(filter.toLocaleLowerCase())),sort.column,sort.direction);
@@ -40,12 +40,15 @@ function Pane({side,path,onNavigate,mode,hidden}) {
     </div><footer>{entries.length} Einträge · {selection.length} ausgewählt</footer>
   </section>;
 }
-export function App({bridge,sessionId}) {
+export function App({bridge,sessionId,initialState}) {
+  const [restored] = useState(() => restoreViewState(bridge.getState?.() ?? initialState));
   const [model,setModel] = useState(null);
-  const [paths,setPaths] = useState(DEMO_ROOTS);
-  const [split,setSplit] = useState(50);
-  const [queueOpen,setQueueOpen] = useState(true);
-  const [hidden,setHidden] = useState(false);
+  const [paths,setPaths] = useState(restored.paths);
+  const [split,setSplit] = useState(restored.split);
+  const [queueOpen,setQueueOpen] = useState(restored.queueOpen);
+  const [hidden,setHidden] = useState(restored.hidden);
+  const [sorts,setSorts] = useState(restored.sorts);
+  useEffect(() => { bridge.setState?.({version:1,sessionId,paths,sorts,split,queueOpen,hidden}); },[sessionId,paths,sorts,split,queueOpen,hidden]);
   const send = (type,extra = {}) => bridge.postMessage({version:1,type,id:crypto.randomUUID(),sessionId,...extra});
   useEffect(() => {
     const receive = event => { if (validateResponse(event.data,sessionId)) setModel(event.data); };
@@ -57,7 +60,7 @@ export function App({bridge,sessionId}) {
     <header className="appbar"><h1>xScp</h1><span>Commander</span><span className="demo-note">Demo · keine Serververbindung</span></header>
     <div className="toolbar" aria-label="Dateiaktionen"><button onClick={() => send('setScenario',{scenario: mode === 'disconnected' ? 'ready':'disconnected'})}>{mode === 'disconnected' ? 'Demo verbinden':'Demo trennen'}</button><button disabled title="Echte Transfers folgen in M3">Hochladen →</button><button disabled title="Echte Transfers folgen in M3">← Herunterladen</button><button onClick={() => send('refresh')}><span className="codicon codicon-refresh" aria-hidden="true" /> Aktualisieren</button><label>Ansicht <select value={mode} onChange={event => send('setScenario',{scenario:event.target.value})}>{SCENARIOS.map(value => <option key={value} value={value}>{labels[value]}</option>)}</select></label><label><input type="checkbox" checked={hidden} onChange={event => setHidden(event.target.checked)} /> Versteckte Dateien</label></div>
     <div className="split-control"><label>Bereichsbreite <input type="range" min="30" max="70" value={split} onChange={event => setSplit(Number(event.target.value))} /></label></div>
-    <div className="panes" style={{'--local-width':`${split}%`}}>{['local','remote'].map(side => <Pane key={side} side={side} path={paths[side]} onNavigate={path => setPaths(value => ({...value,[side]:path}))} mode={mode} hidden={hidden} />)}</div>
+    <div className="panes" style={{'--local-width':`${split}%`}}>{['local','remote'].map(side => <Pane key={side} side={side} path={paths[side]} onNavigate={path => setPaths(value => ({...value,[side]:path}))} mode={mode} hidden={hidden} sort={sorts[side]} setSort={update => setSorts(value => ({...value,[side]:update(value[side])}))} />)}</div>
     <section className="queue"><button className="queue-toggle" aria-expanded={queueOpen} onClick={() => setQueueOpen(value => !value)}>{queueOpen ? '▾':'▸'} Transfers · 2 Demo-Aufträge</button>{queueOpen && <table aria-label="Demo-Transferqueue"><thead><tr><th>Datei</th><th>Richtung</th><th>Status</th><th>Fortschritt</th></tr></thead><tbody><tr><td>index.html</td><td>Lokal → Remote</td><td>Demo: erfolgreich</td><td>100 %</td></tr><tr><td>logo.svg</td><td>Remote → Lokal</td><td>Demo: wartend</td><td>0 %</td></tr></tbody></table>}</section>
     <footer className="status" role="status">{model?.location.local ? 'Lokal: Desktop-Rechner':'Ausführungsort wird geprüft …'} · {labels[mode]} · Keine Dateien werden übertragen.{model?.location.remoteWindow && ' Remote-Workspace gehört nicht zur lokalen Dateiquelle.'}</footer>
   </main>;
