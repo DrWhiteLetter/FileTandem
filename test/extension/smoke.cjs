@@ -12,8 +12,10 @@ exports.run = async () => {
   assert.equal(api.executionLocation().local, true);
   assert.equal(vscode.env.remoteName ?? 'local', process.env.XSCP_EXPECT_REMOTE);
   if (process.env.XSCP_EXPECT_REMOTE === 'ssh-remote') {
-    assert.ok(vscode.workspace.workspaceFolders?.some(folder => folder.uri.scheme === 'vscode-remote'),
-      'Echter Remote-Workspace verbunden');
+    const remoteFolder = vscode.workspace.workspaceFolders?.find(folder => folder.uri.scheme === 'vscode-remote');
+    assert.ok(remoteFolder, 'Remote-Workspace angefordert');
+    const remoteStat = await vscode.workspace.fs.stat(remoteFolder.uri);
+    assert.ok(remoteStat.type & vscode.FileType.Directory, 'Remote-Workspace tatsächlich erreichbar');
   }
   const proof = await api.verifyLocalFile(vscode.Uri.file(process.env.XSCP_PROOF_FILE));
   assert.equal(proof.sha256, process.env.XSCP_PROOF_SHA256, 'Desktop-Marker bytegleich gelesen');
