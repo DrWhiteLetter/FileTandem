@@ -18,7 +18,7 @@ export async function streamFile(session,{direction,local,remote,signal,onProgre
   });
   const stop=() => files?.close();controller.signal.addEventListener('abort',stop,{once:true});
   try {
-    controller.signal.throwIfAborted();files=await RemoteFiles.open(session);controller.signal.throwIfAborted();
+    controller.signal.throwIfAborted();files=await RemoteFiles.open(session,{signal:controller.signal});controller.signal.throwIfAborted();
     const metadata=direction === 'upload' ? await lstat(local):await files.call('lstat',remote);
     if (!metadata.isFile() || metadata.isSymbolicLink()) throw new Error('Nur reguläre Dateien werden gestreamt.');
     if (direction === 'upload') {
@@ -33,7 +33,7 @@ export async function streamFile(session,{direction,local,remote,signal,onProgre
       target=createWriteStream(local,{highWaterMark:BUFFER_BYTES,flags:'wx',mode:0o600});
     }
     const hash=createHash('sha256');let bytes=0;
-    const meter=new Transform({highWaterMark:BUFFER_BYTES,transform(chunk,_,callback) {hash.update(chunk);bytes+=chunk.length;onProgress({bytes,chunkBytes:chunk.length});callback(null,chunk);}});
+    const meter=new Transform({highWaterMark:BUFFER_BYTES,transform(chunk,_,callback) {try {hash.update(chunk);bytes+=chunk.length;onProgress({bytes,chunkBytes:chunk.length});callback(null,chunk);} catch(error) {callback(error);}}});
     await pipeline(source,meter,target,{signal:controller.signal});
     if (bytes !== metadata.size) throw new Error('Quelle wurde während des Transfers geändert.');
     const after=direction === 'upload' ? await lstat(local):await files.call('lstat',remote);

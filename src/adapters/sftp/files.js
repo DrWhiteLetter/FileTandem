@@ -11,11 +11,13 @@ export class RemoteFiles {
     const close=() => {this.#closed=true;for (const reject of this.#pending) reject(Object.assign(new Error('SFTP-Verbindung geschlossen.'),{code:'NOT_CONNECTED'}));this.#pending.clear();};
     channel.on('error',close);channel.once('close',close);session.closed.then(close);
   }
-  static async open(session) {
+  static async open(session,{signal}={}) {
     const channel=await new Promise((resolve,reject) => {
-      let settled=false;
-      const finish=(error,value) => {if (settled) {value?.end();return;}settled=true;clearTimeout(timer);error ? reject(error):resolve(value);};
+      signal?.throwIfAborted();
+      let settled=false;const abort=() => finish(signal.reason);
+      const finish=(error,value) => {if (settled) {value?.end();return;}settled=true;clearTimeout(timer);signal?.removeEventListener('abort',abort);error ? reject(error):resolve(value);};
       const timer=setTimeout(() => {finish(Object.assign(new Error('SFTP-Zeitlimit überschritten.'),{code:'NOT_CONNECTED'}));void session.close();},15000);
+      signal?.addEventListener('abort',abort,{once:true});
       session.closed.then(() => {if (!settled) finish(Object.assign(new Error('Nicht verbunden.'),{code:'NOT_CONNECTED'}));});
       try {session.sftp(finish);} catch(error) {finish(error);}
     });
@@ -46,5 +48,5 @@ export class RemoteFiles {
   async chmod(path,mode) {if ((await this.stat(path)).kind === 'symlink') throw new Error('Symlink-Rechte werden nicht geändert.');return this.call('chmod',remotePath(path),mode);}
   mkdir(path) {return this.call('mkdir',remotePath(path),{mode:0o755});}
   rename(source,target) {return this.call('rename',remotePath(source),remotePath(target));}
-  close() {this.channel.end();}
+  close() {this.#closed=true;for (const reject of this.#pending) reject(Object.assign(new Error('SFTP-Kanal geschlossen.'),{code:'NOT_CONNECTED'}));this.#pending.clear();this.channel.end();}
 }

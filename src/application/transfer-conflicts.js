@@ -6,7 +6,7 @@ export class ConflictRules {
     const safeReplace=target.atomicReplace && existing.kind === 'file';
     let choice=this.rules.get(job.batchId);
     if (!choice || (choice === 'replace' && !safeReplace)) {
-      const answer=await this.choose({direction:job.direction,path:job.target,safeReplace,kind:existing.kind});signal?.throwIfAborted();
+      signal?.throwIfAborted();let abort;const cancelled=new Promise((_,reject) => {abort=() => reject(signal.reason ?? new Error('Abgebrochen.'));signal?.addEventListener('abort',abort,{once:true});});let answer;try {answer=await Promise.race([this.choose({direction:job.direction,path:job.target,safeReplace,kind:existing.kind,signal}),cancelled]);} finally {signal?.removeEventListener('abort',abort);}signal?.throwIfAborted();
       choice=answer?.choice ?? 'cancel';if (!['replace','skip','keep','cancel'].includes(choice) || (choice === 'replace' && !safeReplace)) throw new Error('Ungültige Konfliktentscheidung.');
       if (answer?.apply && choice !== 'cancel') this.rules.set(job.batchId,choice);
     }

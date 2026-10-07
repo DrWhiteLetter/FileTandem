@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import * as vscode from 'vscode';import { TransferEngine } from '../application/transfer-engine.js';import { localFileUri } from '../adapters/local/files.js';import { conflictDialog } from './transfer-conflicts.js';
 export function registerTransfers(context,profileUI) {
   const changed=new vscode.EventEmitter();const ephemeral=new Map();
@@ -11,5 +12,5 @@ export function registerTransfers(context,profileUI) {
     if (profileUI.sessions.snapshot(profile.id).state !== 'connected') await profileUI.connect(profile);
     await engine.submit(profile.id,'upload',paths,profile.remotePath);profileUI.open(profile);
   });
-  return {list:() => {profileUI.guard();return engine.queue.list();},submit:async (id,direction,paths,destination) => {profileUI.guard();return engine.submit(id,direction,paths,destination);}};
+  return {pause:value => {profileUI.guard();engine.queue.pause(value);},cancel:id => {profileUI.guard();engine.queue.cancel(id);},retry:ids => {profileUI.guard();return engine.queue.retry(ids,randomUUID);},list:() => {profileUI.guard();return engine.queue.list();},submit:async (id,direction,paths,destination) => {profileUI.guard();return engine.submit(id,direction,paths,destination);}};
 }

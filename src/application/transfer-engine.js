@@ -29,7 +29,7 @@ export class TransferEngine {
   async run(job,signal,onProgress) {
     this.guard();signal.throwIfAborted();if (job.kind === 'error') throw Object.assign(new Error(),{publicMessage:'Transferbaum konnte nicht vollständig entdeckt werden.'});
     if (['symlink','other'].includes(job.kind)) return {skipped:true,reason:'Symlink/Spezialdatei übersprungen.'};
-    const session=this.sessions.transport(job.profileId);const files=await RemoteFiles.open(session);
+    const session=this.sessions.transport(job.profileId);const files=await RemoteFiles.open(session,{signal});
     try {
       const target=job.direction === 'upload' ? remoteTarget(files):localTarget;
       const parent=job.parentId && this.queue.list().find(j => j.id === job.parentId);

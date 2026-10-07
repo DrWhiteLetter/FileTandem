@@ -29,6 +29,23 @@ export class TransferQueue {
         .finally(() => {this.#active.delete(job.id);this.#notify();this.#schedule();});
     }
   }
+  pause(value=true) {this.paused=value;this.#notify();if (!value) this.#schedule();}
+  cancel(id) {
+    const job=this.#jobs.get(id);if (!job) throw new Error('Auftrag nicht gefunden.');
+    if (job.state === 'queued') this.#jobs.set(id,transition(job,'cancelled'));
+    this.#active.get(id)?.controller.abort();this.#notify();this.#schedule();
+  }
+  retry(ids,idFactory) {
+    const retryable=ids.map(id => this.#jobs.get(id));
+    if (retryable.some(j => !j || !['failed','cancelled','interrupted'].includes(j.state))) throw new Error('Nur fehlgeschlagene/abgebrochene/unterbrochene Aufträge können erneut gestartet werden.');
+    const mapping=new Map(retryable.map(j => [j.id,idFactory()]));const batchId=idFactory();
+    for (const job of retryable) {const parent=job.parentId && this.#jobs.get(job.parentId);if (parent && parent.state !== 'completed' && !mapping.has(parent.id)) throw new Error('Bitte zuerst auch den fehlgeschlagenen Elternordner auswählen.');}
+    for (const job of retryable) {
+      const copy={...job};for (const key of ['bytes','error','started','rate','state','sha256','committed','finalTarget','partialPath']) delete copy[key];
+      this.add({...copy,id:mapping.get(job.id),batchId,parentId:mapping.get(job.parentId) ?? job.parentId,retryOf:job.id});
+    }
+    return batchId;
+  }
   async withLock(id,key,action,signal) {
     while ([...this.#active.entries()].some(([other,a]) => other !== id && [a.job.lockKey,...(a.extra ?? [])].some(held => locksOverlap(held,key)))) {signal.throwIfAborted();await new Promise(resolve => setTimeout(resolve,10));}
     signal.throwIfAborted();const active=this.#active.get(id);active.extra ??= [];active.extra.push(key);
