@@ -23,7 +23,7 @@ export class TransferQueue {
         const bytes=Number.isFinite(progress.bytes) ? progress.bytes:current.bytes;
         this.#jobs.set(job.id,{...current,bytes,rate:bytes/Math.max(.001,(Date.now()-current.started)/1000)});this.#notify();
       })).then(result => {
-        const current=this.#jobs.get(job.id);this.#jobs.set(job.id,{...transition(current,controller.signal.aborted ? 'cancelled':result?.skipped ? 'skipped':'completed'),...result, state:controller.signal.aborted ? 'cancelled':result?.skipped ? 'skipped':'completed'});
+        const current=this.#jobs.get(job.id);this.#jobs.set(job.id,{...transition(current,controller.signal.aborted && !result?.committed ? 'cancelled':result?.skipped ? 'skipped':'completed'),...result, state:controller.signal.aborted && !result?.committed ? 'cancelled':result?.skipped ? 'skipped':'completed'});
       },error => {const current=this.#jobs.get(job.id);this.#jobs.set(job.id,{...transition(current,controller.signal.aborted ? 'cancelled':'failed'),error:controller.signal.aborted ? 'Abgebrochen.':error.publicMessage ?? 'Transfer fehlgeschlagen; Quelle/Ziel und Verbindung prüfen.'});})
         .finally(() => {this.#active.delete(job.id);this.#notify();this.#schedule();});
     }
