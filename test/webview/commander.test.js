@@ -68,5 +68,11 @@ test('Real browser selection survives refresh; per-pane filters, symlinks and pr
   await act(() => {Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype,'value').set.call(filter,'link');filter.dispatchEvent(new dom.window.Event('input',{bubbles:true}));});
   assert.equal(doc.querySelectorAll('.pane:first-child tbody tr').length,1);assert.equal(doc.querySelectorAll('.pane:last-child tbody tr').length,1);
   await act(() => doc.querySelector('button[aria-label="local: Pfadfavorit"]').click());assert.ok(saved.panes.local.favorites.includes('/tmp'));assert.equal(saved.panes.remote.filter,'');
+  await act(() => {Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype,'value').set.call(filter,'');filter.dispatchEvent(new dom.window.Event('input',{bubbles:true}));});
+  model.local.entries=Array.from({length:10000},(_,i) => entry('file-'+String(i).padStart(5,'0')));await render();
+  assert.equal(doc.querySelector('.pane table').getAttribute('aria-rowcount'),'10001');assert.ok(doc.querySelectorAll('.pane:first-child tr[data-entry-id]').length<80,'DOM stays bounded for 10,000 entries');
+  const first=doc.querySelector('.pane tr[data-entry-id]');await act(() => first.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'End',bubbles:true})));assert.equal(doc.activeElement.dataset.entryId,'/tmp/file-09999');assert.equal(doc.activeElement.getAttribute('aria-rowindex'),'10001');
+  await act(() => doc.activeElement.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'F10',shiftKey:true,bubbles:true})));await act(() => doc.activeElement.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true})));assert.equal(doc.activeElement.dataset.entryId,'/tmp/file-09999','Menu returns focus to virtualized source row');
+  await act(() => doc.activeElement.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'a',ctrlKey:true,bubbles:true})));assert.ok(doc.querySelector('.pane footer').textContent.includes('10000 ausgewählt'));assert.equal(button('Hochladen →').disabled,true,'Large selection cannot exceed transfer root limit');
   assert.equal(messages[0].type,'ready');dom.window.close();
 });

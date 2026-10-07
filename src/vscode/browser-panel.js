@@ -14,14 +14,14 @@ import { DirectoryBrowser } from '../application/directory-browser.js';
 import { browserViewState } from '../shared/browser-view-state.js';
 import { browserRequest } from '../shared/browser-messages.js';
 export function registerBrowser(context,profileUI) {
-  const files=new LocalFiles();let handshakes=0;const views=new Set();
+  const files=new LocalFiles();let handshakes=0,diagnostics=false;const views=new Set();
   const open=(profile,restored={},panel) => {
     profileUI.guard();if (profile) profileUI.transfers.remember(profile);restored=browserViewState(restored);
     const sessionId=randomUUID();const assets=vscode.Uri.joinPath(context.extensionUri,'dist');
     panel ??= vscode.window.createWebviewPanel('xscp.browser','xScp',vscode.ViewColumn.One,{});
     panel.webview.options={enableScripts:true,localResourceRoots:[assets]};
     let alive=true;const recent=new Set();
-    const model=() => ({version:1,type:'browserModel',sessionId,profileId:profile?.ephemeral ? undefined:profile?.id,queue:profileUI.transfers.engine.queue.list(profile?.id),queuePaused:profileUI.transfers.engine.queue.paused,local:local.state,remote:remote.state,...browserSettings(key => vscode.workspace.getConfiguration('xscp').get(key)),connection:profile ? {...profileUI.sessions.snapshot(profile.id),name:profile.name} : {state:'disconnected',name:'Kein Server'}});
+    const model=() => ({version:1,type:'browserModel',sessionId,diagnostics,profileId:profile?.ephemeral ? undefined:profile?.id,queue:profileUI.transfers.engine.queue.list(profile?.id),queuePaused:profileUI.transfers.engine.queue.paused,local:local.state,remote:remote.state,...browserSettings(key => vscode.workspace.getConfiguration('xscp').get(key)),connection:profile ? {...profileUI.sessions.snapshot(profile.id),name:profile.name} : {state:'disconnected',name:'Kein Server'}});
     const publish=() => {if (alive) {panel.title=profile ? `xScp · ${profile.name}`:'xScp';void panel.webview.postMessage(model());}};
     let start;try {start=localStart(restored.paths?.local ?? profile?.localPath);} catch {start=localStart();}
     const local=new DirectoryBrowser({start,parent:localParent,list:path => files.list(vscode.Uri.file(localPath(path))),onChange:publish});
@@ -41,7 +41,7 @@ export function registerBrowser(context,profileUI) {
     };
     const remote=new DirectoryBrowser({start:restored.paths.remote ?? profile?.remotePath ?? '/',parent:path => posix.dirname(path),list:async path => (await service()).list(path),onChange:publish});
     remote.state.status='disconnected';
-    const view={model,panel,navigate:async (side,path) => {profileUI.guard();if (!alive || !['local','remote'].includes(side)) throw new Error('Sitzung geschlossen.');await (side==='local' ? local:remote).navigate(path);}};views.add(view);
+    const view={model,panel,publish,navigate:async (side,path) => {profileUI.guard();if (!alive || !['local','remote'].includes(side)) throw new Error('Sitzung geschlossen.');await (side==='local' ? local:remote).navigate(path);}};views.add(view);
     const changes=profileUI.changed.event(() => {
       if (!alive) return;
       if (profile && !profile.ephemeral) {try {profile=profileUI.profiles.get(profile.id);} catch { /* deleted profile keeps disconnected view */ }}
@@ -122,7 +122,8 @@ export function registerBrowser(context,profileUI) {
         if (message.type === 'ready') {handshakes++;await Promise.all([local.refresh(),...(profile && profileUI.sessions.snapshot(profile.id).state === 'connected' ? [remote.refresh()] : [])]);publish();}
         else if (message.type === 'connect') {
           const chosen=await profileUI.choose();if (chosen && alive) {await profileUI.connect(chosen);if (!alive) return;profile=chosen;remoteFiles?.close();remoteTransport=undefined;opening=undefined;remote.history=[chosen.remotePath];remote.index=0;await remote.navigate(chosen.remotePath,{history:false});}
-        } else if (message.type === 'newSession') {open(profile);}
+        } else if (message.type==='renderProof') {view.renderProof={rows:message.rows,height:message.height,rowHeight:message.rowHeight,scrollHeight:message.scrollHeight,theme:message.theme,focusColor:message.focusColor};}
+        else if (message.type === 'newSession') {open(profile);}
         else if (message.type === 'disconnect') {if (profile) await profileUI.disconnect(profile);}
         else if (message.type === 'reconnect') {if (profile) {await profileUI.connect(profile);remoteFiles?.close();remoteTransport=undefined;opening=undefined;await remote.refresh();}}
         else if (message.type === 'queuePause') profileUI.transfers.engine.queue.pause(message.paused);
@@ -164,5 +165,5 @@ export function registerBrowser(context,profileUI) {
   profileUI.command('xscp.favoriteProfile',async arg => {const id=typeof arg === 'string' ? arg:arg?.profileId;const p=id ? profileUI.profiles.get(id):await profileUI.choose();if (p) {await profileUI.profiles.save({...p,favorite:!p.favorite});profileUI.changed.fire();}});
   profileUI.command('xscp.reconnectProfile',async arg => {const id=typeof arg === 'string' ? arg:arg?.profileId;const p=id ? profileUI.profiles.get(id):await profileUI.choose();if (p) {await profileUI.connect(p);return open(p);}});
   context.subscriptions.push(vscode.window.registerWebviewPanelSerializer('xscp.browser',{async deserializeWebviewPanel(panel,state) {try {const restored=browserViewState(state);let profile;if (restored.profileId) {try {profile=profileUI.profiles.get(restored.profileId);} catch { /* removed profile */ }}open(profile,restored,panel);} catch {panel.dispose();}}}));
-  return {open,navigate:async (sessionId,side,path) => {const view=[...views].find(v => v.model().sessionId===sessionId);if (!view) throw new Error('Sitzung geschlossen.');return view.navigate(side,path);},status:() => ({handshakes,views:[...views].map(v => {const m=v.model();return {sessionId:m.sessionId,connection:m.connection,local:{path:m.local.path,status:m.local.status,count:m.local.entries.length},remote:{path:m.remote.path,status:m.remote.status,count:m.remote.entries.length}};})})};
+  return {open,diagnostics:value => {profileUI.guard();diagnostics=value===true;for (const v of views) v.publish();},navigate:async (sessionId,side,path) => {const view=[...views].find(v => v.model().sessionId===sessionId);if (!view) throw new Error('Sitzung geschlossen.');return view.navigate(side,path);},status:() => ({handshakes,views:[...views].map(v => {const m=v.model();return {sessionId:m.sessionId,renderProof:v.renderProof,connection:m.connection,local:{path:m.local.path,status:m.local.status,count:m.local.entries.length},remote:{path:m.remote.path,status:m.remote.status,count:m.remote.entries.length}};})})};
 }

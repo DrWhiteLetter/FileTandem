@@ -63,3 +63,11 @@ body.vscode-high-contrast .selected, body.vscode-high-contrast-light .selected {
 .drop-target { outline: 2px dashed var(--vscode-focusBorder); outline-offset: -3px; }
 .drop-hint { padding: .5rem; background: var(--vscode-editorInfo-background, var(--vscode-sideBar-background)); }
 .file-menu { display: flex; flex-wrap: wrap; gap: .3rem; padding: .5rem; border: 2px solid var(--vscode-focusBorder); background: var(--vscode-menu-background, var(--vscode-editor-background)); }
+.virtual-grid { table-layout: fixed; }
+.virtual-grid tbody tr[data-entry-id] { height: 36px; }
+.virtual-grid tbody td { box-sizing: border-box; height: 36px; padding: 0 .6rem; overflow: hidden; text-overflow: ellipsis; }
+.virtual-grid th { height: 36px; }
+.virtual-grid tbody td:first-child { max-width: none; }
+.file-menu button:focus-visible,summary:focus-visible { outline: 2px solid var(--vscode-focusBorder); }
+.queue { max-height: 30vh; overflow: auto; flex-shrink: 0; }
+@media (forced-colors: active) { .pane tbody tr.selected { outline: 2px solid Highlight; } button:focus-visible,tr:focus-visible { outline-color: Highlight; } }

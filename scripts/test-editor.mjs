@@ -33,7 +33,7 @@ try {
   const setup = spawnSync('ssh', ['-F', join(runtime, 'ssh_config'), 'xscp-fixture-remote', 'printf editor-initial > /data/editor-proof.txt'], { encoding: 'utf8' });
   if (setup.status !== 0) throw new Error(setup.stderr);
   await runTests({ version: '1.140.0', vscodeExecutablePath: process.env.VSCODE_TEST_EXECUTABLE,
-    extensionDevelopmentPath: root, extensionTestsPath: join(root, 'test/extension/editor.cjs'),
+    extensionDevelopmentPath: root, extensionTestsPath: join(root,process.argv.includes('--accessibility') ? 'test/extension/accessibility.cjs':'test/extension/editor.cjs'),
     extensionTestsEnv: { XSCP_EDITOR_RUNTIME: runtime, XSCP_EDITOR_REMOTE: remote ? 'yes' : 'no', XSCP_EDITOR_ROOT: root, XSCP_EDITOR_MARKER: marker, XSCP_EDITOR_MARKER_HASH: createHash('sha256').update(markerBytes).digest('hex'), XSCP_EDITOR_HOST: hostname(), XSCP_SSH_PORT_BASE: process.env.XSCP_SSH_PORT_BASE ?? '22220' },
     launchArgs: ['--user-data-dir', user, '--extensions-dir', extensions, '--skip-welcome', '--skip-release-notes', '--disable-workspace-trust', ...(remote ? ['--folder-uri', 'vscode-remote://ssh-remote+xscp-fixture-remote/data'] : [])],
   });
