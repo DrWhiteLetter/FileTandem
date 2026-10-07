@@ -6,3 +6,6 @@ test('all conflict decisions, safe replacement, alternate collisions and batch-o
   await assert.rejects(new ConflictRules(async () => ({choice:'cancel'})).resolve(job,target),/abgebrochen/);
   await assert.rejects(new ConflictRules(async () => ({choice:'replace'})).resolve(job,{...target,atomicReplace:false}),/Ungültige/);
 });
+test('cancelling a pending conflict releases the wait and ignores late decisions',async () => {
+ let answer;const rules=new ConflictRules(() => new Promise(resolve => {answer=resolve;}));const controller=new AbortController();const pending=rules.resolve(job,target,controller.signal);while (!answer) await new Promise(r => setImmediate(r));controller.abort();await assert.rejects(pending);answer({choice:'replace',apply:true});await new Promise(r => setImmediate(r));assert.equal(rules.rules.size,0);
+});

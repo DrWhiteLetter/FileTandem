@@ -1,0 +1,11 @@
+# M3 – Transfer-Engine und SFTP-Alpha abgeschlossen
+
+Alle neun Items sind umgesetzt und separat mit ihrer Item-ID committed. Upload/Download, sichere Teil-Dateien, Konflikte, rekursive Ordner, Queue, Pause/Abbruch/Retry und ein atomisches Journal sind an die Commander-Oberfläche und native Auswahl angebunden. Die private VSIX trägt Version 0.0.3. [Installation, Bedienung und Grenzen](M3-Alpha.md).
+
+Abnahme am 07.10.2026 unter macOS arm64 mit Node 22.13.1 und VS Code 1.140.0: Lint, Syntax und Build bestanden; 38 Unit-Tests und zwei gerenderte React-Tests bestanden. Fünf echte SFTP-Integrationstests gegen eigene isolierte OpenSSH-Fixtures bestehen, einschließlich SFTP-only ohne Shell, Passwort, verschlüsseltem Key, Hash-Rundlauf, 64-KiB-Streaming, Browsen neben Transfers, Abbruch mit erhaltenem Original, allen Konfliktentscheidungen und Ordnern/Links. Native DOM-Nachrichten für Upload, Download nach, Pause, Abbruch und gezielten Retry sind geprüft.
+
+Die frische VSIX wurde in einem temporären Erweiterungsverzeichnis installiert und in zwei normalen, isolierten VS-Code-Prozessen mit gemeinsamem temporärem Benutzerprofil gestartet. Upload läuft nach Schließen aller Commander-Tabs weiter; rekursiver Download erhält Bytes und leere Ordner. Nach dem tatsächlichen Neustart bleibt ein pausierter Auftrag unterbrochen und sein lokales Ziel ungeschrieben, bis ein ausdrücklicher einzelner Retry erfolgt. Erfolgreiche Aufträge werden erhalten und nicht wiederholt. Die Paketinspektion bestätigt lokale Assets, Notices und den Ausschluss von Entwicklungsdateien, nativen Addons und generierten Fixture-Geheimnissen.
+
+Nicht als abgenommen behauptet: Windows/Linux-Desktop, vollständige visuelle Theme-/Zoom-/Tastaturmatrix und gehostete CI. Diese bleiben für M5/M6 offen. SCP-Transfers und geprüfter Wiederanlauf gehören zu M4. OS-/SFTP-Races mit externen Schreibprozessen, Pfad-Aliase, Dateisystem-/Serverfähigkeiten, Journalgrenzen und hinterlassene eigene Partials sind im Alpha-Protokoll beschrieben. Keine automatischen Remote-Verbindungen oder Ziel-Schreibvorgänge beim Wiederherstellen des Journals.
+
+Item-Nachweise: [01](M3-01.md), [02](M3-02.md), [03](M3-03.md), [04](M3-04.md), [05](M3-05.md), [06](M3-06.md), [07](M3-07.md), [08](M3-08.md), [09](M3-09.md). Commit-Zuordnung: `git log --oneline --grep=M3-`. Nächste Aufgabe: M4-01.

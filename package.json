@@ -2,7 +2,7 @@
   "name": "xscp",
   "displayName": "xScp",
   "description": "Entwicklungsprototyp eines SFTP-/SCP-Dateimanagers für VS Code Desktop.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "private": true,
   "publisher": "xscp-dev",
   "type": "module",
@@ -245,7 +245,8 @@
     "package": "node scripts/package.mjs",
     "test:installed": "node scripts/test-installed.mjs",
     "test:browser": "node --test --test-concurrency=1 test/integration/browser.test.js",
-    "test:browser:installed": "node scripts/test-browser-installed.mjs"
+    "test:browser:installed": "node scripts/test-browser-installed.mjs",
+    "test:transfers": "node --test --test-concurrency=1 test/integration/transfers.test.js"
   },
   "dependencies": {
     "react": "19.3.0",

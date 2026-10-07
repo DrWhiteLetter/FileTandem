@@ -1,6 +1,6 @@
 # Meilensteine zum Abarbeiten
 
-Dieser Backlog konkretisiert den [Umsetzungsplan](../../UMSETZUNGSPLAN.md). Er beschreibt geplante Arbeit und ihren Fortschritt; **M0 ist mit 9/9 Items technisch abgeschlossen; M1 ist mit 7/7 implementierten Items verfügbar; native Bedienabnahmen und gehostete CI bleiben offen. M2 ist mit 9/9 Items implementiert und lokal nachgewiesen. M3-01 ist die nächste Implementierungsaufgabe.** M0-08 ergänzt die echte Remote-SSH-Abnahme von M0-02. JavaScript/JSX, SFTP als Standard und echtes SCP bleiben die Grundlage.
+Dieser Backlog konkretisiert den [Umsetzungsplan](../../UMSETZUNGSPLAN.md). Er beschreibt geplante Arbeit und ihren Fortschritt; **M0 ist mit 9/9 Items technisch abgeschlossen; M1 ist mit 7/7 implementierten Items verfügbar; native Bedienabnahmen und gehostete CI bleiben offen. M2 ist mit 9/9 Items implementiert und lokal nachgewiesen. M3 ist mit 9/9 Items implementiert und lokal nachgewiesen. M4-01 ist die nächste Implementierungsaufgabe.** M0-08 ergänzt die echte Remote-SSH-Abnahme von M0-02. JavaScript/JSX, SFTP als Standard und echtes SCP bleiben die Grundlage.
 
 **59 einzeln abhakbare Items** mit stabilen IDs, Abhängigkeiten, Umsetzung und Fertig-Kriterium.
 
@@ -11,7 +11,7 @@ Dieser Backlog konkretisiert den [Umsetzungsplan](../../UMSETZUNGSPLAN.md). Er b
 | [M0: Technische Nachweise](M0.md) | Abgeschlossen; Entscheidungen und Risiken dokumentiert | 9/9 erledigt | 0 Resttage |
 | [M1: Extension-Grundgerüst](M1.md) | Installierbare Mock-Oberfläche; Bedienabnahmen offen | 7/7 implementiert | Abnahme offen |
 | [M2: Verbindungen und Dateibrowser](M2.md) | SFTP-Verbindungen und Dateiverwaltung nachgewiesen | 9/9 erledigt | 0 Resttage |
-| [M3: Transfer-Engine und SFTP-Alpha](M3.md) | Benutzbare SFTP-Alpha | 9 | 7–10 Tage |
+| [M3: Transfer-Engine und SFTP-Alpha](M3.md) | Installierte SFTP-Alpha mit Queue und Journal | 9/9 erledigt | 0 Resttage |
 | [M4: SCP und sicherer Wiederanlauf](M4.md) | SCP und geprüfter Wiederanlauf | 8 | 6–9 Tage |
 | [M5: Editorintegration und Bedienung](M5.md) | Remote-Bearbeitung und vollständige Bedienung | 8 | 5–7 Tage |
 | [M6: Release-Härtung und Auslieferung](M6.md) | Geprüfte VSIX; optionale Veröffentlichung | 9 | 6–9 Tage |
@@ -20,7 +20,7 @@ Empfohlen: **M0 → M1 → M2 → M3 → M4 → M5 → M6**. Einzelne M5-Aufgabe
 
 ## So arbeitest du die Liste ab
 
-1. M0 ist abgeschlossen. Beginne mit **M3-01** und wähle anschließend ein Item, dessen Abhängigkeiten erledigt sind.
+1. M0 ist abgeschlossen. Beginne mit **M4-01** und wähle anschließend ein Item, dessen Abhängigkeiten erledigt sind.
 2. Implementiere nur den beschriebenen Umfang. Ein Item ist eine Arbeitseinheit, nicht zwingend ein einzelner Commit oder eine feste Zahl von Stunden. Größere Items bei Bedarf in Unteraufgaben aufteilen und die ID beibehalten.
 3. Prüfe das Fertig-Kriterium. Protokolliere Ergebnisse kurz unter `docs/nachweise/`; relevante Tests gehören zur jeweiligen Änderung und werden nicht auf M6 verschoben.
 4. Setze `[x]` erst nach erfolgreicher Prüfung. Ein dokumentierter Fehler allein erfüllt kein Erfolgskriterium.

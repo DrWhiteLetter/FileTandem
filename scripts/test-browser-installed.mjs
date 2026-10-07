@@ -35,7 +35,7 @@ try {
     try {
       while (Date.now() < deadline && !exited) {try {result=JSON.parse(await readFile(resultPath,'utf8'));break;} catch {}await new Promise(resolve => setTimeout(resolve,100));}
       if (!result?.ok) throw new Error(result?.error ?? `Normaler VS-Code-Test ${phase} lieferte kein Ergebnis.`);
-      console.log(`M2-09: normaler isolierter VS-Code-Start ${phase} bestanden.`);
+      console.log(`M2/M3: normaler isolierter VS-Code-Start ${phase} bestanden.`);
     } finally {if (!exited) child.kill('SIGTERM');await closed;child=undefined;}
   }
 } finally {child?.kill('SIGTERM');await rm(directory,{recursive:true,force:true});}

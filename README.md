@@ -1,6 +1,6 @@
 # xScp
 
-Entwicklungsprototyp einer VS-Code-Desktop-Erweiterung für SFTP und SCP. M0 sowie die M1-/M2-Implementierung sind abgeschlossen: Start-Webview, SFTP-Streaming, echtes SCP, Authentifizierung und abgesicherter SFTP-Editor sind nachgewiesen. Die Commander-Ansicht bietet lokale und SFTP-Dateiverwaltung; Transfers folgen in M3.
+Entwicklungsprototyp einer VS-Code-Desktop-Erweiterung für SFTP und SCP. M0 bis M3 sind implementiert: Start-Webview, SFTP-Streaming, echtes SCP, Authentifizierung und abgesicherter SFTP-Editor sind nachgewiesen. Die Commander-Ansicht bietet lokale und SFTP-Dateiverwaltung sowie Uploads, Downloads und Ordnertransfers mit Queue. [SFTP-Alpha 0.0.3 installieren und testen](docs/nachweise/M3-Alpha.md).
 
 ## Entwicklung
 
@@ -33,7 +33,7 @@ Für Tests mit einer vorhandenen Installation kann `VSCODE_TEST_EXECUTABLE` auf 
 - `scripts/build.mjs`: esbuild erzeugt `dist/extension.cjs` für Node sowie `dist/webview.js` und `dist/webview.css` für die Webview. `vscode` bleibt extern; Source Maps unterstützen Debugging.
 - `jsconfig.json`: JavaScript/JSX-Projekt und Editor-Unterstützung mit VS-Code-Typen und JSDoc; kein TypeScript-Compiler.
 
-Die Webview nutzt nur lokale Assets mit CSP. Restricted Mode deaktiviert die Erweiterung. `extensionKind: ["ui"]` bindet die Erweiterung an den lokalen Desktop-Host; Private VSIX-Installation ist nachgewiesen. Die Commander-Demo und eine CI-Grundlage sind enthalten; echte SFTP-Verbindungen und Dateiverwaltung sind angebunden; Transfers folgen in M3.
+Die Webview nutzt nur lokale Assets mit CSP. Restricted Mode deaktiviert die Erweiterung. `extensionKind: ["ui"]` bindet die Erweiterung an den lokalen Desktop-Host; Private VSIX-Installation ist nachgewiesen. Die Commander-Demo und eine CI-Grundlage sind enthalten; echte SFTP-Verbindungen und Dateiverwaltung sind angebunden; SFTP-Transfers mit Queue und Journal sind angebunden.
 
 [M0-02-Nachweis und Remote-Prüfschritte](docs/nachweise/M0-02.md) · [Backlog](docs/meilensteine/README.md) · [Umsetzungsplan](UMSETZUNGSPLAN.md) · [M0-01-Nachweis](docs/nachweise/M0-01.md)
 
@@ -85,7 +85,7 @@ npm run test:sftp
 
 Die vier Integrationstests prüfen normale SFTP- und SFTP-only-Server: gut 32 MiB in beide Richtungen, unabhängiger OpenSSH-Hashvergleich, Leerdateien, Sonderzeichen im Dateinamen, Abbruch, vorhandene Ziele und fehlende Quellen. Der Server ohne SFTP wird ohne Shell-Fallback abgewiesen. Ein separater Bundle-Test prüft den Adapter außerhalb von `node_modules`.
 
-Ziele werden exklusiv neu angelegt (`wx`); vorhandene Dateien werden nicht überschrieben. Nach Abbruch/Fehler können Teil-Dateien zurückbleiben. Atomare Veröffentlichung, Wiederaufnahme, Konfliktentscheidungen, Queue und die Transfer-Oberfläche folgen in M3. Fortschritt zählt durchgereichte Bytes und bestätigt keine dauerhafte Speicherung auf dem Server. [Nachweis und Grenzen](docs/nachweise/M0-05.md).
+Ziele werden exklusiv neu angelegt (`wx`); vorhandene Dateien werden nicht überschrieben. Nach Abbruch/Fehler können Teil-Dateien zurückbleiben. Die SFTP-Alpha ergänzt atomare Veröffentlichung, Konfliktentscheidungen, Queue und Journal; geprüfte Wiederaufnahme folgt in M4. Fortschritt zählt durchgereichte Bytes und bestätigt keine dauerhafte Speicherung auf dem Server. [Nachweis und Grenzen](docs/nachweise/M0-05.md).
 
 ## Echtes SCP (M0-06)
 
@@ -104,7 +104,7 @@ Der Prototyp unterstützt höchstens 1 GiB pro Datei, 4096 Bytes pro SCP-Header 
 
 ## Authentifizierung und Packaging (M0-07)
 
-Der gemeinsame SSH-Adapter unterstützt Passwort, private Ed25519-/RSA-Schlüssel mit optionaler Passphrase, einen ausdrücklich angegebenen Agent-Socket und `keyboardInteractive(request)` als Antwort-Callback. Host-Key-Prüfung bleibt verpflichtend; Agent Forwarding und beliebige `authHandler`-/Algorithmus-Overrides sind ausgeschlossen. Der Callback erhält Serverprompts inklusive `echo`, Endpoint und AbortSignal; er liefert genau eine String-Antwort pro Prompt. Antworten werden weder automatisch aus dem Passwort übernommen noch gespeichert/protokolliert. Die Befehlspalette bietet weiterhin die bisherige Key-Probe; vollständige Profil-/Anmeldedialoge folgen in M2. Die technische Extension-API `probeSshAuthentication` weist weitere Verfahren nach und schließt ihre Sitzung immer.
+Der gemeinsame SSH-Adapter unterstützt Passwort, private Ed25519-/RSA-Schlüssel mit optionaler Passphrase, einen ausdrücklich angegebenen Agent-Socket und `keyboardInteractive(request)` als Antwort-Callback. Host-Key-Prüfung bleibt verpflichtend; Agent Forwarding und beliebige `authHandler`-/Algorithmus-Overrides sind ausgeschlossen. Der Callback erhält Serverprompts inklusive `echo`, Endpoint und AbortSignal; er liefert genau eine String-Antwort pro Prompt. Antworten werden weder automatisch aus dem Passwort übernommen noch gespeichert/protokolliert. Die Befehlspalette bietet weiterhin die bisherige Key-Probe; Profil-/Anmeldedialoge sind seit M2 vorhanden. Die technische Extension-API `probeSshAuthentication` weist weitere Verfahren nach und schließt ihre Sitzung immer.
 
 ```sh
 # Laufende Fixtures vorausgesetzt; ggf. XSCP_DOCKER_CONTEXT=colima-xscp:
@@ -135,7 +135,7 @@ Der Remote-Test verwendet die separate Debian-Fixture auf Port `22224` und ein i
 
 ## Abschluss M0 und weiterer Aufwand
 
-[M0-09](docs/nachweise/M0-09.md) schließt alle neun technischen Nachweise ab. `ssh2` und beide Protokollwege bleiben gewählt; VS-Code-Untergrenze, Serverfähigkeiten, Paketstrategie und Ersatzwege sind verbindlich dokumentiert. Nächster Schritt ist M1-01. Restaufwand M1–M6: 31–46 Personenarbeitstage, mit Reserve 38–56; [Begründung](docs/entscheidungen.md#d10--aufwand-und-übergang-in-m1). M0-Abschluss ist keine Freigabe der noch fehlenden Produktmodule oder der ungeprüften Plattformen.
+[M0-09](docs/nachweise/M0-09.md) schließt alle neun technischen Nachweise ab. `ssh2` und beide Protokollwege bleiben gewählt; VS-Code-Untergrenze, Serverfähigkeiten, Paketstrategie und Ersatzwege sind verbindlich dokumentiert. Der damalige nächste Schritt war M1-01; inzwischen ist die [SFTP-Alpha aus M3](docs/nachweise/M3-Abschluss.md) abgeschlossen. Restaufwand M1–M6: 31–46 Personenarbeitstage, mit Reserve 38–56; [Begründung](docs/entscheidungen.md#d10--aufwand-und-übergang-in-m1). M0-Abschluss ist keine Freigabe der noch fehlenden Produktmodule oder der ungeprüften Plattformen.
 
 ## Qualitätsbefehle (M1-01)
 
@@ -151,7 +151,7 @@ npm run quality
 npm run package
 ```
 
-In VS Code Desktop ab 1.140.0: Erweiterungsansicht → Menü „…“ → „Aus VSIX installieren…“ → `out/xscp-0.0.2.vsix`. Dann die xScp-Activity-Bar öffnen oder **xScp: Dateimanager öffnen** über die Befehlspalette ausführen. Alternativ startet `npm start` den Entwicklungs-Host. Die aktuelle Commander-Ansicht liest das echte lokale Dateisystem und kann SFTP-Profile verbinden. Die ursprüngliche M1-Demo bleibt unter **xScp: Mock-Demo öffnen** verfügbar. Transferknöpfe sind noch deaktiviert.
+In VS Code Desktop ab 1.140.0: Erweiterungsansicht → Menü „…“ → „Aus VSIX installieren…“ → `out/xscp-0.0.3.vsix`. Dann die xScp-Activity-Bar öffnen oder **xScp: Dateimanager öffnen** über die Befehlspalette ausführen. Alternativ startet `npm start` den Entwicklungs-Host. Die aktuelle Commander-Ansicht liest das echte lokale Dateisystem und kann SFTP-Profile verbinden. Die ursprüngliche M1-Demo bleibt unter **xScp: Mock-Demo öffnen** verfügbar. Die SFTP-Transferknöpfe sind angebunden; [Alpha-Anleitung](docs/nachweise/M3-Alpha.md).
 
 `npm run test:installed` installiert und testet die VSIX ausschließlich in einem temporären, anschließend entfernten Profil. Bei vorhandener VS-Code-Installation lässt sich `VSCODE_TEST_EXECUTABLE` auf die Programmdatei setzen; sonst wird die festgelegte Testversion geladen. Python 3 wird für die unabhängige ZIP-Prüfung benötigt.
 
@@ -175,3 +175,7 @@ VSCODE_TEST_EXECUTABLE="/Applications/Visual Studio Code.app/Contents/MacOS/Code
 ```
 
 Diese Tests benötigen laufende Fixtures (siehe oben). Der zweite Test installiert die gebaute VSIX in einem temporären Profil und startet zwei normale VS-Code-Fenster nacheinander, um echte Profil-/Host-Key-Persistenz zu prüfen. Eigene Testordner werden im nativen Papierkorb geprüft; alle temporären Profile werden entfernt. Es werden keine produktiven Server verwendet. [M2-Abschluss und Abnahmen](docs/nachweise/M2-Abschluss.md).
+
+## SFTP-Alpha (M3)
+
+Private VSIX: `out/xscp-0.0.3.vsix`. [Anleitung, Prüfergebnisse und Grenzen](docs/nachweise/M3-Alpha.md). Reproduzierbar: `npm run quality`, `npm run test:transfers` mit laufenden eigenen Fixtures, `npm run package`, `npm run test:browser:installed`. Der Installationstest verwendet zwei reguläre isolierte Fenster und prüft zusätzlich Upload nach Tab-Schließen, Ordner-Rundlauf sowie Journal und gezielten Retry nach Neustart.
