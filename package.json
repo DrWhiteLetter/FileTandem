@@ -49,6 +49,22 @@
         "command": "xscp.refreshConnections",
         "title": "xScp: Verbindungsansicht aktualisieren",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "xscp.addProfile",
+        "title": "xScp: Profil anlegen"
+      },
+      {
+        "command": "xscp.editProfile",
+        "title": "xScp: Profil bearbeiten"
+      },
+      {
+        "command": "xscp.deleteProfile",
+        "title": "xScp: Profil löschen"
+      },
+      {
+        "command": "xscp.exportProfiles",
+        "title": "xScp: Profile ohne Geheimnisse exportieren"
       }
     ],
     "viewsContainers": {

@@ -1,3 +1,4 @@
+import { registerProfiles } from './vscode/profile-commands.js';
 import * as vscode from 'vscode';
 import { requireDesktopAccess } from './application/access-policy.js';
 import { registerConnectionsView } from './vscode/connections-view.js';
@@ -11,6 +12,7 @@ import { executionLocation, registerLocalProof, verifyLocalFile } from './vscode
 
 /** @param {import('vscode').ExtensionContext} context */
 export function activate(context) {
+  const profileUI=registerProfiles(context);
   registerLocalProof(context);
   registerConnectionsView(context);
   const { trust } = registerHostKeyProof(context);
@@ -18,6 +20,7 @@ export function activate(context) {
   const manager = registerManager(context);
   return {
     manager,
+    profiles:profileUI.profiles,
     editorProof,
     // Technical probe for authentication/installed-package acceptance; never
     // returns a reconnectable client, credentials or a transfer session.
