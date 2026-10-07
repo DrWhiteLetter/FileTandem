@@ -102,6 +102,14 @@
         "command": "xscp.reconnectProfile",
         "title": "xScp: Wiederverbinden",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "xscp.showTransfers",
+        "title": "xScp: Transfers anzeigen"
+      },
+      {
+        "command": "xscp.uploadFromExplorer",
+        "title": "xScp: Auswahl hochladen"
       }
     ],
     "viewsContainers": {
@@ -168,6 +176,13 @@
         {
           "command": "xscp.deleteProfile",
           "when": "view == xscp.connections && viewItem == xscpProfile",
+          "group": "xscp"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "xscp.uploadFromExplorer",
+          "when": "resourceScheme == file",
           "group": "xscp"
         }
       ]

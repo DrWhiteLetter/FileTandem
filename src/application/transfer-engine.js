@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';import { join,posix,resolve } from 'node:path';
-import { LocalFiles } from '../adapters/local/files.js';import { RemoteFiles } from '../adapters/sftp/files.js';
+import { LocalFiles,localPath } from '../adapters/local/files.js';import { RemoteFiles,remotePath } from '../adapters/sftp/files.js';
 import { localTarget } from '../adapters/local/transfer-target.js';import { remoteTarget } from '../adapters/sftp/transfer-target.js';
 import { TransferQueue } from './transfer-queue.js';import { discoverTree } from './transfer-tree.js';import { ConflictRules } from './transfer-conflicts.js';import { transferFile,targetSnapshot } from './transfer-file.js';
 import { serverIdentity } from '../adapters/ssh/host-keys.js';
@@ -10,8 +10,10 @@ export class TransferEngine {
   }
   key(job,path) {if (job.direction === 'upload') return 'remote:'+job.server+':'+posix.normalize(path);const local=resolve(path).replaceAll('\\','/');return 'local:'+(process.platform === 'win32' ? local.toLowerCase():local);}
   async submit(profileId,direction,paths,destination) {
-    this.guard();const profile=this.profiles.get(profileId);if (profile.protocol !== 'sftp') throw new Error('Transfers sind in M3 nur über SFTP verfügbar.');
-    const server=serverIdentity(profile.host,profile.port).id;const transport=this.sessions.transport(profileId);const files=await RemoteFiles.open(transport);const batchId=randomUUID(),ids=[];
+    this.guard();if (!['upload','download'].includes(direction) || !Array.isArray(paths) || !paths.length || paths.length > 1000) throw new Error('Ungültige Transferauswahl.');
+    paths=paths.map(direction === 'upload' ? localPath:remotePath);destination=(direction === 'upload' ? remotePath:localPath)(destination);
+    const profile=this.profiles.get(profileId);if (profile.protocol !== 'sftp') throw new Error('Transfers sind in M3 nur über SFTP verfügbar.');
+    const server=serverIdentity(profile.host,profile.port).id;const transport=this.sessions.transport(profileId);if (transport.endpoint?.id && transport.endpoint.id !== server) throw new Error('Profil wurde geändert; bitte erneut verbinden.');const files=await RemoteFiles.open(transport);const batchId=randomUUID(),ids=[];
     const source=direction === 'upload' ? {stat:path => this.local.stat({scheme:'file',fsPath:path}),listNoFollow:path => this.local.listNoFollow(path)}:files;
     const targetJoin=direction === 'upload' ? posix.join:join;const sourceBase=direction === 'upload' ? p => p.replaceAll('\\','/').split('/').at(-1):posix.basename;
     try {for (const path of paths) {

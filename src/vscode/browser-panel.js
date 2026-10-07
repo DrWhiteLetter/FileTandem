@@ -8,19 +8,19 @@ import { createFolder,renameEntry } from '../application/file-operations.js';
 import { fileName } from '../domain/file-name.js';
 import { posix,join } from 'node:path';
 import { RemoteFiles } from '../adapters/sftp/files.js';
-import { LocalFiles,localPath,localParent,localStart } from '../adapters/local/files.js';
+import { LocalFiles,localFileUri,localPath,localParent,localStart } from '../adapters/local/files.js';
 import { DirectoryBrowser } from '../application/directory-browser.js';
 import { browserViewState } from '../shared/browser-view-state.js';
 import { browserRequest } from '../shared/browser-messages.js';
 export function registerBrowser(context,profileUI) {
   const files=new LocalFiles();let handshakes=0;const views=new Set();
   const open=(profile,restored={},panel) => {
-    profileUI.guard();restored=browserViewState(restored);
+    profileUI.guard();if (profile) profileUI.transfers.remember(profile);restored=browserViewState(restored);
     const sessionId=randomUUID();const assets=vscode.Uri.joinPath(context.extensionUri,'dist');
     panel ??= vscode.window.createWebviewPanel('xscp.browser','xScp',vscode.ViewColumn.One,{});
     panel.webview.options={enableScripts:true,localResourceRoots:[assets]};
     let alive=true;const recent=new Set();
-    const model=() => ({version:1,type:'browserModel',sessionId,profileId:profile?.ephemeral ? undefined:profile?.id,local:local.state,remote:remote.state,showHiddenFiles:vscode.workspace.getConfiguration('xscp').get('showHiddenFiles'),connection:profile ? {...profileUI.sessions.snapshot(profile.id),name:profile.name} : {state:'disconnected',name:'Kein Server'}});
+    const model=() => ({version:1,type:'browserModel',sessionId,profileId:profile?.ephemeral ? undefined:profile?.id,queue:profileUI.transfers.engine.queue.list(profile?.id),local:local.state,remote:remote.state,showHiddenFiles:vscode.workspace.getConfiguration('xscp').get('showHiddenFiles'),connection:profile ? {...profileUI.sessions.snapshot(profile.id),name:profile.name} : {state:'disconnected',name:'Kein Server'}});
     const publish=() => {if (alive) void panel.webview.postMessage(model());};
     let start;try {start=localStart(restored.paths?.local ?? profile?.localPath);} catch {start=localStart();}
     const local=new DirectoryBrowser({start,parent:localParent,list:path => files.list(vscode.Uri.file(localPath(path))),onChange:publish});
@@ -48,6 +48,22 @@ export function registerBrowser(context,profileUI) {
       else if (remote.state.status === 'disconnected') void remote.refresh();
       publish();
     });
+    const observedTerminal=new Set();
+    const transferChanges=profileUI.transfers.changed.event(() => {
+      publish();
+      const newly=profileUI.transfers.engine.queue.list(profile?.id).filter(j => ['completed','failed','cancelled','skipped'].includes(j.state) && !observedTerminal.has(j.id));for (const job of newly) observedTerminal.add(job.id);
+      if (newly.length && local.state.status !== 'loading') {void local.refresh();if (profileUI.sessions.snapshot(profile?.id).state === 'connected') void remote.refresh();}
+    });
+    const transfer=async message => {
+      if (!profile || profileUI.sessions.snapshot(profile.id).state !== 'connected') throw new Error('Bitte ein SFTP-Profil verbinden.');
+      const browser=message.side === 'local' ? local:remote;
+      if (browser.state.status !== 'ready') throw new Error('Bitte den Quellordner laden.');
+      const selected=message.ids.map(id => browser.state.entries.find(e => e.id === id));if (!selected.length || selected.some(e => !e)) throw new Error('Auswahl ist veraltet.');
+      let destination=message.side === 'local' ? remote.state.path:local.state.path;
+      if (message.destination === 'choose') {const folders=await vscode.window.showOpenDialog({title:'Download nach',canSelectFolders:true,canSelectFiles:false,canSelectMany:false});if (!folders?.length) return;destination=localFileUri(folders[0]);}
+      profileUI.guard();if (!alive) return;
+      await profileUI.transfers.engine.submit(profile.id,message.side === 'local' ? 'upload':'download',selected.map(e => e.path),destination);
+    };
     let busy=false;
     const action=async message => {
       if (busy) throw new Error('Eine Dateiaktion läuft bereits.'); busy=true;
@@ -105,19 +121,26 @@ export function registerBrowser(context,profileUI) {
           const chosen=await profileUI.choose();if (chosen && alive) {await profileUI.connect(chosen);if (!alive) return;profile=chosen;remoteFiles?.close();remoteTransport=undefined;opening=undefined;remote.history=[chosen.remotePath];remote.index=0;await remote.navigate(chosen.remotePath,{history:false});}
         } else if (message.type === 'disconnect') {if (profile) await profileUI.sessions.disconnect(profile.id);}
         else if (message.type === 'reconnect') {if (profile) {await profileUI.connect(profile);remoteFiles?.close();remoteTransport=undefined;opening=undefined;await remote.refresh();}}
+        else if (message.type === 'selectUpload') {
+          if (!profile) throw new Error('Bitte ein Profil verbinden.');
+          const uris=await vscode.window.showOpenDialog({defaultUri:vscode.Uri.file(localStart()),canSelectFiles:true,canSelectFolders:true,canSelectMany:true,title:'Dateien/Ordner hochladen'});
+          if (uris?.length && alive) await profileUI.transfers.engine.submit(profile.id,'upload',uris.map(localFileUri),remote.state.path);
+        }
+        else if (message.type === 'transfer') await transfer(message);
         else if (message.type === 'action') await action(message);
         else if (message.type === 'navigate') await browser.navigate(message.path);
         else if (message.type === 'refresh') await browser.refresh();
         else if (message.type === 'history') await browser[message.direction]();
       } catch(error) {if (alive) void vscode.window.showErrorMessage(error.code === 'EEXIST' || error.code === 'FileExists' ? 'xScp: Ziel existiert bereits; nichts überschrieben.':`xScp: ${error.message}`);}
     });
-    panel.onDidDispose(() => {alive=false;views.delete(view);changes.dispose();receive.dispose();local.invalidate();remote.invalidate();remoteFiles?.close();});
+    panel.onDidDispose(() => {alive=false;views.delete(view);changes.dispose();transferChanges.dispose();receive.dispose();local.invalidate();remote.invalidate();remoteFiles?.close();});
     const script=panel.webview.asWebviewUri(vscode.Uri.joinPath(assets,'webview.js'));const style=panel.webview.asWebviewUri(vscode.Uri.joinPath(assets,'webview.css'));const nonce=randomBytes(24).toString('base64');
     panel.webview.html=`<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="xscp-session" content="${sessionId}"><meta name="xscp-mode" content="browser"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${panel.webview.cspSource}; font-src ${panel.webview.cspSource}; script-src 'nonce-${nonce}';"><link rel="stylesheet" href="${style}"></head><body><div id="root"></div><script nonce="${nonce}" src="${script}"></script></body></html>`;
     context.subscriptions.push(panel);return panel;
   };
   profileUI.open=profile => open(profile);
   profileUI.command('xscp.openManager',() => open());
+  profileUI.command('xscp.showTransfers',() => open());
   profileUI.command('xscp.openProfile',async arg => {
     const id=typeof arg === 'string' ? arg:arg?.profileId;
     const profile=id ? profileUI.profiles.get(id):await profileUI.choose();if (!profile) return;
