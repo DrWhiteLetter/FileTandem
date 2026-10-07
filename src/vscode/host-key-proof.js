@@ -1,3 +1,4 @@
+import { hasDesktopAccess } from '../application/access-policy.js';
 import * as vscode from 'vscode';
 import { readFile, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
@@ -17,7 +18,7 @@ export function registerHostKeyProof(context) {
     let session;
     const controller = new AbortController();
     try {
-      if (!executionLocation(context).local || !vscode.workspace.isTrusted) throw new Error('xScp benötigt einen vertrauenswürdigen Workspace und den lokalen UI Extension Host.');
+      if (!hasDesktopAccess(executionLocation(context), vscode.workspace.isTrusted)) throw new Error('xScp benötigt einen vertrauenswürdigen Workspace und den lokalen UI Extension Host.');
       const host = await vscode.window.showInputBox({ title: 'SSH-Host-Key prüfen: Host', value: '127.0.0.1', ignoreFocusOut: true });
       if (host === undefined) return;
       const portText = await vscode.window.showInputBox({ title: 'SSH-Port', value: '22220', ignoreFocusOut: true });

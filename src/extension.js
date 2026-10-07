@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import { hasDesktopAccess, requireDesktopAccess } from './application/access-policy.js';
+import { registerConnectionsView } from './vscode/connections-view.js';
 import { probeAuthentication } from './application/authentication-probe.js';
 import { registerEditorProvider } from './vscode/editor-provider.js';
 import { randomBytes } from 'node:crypto';
@@ -10,12 +12,13 @@ import { executionLocation, registerLocalProof, verifyLocalFile } from './vscode
 /** @param {import('vscode').ExtensionContext} context */
 export function activate(context) {
   registerLocalProof(context);
+  registerConnectionsView(context);
   const { trust } = registerHostKeyProof(context);
   const editorProof = registerEditorProvider(context, trust);
   context.subscriptions.push(vscode.commands.registerCommand('xscp.openManager', () => {
     const location = executionLocation(context);
-    if (!location.local) {
-      void vscode.window.showErrorMessage('xScp benötigt den lokalen UI Extension Host. Bitte lokal installieren und remote.extensionKind prüfen.');
+    if (!hasDesktopAccess(location, vscode.workspace.isTrusted)) {
+      void vscode.window.showErrorMessage('xScp benötigt einen vertrauenswürdigen Kontext und den lokalen UI Extension Host. Bitte lokal installieren und remote.extensionKind prüfen.');
       return;
     }
     const assets = vscode.Uri.joinPath(context.extensionUri, 'dist');
@@ -43,7 +46,7 @@ export function activate(context) {
     // Technical probe for authentication/installed-package acceptance; never
     // returns a reconnectable client, credentials or a transfer session.
     probeSshAuthentication: async (config, { signal, confirmUnknown = unknownHostKeyDialog(vscode.window) } = {}) => {
-      if (!executionLocation(context).local || !vscode.workspace.isTrusted) throw new Error('SSH-Nachweis benötigt den lokalen, vertrauenswürdigen UI Extension Host.');
+      requireDesktopAccess(executionLocation(context), vscode.workspace.isTrusted);
       return probeAuthentication(connectSsh, config, { trust, signal, confirmUnknown });
     },
     executionLocation: () => executionLocation(context),

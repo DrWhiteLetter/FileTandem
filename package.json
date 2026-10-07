@@ -44,8 +44,63 @@
       {
         "command": "xscp.lockEditorFile",
         "title": "xScp: Remote-Datei sperren"
+      },
+      {
+        "command": "xscp.refreshConnections",
+        "title": "xScp: Verbindungsansicht aktualisieren",
+        "icon": "$(refresh)"
       }
-    ]
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "xscp",
+          "title": "xScp",
+          "icon": "media/activity.svg"
+        }
+      ]
+    },
+    "views": {
+      "xscp": [
+        {
+          "id": "xscp.connections",
+          "name": "Verbindungen"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "xscp.refreshConnections",
+          "when": "view == xscp.connections",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "xScp",
+      "properties": {
+        "xscp.showHiddenFiles": {
+          "type": "boolean",
+          "default": false,
+          "scope": "application",
+          "description": "Versteckte Dateien in den xScp-Dateilisten anzeigen."
+        },
+        "xscp.demoScenario": {
+          "type": "string",
+          "enum": [
+            "ready",
+            "loading",
+            "empty",
+            "error",
+            "disconnected"
+          ],
+          "default": "ready",
+          "scope": "application",
+          "description": "Darstellungszustand der Mock-Dateilisten; baut keine SSH-Verbindung auf."
+        }
+      }
+    }
   },
   "scripts": {
     "build": "node scripts/build.mjs",
@@ -85,5 +140,8 @@
   },
   "extensionKind": [
     "ui"
+  ],
+  "activationEvents": [
+    "onWebviewPanel:xscp.manager"
   ]
 }

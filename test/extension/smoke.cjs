@@ -29,6 +29,13 @@ exports.run = async () => {
   assert.ok((await vscode.commands.getCommands(true)).includes('xscp.verifyLocalFile'));
   assert.ok((await vscode.commands.getCommands(true)).includes('xscp.verifySshHostKey'));
   assert.equal(extension.packageJSON.dependencies.ssh2, '1.17.0');
+  assert.equal(extension.packageJSON.capabilities.untrustedWorkspaces.supported, false);
+  assert.ok(extension.packageJSON.contributes.views.xscp.some(view => view.id === 'xscp.connections'));
+  assert.equal(extension.packageJSON.contributes.keybindings, undefined, 'F5 is not globally overridden');
+  assert.ok(!extension.packageJSON.activationEvents.includes('*'));
+  assert.equal(vscode.workspace.workspaceFolders?.length ?? 0, process.env.XSCP_EXPECT_REMOTE === 'ssh-remote' ? 1 : 0);
+  assert.equal(vscode.workspace.getConfiguration('xscp').get('showHiddenFiles'), false);
+  await vscode.commands.executeCommand('xscp.refreshConnections');
   console.log(`M0-02: Desktop-Dateizugriff, SHA-256 und URI-Abgrenzung erfolgreich (${process.env.XSCP_EXPECT_REMOTE || 'lokales Fenster'}).`);
   assert.ok((await vscode.commands.getCommands(true)).includes('xscp.openManager'));
   await vscode.commands.executeCommand('xscp.openManager');

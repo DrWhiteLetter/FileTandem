@@ -1,3 +1,4 @@
+import { hasDesktopAccess } from '../application/access-policy.js';
 import * as vscode from 'vscode';
 import { randomUUID } from 'node:crypto';
 import { readFile, stat } from 'node:fs/promises';
@@ -10,7 +11,7 @@ export function registerEditorProvider(context, trust) {
   const entries = new Map();
   const changes = new vscode.EventEmitter();
   const guard = () => {
-    if (!executionLocation(context).local || !vscode.workspace.isTrusted) throw vscode.FileSystemError.NoPermissions('Lokaler, vertrauenswürdiger UI Extension Host erforderlich.');
+    if (!hasDesktopAccess(executionLocation(context), vscode.workspace.isTrusted)) throw vscode.FileSystemError.NoPermissions('Lokaler, vertrauenswürdiger UI Extension Host erforderlich.');
   };
   const entry = uri => {
     guard();
@@ -29,7 +30,7 @@ export function registerEditorProvider(context, trust) {
       const e = entry(uri);
       if (!e.allowed) throw vscode.FileSystemError.NoPermissions('Bearbeitung zuerst ausdrücklich freigeben.');
       if (!options.overwrite) throw vscode.FileSystemError.FileExists(uri);
-      await e.file.write(Buffer.from(data), () => entries.get(uri.authority) === e && e.allowed && vscode.workspace.isTrusted && executionLocation(context).local);
+      await e.file.write(Buffer.from(data), () => entries.get(uri.authority) === e && e.allowed && hasDesktopAccess(executionLocation(context), vscode.workspace.isTrusted));
       e.modified = Math.max(Date.now(), e.modified + 1); changed(uri);
     },
     readDirectory: denied, createDirectory: denied, delete: denied, rename: denied,
