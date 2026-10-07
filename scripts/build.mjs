@@ -7,7 +7,7 @@ const bundles = [
   { ...shared, entryPoints: ['src/extension.js'], outfile: 'dist/extension.cjs',
     ...hostBundleOptions },
   { ...shared, entryPoints: ['webview/src/main.jsx'], outfile: 'dist/webview.js',
-    platform: 'browser', format: 'iife', target: 'es2022', jsx: 'automatic' },
+    loader: { '.ttf': 'file' }, platform: 'browser', format: 'iife', target: 'es2022', jsx: 'automatic' },
 ];
 if (watch) {
   const contexts = await Promise.all(bundles.map(options => context(options)));

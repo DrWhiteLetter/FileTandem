@@ -17,6 +17,12 @@ test('Rendered Commander: selection, folders, filter, safe names, queue and all 
   const doc=dom.window.document;
   assert.equal(messages[0].type,'ready'); assert.equal(doc.querySelectorAll('.pane').length,2);
   assert.ok(doc.body.textContent.includes('<img src=x onerror=alert(1)>.txt')); assert.equal(doc.querySelector('img'),null);
+  const firstRow = doc.querySelector('.pane tbody tr');
+  firstRow.focus();
+  await act(() => firstRow.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true})));
+  assert.equal(doc.activeElement,doc.querySelectorAll('.pane tbody tr')[1]);
+  assert.equal(doc.activeElement.getAttribute('aria-selected'),'true');
+  assert.equal(doc.querySelectorAll('table[role="grid"]').length,2);
   const row = [...doc.querySelectorAll('.pane:first-child tbody tr')].find(r => r.textContent.includes('README'));
   await act(() => row.dispatchEvent(new dom.window.MouseEvent('click',{bubbles:true}))); assert.equal(row.getAttribute('aria-selected'),'true');
   await act(() => doc.querySelector('.pane tbody tr').dispatchEvent(new dom.window.MouseEvent('dblclick',{bubbles:true}))); assert.ok(doc.querySelector('.path').textContent.endsWith('/assets'));

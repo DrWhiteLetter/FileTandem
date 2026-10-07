@@ -40,3 +40,16 @@ td:first-child { max-width: 30rem; overflow: hidden; text-overflow: ellipsis; }
 .queue table { font-size: .9em; }
 .status { border-top: 1px solid var(--vscode-panel-border); padding: .5rem .9rem; color: var(--vscode-descriptionForeground); }
 @media(max-width:600px) { .commander { height: auto; min-height: 100vh; } .panes { flex-direction: column; } .pane:first-child { flex-basis: auto; border-right: 0; border-bottom: 1px solid var(--vscode-panel-border); } .file-scroll { max-height: 18rem; } .split-control { display: none; } .appbar { flex-wrap: wrap; } .demo-note { margin-left: 0; } }
+
+.pane:focus-within { box-shadow: inset 0 0 0 1px var(--vscode-focusBorder); }
+tr:focus-visible { outline: 2px solid var(--vscode-focusBorder); outline-offset: -2px; }
+.selected td:first-child::after { content: ' ✓'; font-weight: bold; }
+.codicon { vertical-align: middle; }
+body.vscode-high-contrast .pane, body.vscode-high-contrast-light .pane,
+body.vscode-high-contrast button, body.vscode-high-contrast-light button,
+body.vscode-high-contrast input, body.vscode-high-contrast-light input {
+  border: 1px solid var(--vscode-contrastBorder, var(--vscode-focusBorder));
+}
+body.vscode-high-contrast .selected, body.vscode-high-contrast-light .selected {
+  outline: 1px solid var(--vscode-contrastActiveBorder, var(--vscode-focusBorder)); outline-offset: -1px;
+}

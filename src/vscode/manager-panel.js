@@ -26,7 +26,7 @@ export function registerManager(context) {
     const script = panel.webview.asWebviewUri(vscode.Uri.joinPath(assets,'webview.js'));
     const style = panel.webview.asWebviewUri(vscode.Uri.joinPath(assets,'webview.css'));
     const nonce = randomBytes(24).toString('base64');
-    panel.webview.html = `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="xscp-session" content="${sessionId}"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${panel.webview.cspSource}; script-src 'nonce-${nonce}';"><link rel="stylesheet" href="${style}"><title>xScp</title></head><body><div id="root"></div><script nonce="${nonce}" src="${script}"></script></body></html>`;
+    panel.webview.html = `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="xscp-session" content="${sessionId}"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${panel.webview.cspSource}; font-src ${panel.webview.cspSource}; script-src 'nonce-${nonce}';"><link rel="stylesheet" href="${style}"><title>xScp</title></head><body><div id="root"></div><script nonce="${nonce}" src="${script}"></script></body></html>`;
     context.subscriptions.push(panel);
     return panel;
   };

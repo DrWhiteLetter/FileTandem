@@ -253,3 +253,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+## Codicons 0.0.46-24
+
+Microsoft Corporation, https://github.com/microsoft/vscode-codicons. Icon font distributed unchanged under CC BY 4.0; see [full license](media/CODICONS-LICENSE.txt). Generated CSS carries its upstream MIT notice. The font also contains the Git logo attributed by upstream to Jason Long under CC BY 3.0 (details in the license).
