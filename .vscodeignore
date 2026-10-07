@@ -1,0 +1,17 @@
+# Runtime bundles contain everything except the vscode API.
+.vscode/**
+.vscode-test/**
+.git/**
+node_modules/**
+src/**
+webview/**
+scripts/**
+test/**
+docs/archiv/**
+.nvmrc
+jsconfig.json
+package-lock.json
+**/*.map
+**/*.log
+.env
+.env.*

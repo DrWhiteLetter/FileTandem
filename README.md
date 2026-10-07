@@ -44,3 +44,15 @@ Build-Konzept nach der [offiziellen VS-Code-Anleitung](https://code.visualstudio
 Die Dateiquelle „Lokal · Mein Rechner“ ist das Desktop-Dateisystem, auch bei einem Remote-Workspace. Der Befehl **xScp: Lokalen Dateizugriff nachweisen** öffnet eine Dateiauswahl mit lokalem `file:`-Startpfad im Home-Verzeichnis. Eine bewusst erstellte, kleine Testdatei auswählen; der Ausgabekanal **xScp: Ausführungsort** zeigt Ausführungsart, Remote-Fenster-Kontext, Betriebssystem, Hostnamen, lokale Datei, Bytezahl und SHA-256. Dateiinhalt wird nicht ausgegeben. Der Dateipfad und Hostname dienen dem lokalen technischen Nachweis; vor Weitergabe des Protokolls gegebenenfalls kürzen.
 
 `npm test` prüft den lokalen Zugriff gegen einen vom Desktop-Teststarter erzeugten Zufallsmarker. Der Marker wird anschließend entfernt. Der tatsächliche Remote-SSH-Nachweis bleibt offen: Der nachträglich freigegebene SSH-Testserver erlaubt die Anmeldung, erfüllt aber nicht die Laufzeitvoraussetzungen von VS Code Server. Ein kompatibler Testhost ist erforderlich. Vorgehen und automatischer Remote-Test stehen im [Nachweis](docs/nachweise/M0-02.md). Eine `remote.extensionKind`-Übersteuerung auf `workspace` wird nicht unterstützt. Remote-Workspace-URIs werden nie als lokale Pfade gelesen. Der Prototyp-Nachweis akzeptiert keine `file:`-Authority/UNC-Pfade; Windows-/UNC-Unterstützung bleibt separat zu testen.
+
+## SSH-Testumgebungen (M0-03)
+
+Drei isolierte OpenSSH-Container stellen SFTP, SFTP-only ohne Shell und echtes SCP ohne SFTP bereit. Sie sind ausschließlich über Loopback erreichbar und verwenden lokal erzeugte disposable Testkeys. Mit laufender lokaler Docker-Laufzeit:
+
+```sh
+npm run fixtures:start
+npm run fixtures:verify
+npm run fixtures:stop
+```
+
+Auf diesem Mac wurde dafür das separate Colima-Profil `xscp` eingerichtet; nach der Abnahme ist es gestoppt. Für den nächsten Lauf `colima start xscp --activate=false` und `export XSCP_DOCKER_CONTEXT=colima-xscp` ausführen. Alle Zugänge, Voraussetzungen, Reset und Details stehen in der [Fixture-Anleitung](test/fixtures/ssh/README.md). Der [M0-03-Nachweis](docs/nachweise/M0-03.md) dokumentiert die Abnahme. Produktive Server werden für diese Fixtures nicht verwendet.

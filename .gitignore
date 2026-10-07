@@ -19,3 +19,6 @@ coverage/
 
 # Logs
 *.log
+
+# Generated, disposable SSH fixture credentials and reports
+test/fixtures/ssh/.runtime/

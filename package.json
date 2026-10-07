@@ -35,9 +35,15 @@
     "build": "node scripts/build.mjs",
     "watch": "node scripts/build.mjs --watch",
     "start": "npm run build && node scripts/start.mjs",
-    "check": "node --check src/extension.js && node --check scripts/build.mjs && node --check scripts/start.mjs && node --check scripts/test-extension.mjs && node --check src/vscode/local-proof.js && node --check test/extension/smoke.cjs",
+    "check": "node --check src/extension.js && node --check scripts/build.mjs && node --check scripts/start.mjs && node --check scripts/test-extension.mjs && node --check src/vscode/local-proof.js && node --check test/extension/smoke.cjs && node --check scripts/ssh-fixtures.mjs",
     "test": "npm run build && node scripts/test-extension.mjs",
-    "vscode:prepublish": "npm run build"
+    "vscode:prepublish": "npm run build",
+    "fixtures:init": "node scripts/ssh-fixtures.mjs init",
+    "fixtures:start": "node scripts/ssh-fixtures.mjs start",
+    "fixtures:stop": "node scripts/ssh-fixtures.mjs stop",
+    "fixtures:reset": "node scripts/ssh-fixtures.mjs reset",
+    "fixtures:verify": "node scripts/ssh-fixtures.mjs verify",
+    "fixtures:status": "node scripts/ssh-fixtures.mjs status"
   },
   "dependencies": {
     "react": "19.3.0",
