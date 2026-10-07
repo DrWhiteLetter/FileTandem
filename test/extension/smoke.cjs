@@ -6,6 +6,26 @@ exports.run = async () => {
   assert.ok(extension, 'Extension aus dem Checkout gefunden');
   await extension.activate();
   assert.ok(extension.isActive, 'Host-Bundle aktiviert');
+  assert.deepEqual(extension.packageJSON.extensionKind, ['ui']);
+  assert.equal(extension.extensionKind, vscode.ExtensionKind.UI);
+  const api = extension.exports;
+  assert.equal(api.executionLocation().local, true);
+  assert.equal(vscode.env.remoteName ?? 'local', process.env.XSCP_EXPECT_REMOTE);
+  if (process.env.XSCP_EXPECT_REMOTE === 'ssh-remote') {
+    assert.ok(vscode.workspace.workspaceFolders?.some(folder => folder.uri.scheme === 'vscode-remote'),
+      'Echter Remote-Workspace verbunden');
+  }
+  const proof = await api.verifyLocalFile(vscode.Uri.file(process.env.XSCP_PROOF_FILE));
+  assert.equal(proof.sha256, process.env.XSCP_PROOF_SHA256, 'Desktop-Marker bytegleich gelesen');
+  assert.equal(proof.bytesRead, 128);
+  assert.equal(proof.hostName, process.env.XSCP_PROOF_HOST, 'Host entspricht Desktop-Teststarter');
+  assert.equal(proof.windowRemoteName ?? 'local', process.env.XSCP_EXPECT_REMOTE);
+  await assert.rejects(api.verifyLocalFile(vscode.Uri.parse('vscode-remote://ssh-remote+fixture/tmp/file')), /file:-URIs/);
+  await assert.rejects(api.verifyLocalFile(vscode.Uri.parse('file://other-host/tmp/file')), /file:-URIs/);
+  await assert.rejects(api.verifyLocalFile(vscode.Uri.file('/xscp-nonexistent-test-file')), /ENOENT/);
+  await assert.rejects(api.verifyLocalFile(vscode.Uri.file(require('node:path').dirname(process.env.XSCP_PROOF_FILE))), /reguläre/);
+  assert.ok((await vscode.commands.getCommands(true)).includes('xscp.verifyLocalFile'));
+  console.log(`M0-02: Desktop-Dateizugriff, SHA-256 und URI-Abgrenzung erfolgreich (${process.env.XSCP_EXPECT_REMOTE || 'lokales Fenster'}).`);
   assert.ok((await vscode.commands.getCommands(true)).includes('xscp.openManager'));
   await vscode.commands.executeCommand('xscp.openManager');
   const hasTab = () => vscode.window.tabGroups.all.flatMap(group => group.tabs)

@@ -4,7 +4,7 @@ Entwicklungsprototyp einer VS-Code-Desktop-Erweiterung für SFTP und SCP. M0-01 
 
 ## Entwicklung
 
-Voraussetzungen: Node.js ab 22.13.1 mit npm sowie VS Code Desktop 1.139.1 (aktuell getestete Version). Die vorläufige Manifest-Untergrenze 1.139.0 wird in M0-09 überprüft. macOS ist die zuerst geprüfte Plattform.
+Voraussetzungen: Node.js ab 22.13.1 mit npm sowie VS Code Desktop 1.139.1 (M0-01) bzw. 1.140.0 (M0-02 lokal). Die vorläufige Manifest-Untergrenze 1.139.0 wird in M0-09 überprüft. macOS ist die zuerst geprüfte Plattform.
 
 ```sh
 # Mit nvm, falls vorhanden:
@@ -33,8 +33,14 @@ Für Tests mit einer vorhandenen Installation kann `VSCODE_TEST_EXECUTABLE` auf 
 - `scripts/build.mjs`: esbuild erzeugt `dist/extension.cjs` für Node sowie `dist/webview.js` und `dist/webview.css` für die Webview. `vscode` bleibt extern; Source Maps unterstützen Debugging.
 - `jsconfig.json`: JavaScript/JSX-Projekt und Editor-Unterstützung mit VS-Code-Typen und JSDoc; kein TypeScript-Compiler.
 
-Die Webview nutzt nur lokale Assets mit CSP. Restricted Mode deaktiviert die Erweiterung. `extensionKind` und Remote-SSH-Nachweise folgen in M0-02; Packaging, CI und die vollständige Oberfläche folgen in späteren Items.
+Die Webview nutzt nur lokale Assets mit CSP. Restricted Mode deaktiviert die Erweiterung. `extensionKind: ["ui"]` bindet die Erweiterung an den lokalen Desktop-Host; Packaging, CI und die vollständige Oberfläche folgen in späteren Items.
 
-[Backlog](docs/meilensteine/README.md) · [Umsetzungsplan](UMSETZUNGSPLAN.md) · [M0-01-Nachweis](docs/nachweise/M0-01.md)
+[M0-02-Nachweis und Remote-Prüfschritte](docs/nachweise/M0-02.md) · [Backlog](docs/meilensteine/README.md) · [Umsetzungsplan](UMSETZUNGSPLAN.md) · [M0-01-Nachweis](docs/nachweise/M0-01.md)
 
 Build-Konzept nach der [offiziellen VS-Code-Anleitung](https://code.visualstudio.com/api/working-with-extensions/bundling-extension), Host-Tests nach [Testing Extensions](https://code.visualstudio.com/api/working-with-extensions/testing-extension).
+
+## Lokaler Ausführungsort (M0-02)
+
+Die Dateiquelle „Lokal · Mein Rechner“ ist das Desktop-Dateisystem, auch bei einem Remote-Workspace. Der Befehl **xScp: Lokalen Dateizugriff nachweisen** öffnet eine Dateiauswahl mit lokalem `file:`-Startpfad im Home-Verzeichnis. Eine bewusst erstellte, kleine Testdatei auswählen; der Ausgabekanal **xScp: Ausführungsort** zeigt Ausführungsart, Remote-Fenster-Kontext, Betriebssystem, Hostnamen, lokale Datei, Bytezahl und SHA-256. Dateiinhalt wird nicht ausgegeben. Der Dateipfad und Hostname dienen dem lokalen technischen Nachweis; vor Weitergabe des Protokolls gegebenenfalls kürzen.
+
+`npm test` prüft den lokalen Zugriff gegen einen vom Desktop-Teststarter erzeugten Zufallsmarker. Der Marker wird anschließend entfernt. Der tatsächliche Remote-SSH-Nachweis benötigt einen freigegebenen isolierten Testhost und ist derzeit offen. Vorgehen und automatischer Remote-Test stehen im [Nachweis](docs/nachweise/M0-02.md). Eine `remote.extensionKind`-Übersteuerung auf `workspace` wird nicht unterstützt. Remote-Workspace-URIs werden nie als lokale Pfade gelesen. Der Prototyp-Nachweis akzeptiert keine `file:`-Authority/UNC-Pfade; Windows-/UNC-Unterstützung bleibt separat zu testen.

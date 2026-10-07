@@ -13,6 +13,32 @@
         "${workspaceFolder}/dist/**/*.cjs"
       ],
       "preLaunchTask": "npm: build"
+    },
+    {
+      "name": "xScp: Remote-SSH-Ausführungsort prüfen",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}",
+        "--folder-uri=vscode-remote://ssh-remote+${input:xscpTestHost}${input:xscpTestFolder}"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/dist/**/*.cjs"
+      ],
+      "preLaunchTask": "npm: build"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "xscpTestHost",
+      "type": "promptString",
+      "description": "SSH-Hostalias eines freigegebenen isolierten Testservers"
+    },
+    {
+      "id": "xscpTestFolder",
+      "type": "promptString",
+      "description": "Existierender absoluter POSIX-Testordner auf dem SSH-Testserver",
+      "default": "/tmp"
     }
   ]
 }

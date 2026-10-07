@@ -1,7 +1,7 @@
 {
   "name": "xscp",
   "displayName": "xScp",
-  "description": "Entwicklungsprototyp eines SFTP-/SCP-Dateimanagers f\u00fcr VS Code Desktop.",
+  "description": "Entwicklungsprototyp eines SFTP-/SCP-Dateimanagers für VS Code Desktop.",
   "version": "0.0.1",
   "private": true,
   "publisher": "xscp-dev",
@@ -23,7 +23,11 @@
     "commands": [
       {
         "command": "xscp.openManager",
-        "title": "xScp: Dateimanager \u00f6ffnen"
+        "title": "xScp: Dateimanager öffnen"
+      },
+      {
+        "command": "xscp.verifyLocalFile",
+        "title": "xScp: Lokalen Dateizugriff nachweisen"
       }
     ]
   },
@@ -31,7 +35,7 @@
     "build": "node scripts/build.mjs",
     "watch": "node scripts/build.mjs --watch",
     "start": "npm run build && node scripts/start.mjs",
-    "check": "node --check src/extension.js && node --check scripts/build.mjs && node --check scripts/start.mjs && node --check scripts/test-extension.mjs",
+    "check": "node --check src/extension.js && node --check scripts/build.mjs && node --check scripts/start.mjs && node --check scripts/test-extension.mjs && node --check src/vscode/local-proof.js && node --check test/extension/smoke.cjs",
     "test": "npm run build && node scripts/test-extension.mjs",
     "vscode:prepublish": "npm run build"
   },
@@ -43,5 +47,8 @@
     "esbuild": "0.28.2",
     "@types/vscode": "1.138.0",
     "@vscode/test-electron": "3.1.0"
-  }
+  },
+  "extensionKind": [
+    "ui"
+  ]
 }
