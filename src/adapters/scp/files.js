@@ -21,7 +21,7 @@ export class ScpFiles {
 }
 export function scpTarget(files) {
  return {
-  atomicReplace:true,stat:path => files.stat(path),alternative:(path,index) => {const ext=posix.extname(path);return posix.join(posix.dirname(path),`${posix.basename(path,ext)} (${index})${ext}`);},partial:(path,id) => posix.join(posix.dirname(remotePath(path)),`.xscp-${id}.part`),
+  atomicReplace:true,stat:path => files.stat(path),remove:path => files.call('unlink',path),alternative:(path,index) => {const ext=posix.extname(path);return posix.join(posix.dirname(path),`${posix.basename(path,ext)} (${index})${ext}`);},partial:(path,id) => posix.join(posix.dirname(remotePath(path)),`.xscp-${id}.part`),
   async hash(path,signal) {const data=await files.execute(`sha256sum -- ${shellQuote(remotePath(path))}`,{signal,maxBytes:8192,timeout:300000});const match=/^([a-f0-9]{64})  /.exec(data.toString('utf8'));if (!match) throw new Error('Ungültige SHA-256-Ausgabe.');return match[1];},
   async prepare(part,metadata) {if (metadata) {await files.chmod(part,metadata.mode&0o777);if (!Number.isFinite(metadata.modified)) throw new Error('Ungültige Änderungszeit.');await files.execute(`touch -m -d ${shellQuote('@'+metadata.modified/1000)} -- ${shellQuote(remotePath(part))}`);}},
   publish:(part,path,replace) => replace ? files.execute(`mv -T -f -- ${shellQuote(remotePath(part))} ${shellQuote(remotePath(path))}`):files.execute(`ln -T -- ${shellQuote(remotePath(part))} ${shellQuote(remotePath(path))} && { rm -f -- ${shellQuote(part)} || :; }`),

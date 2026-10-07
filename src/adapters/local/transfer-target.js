@@ -2,7 +2,7 @@ import { lstat,link,unlink,rename,open } from 'node:fs/promises';
 import { createReadStream } from 'node:fs';import { dirname,join,basename,extname } from 'node:path';import { createHash } from 'node:crypto';
 import { localPath } from './files.js';
 export const localTarget={
-  atomicReplace:true,
+  atomicReplace:true,remove:path => unlink(localPath(path)),
   alternative:(path,index) => {const extension=extname(path),name=basename(path,extension);return join(dirname(path),`${name} (${index})${extension}`);},
   partial:(path,id) => join(dirname(localPath(path)),`.xscp-${id}.part`),
   async stat(path) {const s=await lstat(localPath(path));return {kind:s.isSymbolicLink() ? 'symlink':s.isFile() ? 'file':s.isDirectory() ? 'directory':'other',size:s.size,modified:s.mtimeMs,mode:s.mode,ino:s.ino,dev:s.dev};},

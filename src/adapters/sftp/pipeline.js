@@ -37,7 +37,7 @@ export async function streamFile(session,{direction,local,remote,signal,onProgre
       source=Readable.from((async function* () {let position=offset;try {while (true) {const buffer=Buffer.alloc(BUFFER_BYTES);const count=await rpc('read',handle,buffer,0,buffer.length,position);if (!count) break;position+=count;yield buffer.subarray(0,count);}} finally {if (!controller.signal.aborted) await rpc('close',handle);}})(),{objectMode:false,highWaterMark:BUFFER_BYTES});
       target=createWriteStream(local,{highWaterMark:BUFFER_BYTES,flags:resume ? constants.O_WRONLY | constants.O_NOFOLLOW:'wx',start:offset,mode:0o600});
     }
-    const meter=new Transform({highWaterMark:BUFFER_BYTES,transform(chunk,_,callback) {try {hash.update(chunk);bytes+=chunk.length;onProgress({bytes,chunkBytes:chunk.length});callback(null,chunk);} catch(error) {callback(error);}}});
+    const meter=new Transform({highWaterMark:BUFFER_BYTES,transform(chunk,_,callback) {try {hash.update(chunk);bytes+=chunk.length;onProgress({bytes,chunkBytes:chunk.length,resumedBytes:offset});callback(null,chunk);} catch(error) {callback(error);}}});
     await pipeline(source,meter,target,{signal:controller.signal});
     if (bytes !== metadata.size) throw new Error('Quelle wurde während des Transfers geändert.');
     const after=direction === 'upload' ? await lstat(local):await files.call('lstat',remote);

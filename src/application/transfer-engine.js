@@ -51,6 +51,20 @@ export class TransferEngine {
       },signal);
     } finally {files.close();}
   }
+  async cleanup(id) {
+    await this.ready;this.guard();const job=this.queue.list().find(j => j.id===id),a=job?.attempt;
+    if (!job || !['failed','cancelled','interrupted','completed'].includes(job.state) || !a) throw new Error('Kein bereinigbarer eigener Teil-Auftrag.');
+    const profile=this.profiles.get(job.profileId);if (a.identity!==profileIdentity(profile) || a.source!==job.source || a.target!==job.target || a.protocol!==profile.protocol) throw new Error('Profil/Teil-Auftrag wurde geändert; keine automatische Bereinigung.');
+    return this.queue.maintain(this.key(job,a.target),async () => {
+      this.guard();let files;try {
+        if (job.direction==='upload') {const session=this.sessions.transport(job.profileId);if (session.endpoint?.id && session.endpoint.id!==job.server) throw new Error('Falsche Serververbindung.');files=await openRemoteFiles(session,profile.protocol);}
+        const target=files ? targetFor(files):localTarget;
+        if (!/^[a-zA-Z0-9-]{1,64}$/.test(a.id) || a.part!==target.partial(a.target,a.id)) throw new Error('Fremder Teil-Datei-Pfad wird nicht bereinigt.');
+        const current=await targetSnapshot(target,a.part);if (current && (current.kind!=='file' || current.size>a.sourceInfo.size)) throw new Error('Teil-Datei wurde ersetzt; keine Bereinigung.');
+        if (current) await target.remove(a.part);this.queue.clearPartial(a.part);return {removed:!!current};
+      } finally {files?.close();}
+    });
+  }
   resume(ids) {this.guard();return this.queue.retry(ids,randomUUID,{resume:true});}
   dispose() {this.queue.dispose();}
 }

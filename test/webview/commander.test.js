@@ -48,10 +48,12 @@ test('Real browser selection survives refresh; per-pane filters, symlinks and pr
   const button=text => [...doc.querySelectorAll('button')].find(b => b.textContent===text);
   await act(() => button('Hochladen →').click());assert.equal(messages.at(-1).type,'transfer');assert.equal(messages.at(-1).side,'local');assert.deepEqual(JSON.parse(JSON.stringify(messages.at(-1).ids)),['/tmp/a.txt']);
   await act(() => doc.querySelector('.pane:last-child tbody tr').click());await act(() => button('Download nach …').click());assert.equal(messages.at(-1).destination,'choose');assert.equal(messages.at(-1).side,'remote');
-  model.queue=[{id:'running',source:'/a',target:'/b',direction:'upload',state:'running',bytes:12,rate:10},{id:'failed',source:'/a',target:'/c',direction:'upload',state:'failed',bytes:0,rate:0},{id:'success',source:'/a',target:'/d',direction:'upload',state:'completed',bytes:12,rate:10}];await render();
+  model.queue=[{id:'running',source:'/a',target:'/b',direction:'upload',state:'running',bytes:12,rate:10},{id:'failed',source:'/a',target:'/c',direction:'upload',protocol:'sftp',attempt:{part:'/own-part'},state:'failed',bytes:0,rate:0},{id:'success',source:'/a',target:'/d',direction:'upload',state:'completed',bytes:12,rate:10}];await render();
   await act(() => button('Queue pausieren').click());assert.equal(messages.at(-1).type,'queuePause');assert.equal(messages.at(-1).paused,true);
   await act(() => button('Abbrechen').click());assert.deepEqual(JSON.parse(JSON.stringify(messages.at(-1).ids)),['running']);
   await act(() => button('Fehlgeschlagene erneut starten').click());assert.deepEqual(JSON.parse(JSON.stringify(messages.at(-1).ids)),['failed']);
+  await act(() => button('Geprüft fortsetzen').click());assert.equal(messages.at(-1).action,'resume');assert.deepEqual(JSON.parse(JSON.stringify(messages.at(-1).ids)),['failed']);
+  await act(() => button('Teil-Datei bereinigen').click());assert.equal(messages.at(-1).action,'cleanup');
   const filter=doc.querySelector('input[aria-label="local: Namensfilter"]');
   await act(() => {Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype,'value').set.call(filter,'link');filter.dispatchEvent(new dom.window.Event('input',{bubbles:true}));});
   assert.equal(doc.querySelectorAll('.pane:first-child tbody tr').length,1);assert.equal(doc.querySelectorAll('.pane:last-child tbody tr').length,1);

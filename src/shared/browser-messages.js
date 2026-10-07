@@ -11,7 +11,7 @@ export function browserRequest(value,sessionId) {
     keys.push('side','ids',value.type === 'action' ? 'action':'destination');
     if (!['local','remote'].includes(value.side) || (value.type === 'action' ? !['mkdir','rename','delete','properties','chmod'].includes(value.action):(!['opposite','choose'].includes(value.destination) || (value.side === 'local' && value.destination === 'choose'))) || !Array.isArray(value.ids) || value.ids.length > 1000 || new Set(value.ids).size !== value.ids.length || value.ids.some(id => typeof id !== 'string' || id.length > 4096 || id.includes('\0'))) return false;
   } else if (value.type === 'queuePause') {keys.push('paused');if (typeof value.paused !== 'boolean') return false;}
-  else if (value.type === 'queueAction') {keys.push('action','ids');if (!['cancel','retry'].includes(value.action) || !Array.isArray(value.ids) || !value.ids.length || value.ids.length > 1000 || value.ids.some(id => !token(id)) || new Set(value.ids).size !== value.ids.length) return false;}
+  else if (value.type === 'queueAction') {keys.push('action','ids');if (!['cancel','retry','resume','cleanup'].includes(value.action) || (value.action==='cleanup' && value.ids?.length!==1) || !Array.isArray(value.ids) || !value.ids.length || value.ids.length > 1000 || value.ids.some(id => !token(id)) || new Set(value.ids).size !== value.ids.length) return false;}
   else if (!['ready','connect','disconnect','reconnect','selectUpload'].includes(value.type)) return false;
   return Object.keys(value).length === keys.length && Object.keys(value).every(k => keys.includes(k));
 }

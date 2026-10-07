@@ -52,5 +52,29 @@ export function BrowserApp({bridge,sessionId}) {
 
 function TransferList({jobs,paused,send}) {
   const [open,setOpen]=useState(true);
-  return <section className="queue"><button className="queue-toggle" aria-expanded={open} onClick={() => setOpen(!open)}>Transfers · {jobs.length}</button>{open && <><button onClick={() => send('queuePause',{paused:!paused})}>{paused ? 'Queue fortsetzen':'Queue pausieren'}</button><button disabled={!jobs.some(j => ['failed','cancelled','interrupted'].includes(j.state))} onClick={() => send('queueAction',{action:'retry',ids:jobs.filter(j => ['failed','cancelled','interrupted'].includes(j.state)).slice(0,1000).map(j => j.id)})}>Fehlgeschlagene erneut starten</button><span>{paused ? ' Neue Starts pausiert; aktive Transfers laufen weiter.':' Pause wirkt global auf neue Starts.'}</span><p>Pro Sitzung; globale Ansicht: „xScp: Transfers anzeigen“.</p><table aria-label="Transferqueue"><thead><tr><th>Datei / Ziel</th><th>Richtung</th><th>Status</th><th>Bytes / Rate</th></tr></thead><tbody>{jobs.slice(-200).map(job => <tr key={job.id}><td title={job.source}>{job.finalTarget ?? job.target}</td><td>{job.direction === 'upload' ? 'Upload':'Download'}</td><td>{transferLabels[job.state] ?? job.state}{['queued','running'].includes(job.state) && <button onClick={() => send('queueAction',{action:'cancel',ids:[job.id]})}>Abbrechen</button>}{['failed','cancelled','interrupted'].includes(job.state) && <button onClick={() => send('queueAction',{action:'retry',ids:[job.id]})}>Erneut starten</button>}{job.error || job.reason ? ` · ${job.error || job.reason}`:''}</td><td>{job.bytes.toLocaleString('de-DE')} B · {(job.rate/1024).toFixed(1)} KiB/s</td></tr>)}</tbody></table>{jobs.length > 200 && <p>Die letzten 200 Aufträge werden angezeigt.</p>}</>}</section>;
+  const retryable=jobs.filter(j => ['failed','cancelled','interrupted'].includes(j.state));
+  const action=(action,ids) => send('queueAction',{action,ids});
+  return <section className="queue">
+    <button className="queue-toggle" aria-expanded={open} onClick={() => setOpen(!open)}>Transfers · {jobs.length}</button>
+    {open && <>
+      <button onClick={() => send('queuePause',{paused:!paused})}>{paused ? 'Queue fortsetzen':'Queue pausieren'}</button>
+      <button disabled={!retryable.length} onClick={() => action('retry',retryable.slice(0,1000).map(j => j.id))}>Fehlgeschlagene erneut starten</button>
+      <span>{paused ? ' Neue Starts pausiert; aktive Transfers laufen weiter.':' Pause wirkt global auf neue Starts.'}</span>
+      <p>Pro Sitzung; globale Ansicht: „xScp: Transfers anzeigen“.</p>
+      <table aria-label="Transferqueue"><thead><tr><th>Datei / Ziel</th><th>Richtung</th><th>Status</th><th>Bytes / Rate</th></tr></thead><tbody>
+        {jobs.slice(-200).map(job => <tr key={job.id}>
+          <td title={job.source}>{job.finalTarget ?? job.target}</td><td>{job.direction === 'upload' ? 'Upload':'Download'}</td>
+          <td>{transferLabels[job.state] ?? job.state}
+            {['queued','running'].includes(job.state) && <button onClick={() => action('cancel',[job.id])}>Abbrechen</button>}
+            {['failed','cancelled','interrupted'].includes(job.state) && <>
+              <button onClick={() => action('retry',[job.id])}>Vollständig neu starten</button>
+              {job.attempt && (job.protocol ?? 'sftp')==='sftp' && <button onClick={() => action('resume',[job.id])}>Geprüft fortsetzen</button>}
+            </>}
+            {job.attempt && ['failed','cancelled','interrupted','completed'].includes(job.state) && <button onClick={() => action('cleanup',[job.id])}>Teil-Datei bereinigen</button>}
+            {job.error || job.reason ? ` · ${job.error || job.reason}`:''}
+          </td><td>{job.bytes.toLocaleString('de-DE')} B · {(job.rate/1024).toFixed(1)} KiB/s</td>
+        </tr>)}
+      </tbody></table>{jobs.length>200 && <p>Die letzten 200 Aufträge werden angezeigt.</p>}
+    </>}
+  </section>;
 }

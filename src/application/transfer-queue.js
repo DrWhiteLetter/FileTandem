@@ -1,6 +1,6 @@
 import { transition,batchState,locksOverlap,TERMINAL } from '../domain/transfer-job.js';
 export class TransferQueue {
-  #jobs=new Map();#active=new Map();#scheduled=false;#disposed=false;#progressAt=0;
+  #jobs=new Map();#active=new Map();#scheduled=false;#disposed=false;#progressAt=0;#maintenance=new Set();
   constructor({run,onChange=() => {},limit=2}) {this.run=run;this.onChange=onChange;this.limit=limit;this.paused=false;}
   list(profileId) {return [...this.#jobs.values()].filter(j => !profileId || j.profileId === profileId).map(j => ({...j}));}
   restore(jobs) {if (this.#jobs.size) throw new Error('Queue bereits initialisiert.');for (const job of jobs) this.#jobs.set(job.id,{...job});this.#notify();}
@@ -17,13 +17,13 @@ export class TransferQueue {
       if (job.state !== 'queued') continue;
       if (job.parentId) {const parent=this.#jobs.get(job.parentId);if (!parent || ['failed','cancelled','interrupted'].includes(parent.state)) {this.#jobs.set(job.id,transition(job,'cancelled'));this.#notify();continue;}if (parent.state === 'skipped') {this.#jobs.set(job.id,transition(job,'skipped'));this.#notify();continue;}if (parent.state !== 'completed') continue;}
       const active=[...this.#active.values()];
-      if (active.filter(a => a.job.server === job.server).length >= this.limit || active.some(a => [a.job.lockKey,...(a.extra ?? [])].some(key => locksOverlap(key,job.lockKey)))) continue;
+      if (active.filter(a => a.job.server === job.server).length >= this.limit || [...this.#maintenance].some(key => locksOverlap(key,job.lockKey)) || active.some(a => [a.job.lockKey,...(a.extra ?? [])].some(key => locksOverlap(key,job.lockKey)))) continue;
       const controller=new AbortController();this.#active.set(job.id,{job,controller});
       this.#jobs.set(job.id,{...transition(job,'running'),started:Date.now()});this.#notify();
       Promise.resolve().then(() => this.run({...job},controller.signal,progress => {
         const current=this.#jobs.get(job.id);if (current.state !== 'running') return;
         const bytes=Number.isFinite(progress.bytes) ? progress.bytes:current.bytes;
-        this.#jobs.set(job.id,{...current,bytes,rate:bytes/Math.max(.001,(Date.now()-current.started)/1000)});if (Date.now()-this.#progressAt >= 100) {this.#progressAt=Date.now();this.#notify();}
+        this.#jobs.set(job.id,{...current,bytes,resumedBytes:progress.resumedBytes ?? current.resumedBytes ?? 0,rate:(bytes-(progress.resumedBytes ?? 0))/Math.max(.001,(Date.now()-current.started)/1000)});if (Date.now()-this.#progressAt >= 100) {this.#progressAt=Date.now();this.#notify();}
       })).then(result => {
         const current=this.#jobs.get(job.id);this.#jobs.set(job.id,{...transition(current,controller.signal.aborted && !result?.committed ? 'cancelled':result?.skipped ? 'skipped':'completed'),...result, state:controller.signal.aborted && !result?.committed ? 'cancelled':result?.skipped ? 'skipped':'completed'});
       },error => {const current=this.#jobs.get(job.id);this.#jobs.set(job.id,{...transition(current,this.#disposed ? 'interrupted':controller.signal.aborted || error.code === 'USER_CANCELLED' ? 'cancelled':'failed'),error:controller.signal.aborted ? 'Abgebrochen.':error.publicMessage ?? 'Transfer fehlgeschlagen; Quelle/Ziel und Verbindung prüfen.'});})
@@ -51,8 +51,10 @@ export class TransferQueue {
     }
     return batchId;
   }
+  clearPartial(part) {for (const [id,job] of this.#jobs) if (job.attempt?.part===part) {const copy={...job,partialCleaned:true};delete copy.attempt;this.#jobs.set(id,copy);}this.#notify();}
+  async maintain(key,action) {while ([...this.#maintenance].some(held => locksOverlap(held,key)) || [...this.#active.values()].some(a => [a.job.lockKey,...(a.extra ?? [])].some(held => locksOverlap(held,key)))) await new Promise(r => setTimeout(r,10));if (this.#disposed) throw new Error('Queue beendet.');this.#maintenance.add(key);try {return await action();} finally {this.#maintenance.delete(key);this.#schedule();}}
   async withLock(id,key,action,signal) {
-    while ([...this.#active.entries()].some(([other,a]) => other !== id && [a.job.lockKey,...(a.extra ?? [])].some(held => locksOverlap(held,key)))) {signal.throwIfAborted();await new Promise(resolve => setTimeout(resolve,10));}
+    while ([...this.#maintenance].some(held => locksOverlap(held,key)) || [...this.#active.entries()].some(([other,a]) => other !== id && [a.job.lockKey,...(a.extra ?? [])].some(held => locksOverlap(held,key)))) {signal.throwIfAborted();await new Promise(resolve => setTimeout(resolve,10));}
     signal.throwIfAborted();const active=this.#active.get(id);active.extra ??= [];active.extra.push(key);
     try {return await action();} finally {active.extra=active.extra.filter(value => value !== key);}
   }

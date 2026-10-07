@@ -124,7 +124,9 @@ export function registerBrowser(context,profileUI) {
         else if (message.type === 'queueAction') {
           const owned=profileUI.transfers.engine.queue.list(profile?.id);if (message.ids.some(id => !owned.some(j => j.id === id))) throw new Error('Fremder Queue-Auftrag.');
           if (message.action === 'cancel') for (const id of message.ids) profileUI.transfers.engine.queue.cancel(id);
-          else profileUI.transfers.engine.queue.retry(message.ids,randomUUID);
+          else if (message.action==='retry') profileUI.transfers.retry(message.ids);
+          else if (message.action==='resume') profileUI.transfers.resume(message.ids);
+          else {const job=owned.find(j => j.id===message.ids[0]);if (!job?.attempt) throw new Error('Keine eigene Teil-Datei verfügbar.');if (await vscode.window.showWarningMessage('Eigene Teil-Datei bereinigen?',{modal:true,detail:job.attempt.part},'Teil-Datei löschen')==='Teil-Datei löschen') {profileUI.guard();await profileUI.transfers.cleanup(job.id);}}
         }
         else if (message.type === 'selectUpload') {
           if (!profile) throw new Error('Bitte ein Profil verbinden.');
