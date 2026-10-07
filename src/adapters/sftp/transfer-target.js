@@ -1,6 +1,7 @@
 import { posix } from 'node:path';import { createHash } from 'node:crypto';import { remotePath } from './files.js';
 export function remoteTarget(files) {
   return {
+    alternative:(path,index) => {const extension=posix.extname(path);return posix.join(posix.dirname(path),`${posix.basename(path,extension)} (${index})${extension}`);},
     atomicReplace:files.channel._extensions?.['posix-rename@openssh.com'] === '1',
     partial:(path,id) => posix.join(posix.dirname(remotePath(path)),`.xscp-${id}.part`),
     stat:path => files.stat(path),
