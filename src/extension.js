@@ -1,3 +1,4 @@
+import { registerBrowser } from './vscode/browser-panel.js';
 import { SessionManager } from './application/session-manager.js';
 import { credentialProvider } from './vscode/credentials.js';
 import { registerProfiles } from './vscode/profile-commands.js';
@@ -32,7 +33,8 @@ export function activate(context) {
   profileUI.command('xscp.connectProfile',async id => {const p=typeof id === 'string' ? profileUI.profiles.get(id) : await profileUI.choose(); if (p) return profileUI.connect(p);});
   profileUI.command('xscp.disconnectProfile',async id => {const p=typeof id === 'string' ? profileUI.profiles.get(id) : await profileUI.choose(); if (p) return profileUI.sessions.disconnect(p.id);});
   const editorProof = registerEditorProvider(context, trust);
-  const manager = registerManager(context);
+  registerManager(context);
+  const manager = registerBrowser(context,profileUI);
   return {
     manager,
     profiles:profileUI.profiles,

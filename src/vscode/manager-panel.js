@@ -33,14 +33,14 @@ export function registerManager(context) {
   };
   const open = () => {
     requireDesktopAccess(executionLocation(context),vscode.workspace.isTrusted);
-    return attach(vscode.window.createWebviewPanel('xscp.manager','xScp',vscode.ViewColumn.One,{}));
+    return attach(vscode.window.createWebviewPanel('xscp.demo','xScp',vscode.ViewColumn.One,{}));
   };
-  context.subscriptions.push(vscode.window.registerWebviewPanelSerializer('xscp.manager',{
+  context.subscriptions.push(vscode.window.registerWebviewPanelSerializer('xscp.demo',{
     async deserializeWebviewPanel(panel,state) {
       try { attach(panel,state ?? {}); } catch { panel.dispose(); }
     },
   }));
-  context.subscriptions.push(vscode.commands.registerCommand('xscp.openManager', () => {
+  context.subscriptions.push(vscode.commands.registerCommand('xscp.openDemo', () => {
     try { open(); } catch (error) { void vscode.window.showErrorMessage(error.message); }
   }));
   return { open, status: () => ({ handshakes }) };

@@ -77,6 +77,10 @@
       {
         "command": "xscp.disconnectProfile",
         "title": "xScp: Verbindung trennen"
+      },
+      {
+        "command": "xscp.openDemo",
+        "title": "xScp: Mock-Demo öffnen"
       }
     ],
     "viewsContainers": {
@@ -175,6 +179,7 @@
     "ui"
   ],
   "activationEvents": [
-    "onWebviewPanel:xscp.manager"
+    "onWebviewPanel:xscp.demo",
+    "onWebviewPanel:xscp.browser"
   ]
 }

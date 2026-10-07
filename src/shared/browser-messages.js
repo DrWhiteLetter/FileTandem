@@ -1,0 +1,16 @@
+const plain=v => v && typeof v === 'object' && !Array.isArray(v) && [Object.prototype,null].includes(Object.getPrototypeOf(v));
+const token=v => typeof v === 'string' && /^[a-zA-Z0-9-]{1,64}$/.test(v);
+export function browserRequest(value,sessionId) {
+  if (!plain(value) || value.version !== 1 || !token(value.id) || value.sessionId !== sessionId || !token(sessionId)) return false;
+  const keys=['version','type','id','sessionId'];
+  if (['navigate','history','refresh'].includes(value.type)) {
+    keys.push('side');if (!['local','remote'].includes(value.side)) return false;
+    if (value.type === 'navigate') {keys.push('path');if (typeof value.path !== 'string' || !value.path || value.path.length > 4096 || value.path.includes('\0')) return false;}
+    if (value.type === 'history') {keys.push('direction');if (!['back','forward','up'].includes(value.direction)) return false;}
+  } else if (value.type !== 'ready') return false;
+  return Object.keys(value).length === keys.length && Object.keys(value).every(k => keys.includes(k));
+}
+export function browserResponse(value,sessionId) {
+  return plain(value) && value.version === 1 && value.type === 'browserModel' && value.sessionId === sessionId
+    && ['local','remote'].every(side => plain(value[side]) && typeof value[side].path === 'string' && Array.isArray(value[side].entries) && value[side].entries.length <= 10000 && value[side].entries.every(e => plain(e) && typeof e.id === 'string' && typeof e.name === 'string' && typeof e.path === 'string' && ['file','directory','symlink','other'].includes(e.kind)));
+}
