@@ -7,7 +7,7 @@ import { executionLocation } from './local-proof.js';
 import { createFolder,renameEntry } from '../application/file-operations.js';
 import { fileName } from '../domain/file-name.js';
 import { posix,join } from 'node:path';
-import { RemoteFiles } from '../adapters/sftp/files.js';
+import { openRemoteFiles } from '../application/remote-files.js';
 import { LocalFiles,localFileUri,localPath,localParent,localStart } from '../adapters/local/files.js';
 import { DirectoryBrowser } from '../application/directory-browser.js';
 import { browserViewState } from '../shared/browser-view-state.js';
@@ -27,11 +27,10 @@ export function registerBrowser(context,profileUI) {
     let remoteFiles,remoteTransport,opening;
     const service=async () => {
       if (!profile) throw Object.assign(new Error('Nicht verbunden.'),{code:'NOT_CONNECTED'});
-      if (profile.protocol !== 'sftp') throw Object.assign(new Error('SCP-Dateiverwaltung folgt mit M4; bitte ein SFTP-Profil verwenden.'),{code:'UNSUPPORTED_PROTOCOL'});
       const transport=profileUI.sessions.transport(profile.id);
       if (transport !== remoteTransport) {
         if (opening?.transport === transport) return opening.promise;
-        remoteFiles?.close();const pending=RemoteFiles.open(transport);opening={transport,promise:pending};
+        remoteFiles?.close();const pending=openRemoteFiles(transport,profile.protocol);opening={transport,promise:pending};
         const result=await pending;
         if (!alive || opening?.promise !== pending || profileUI.sessions.transport(profile.id) !== transport) {result.close();throw new Error('Verbindung wurde ersetzt.');}
         remoteFiles=result;remoteTransport=transport;
@@ -55,7 +54,7 @@ export function registerBrowser(context,profileUI) {
       if (newly.length && local.state.status !== 'loading') {void local.refresh();if (profileUI.sessions.snapshot(profile?.id).state === 'connected') void remote.refresh();}
     });
     const transfer=async message => {
-      if (!profile || profileUI.sessions.snapshot(profile.id).state !== 'connected') throw new Error('Bitte ein SFTP-Profil verbinden.');
+      if (!profile || profileUI.sessions.snapshot(profile.id).state !== 'connected') throw new Error('Bitte ein Profil verbinden.');
       const browser=message.side === 'local' ? local:remote;
       if (browser.state.status !== 'ready') throw new Error('Bitte den Quellordner laden.');
       const selected=message.ids.map(id => browser.state.entries.find(e => e.id === id));if (!selected.length || selected.some(e => !e)) throw new Error('Auswahl ist veraltet.');
