@@ -17,12 +17,12 @@ export function registerProfiles(context) {
       raw[key]=key === 'port' ? (/^\d+$/.test(value) ? Number(value) : NaN) : value;
     }
     const protocol=await vscode.window.showQuickPick(['sftp','scp'],{title:'Protokoll (SCP: GNU/Linux-Shell erforderlich)'}); if (!protocol) return; raw.protocol=protocol;
-    const auth=await vscode.window.showQuickPick(['password','key','agent'],{title:'Anmeldung'}); if (!auth) return; raw.auth=auth; raw.keyPath=''; raw.agentPath='';
-    if (auth === 'key') {
+    const auth=await vscode.window.showQuickPick([{label:'Passwort',value:'password'},{label:'SSH-Schlüssel',value:'key'},{label:'SSH-Agent',value:'agent'},{label:'Interaktive Anmeldung (z. B. Passwort / MFA)',value:'interactive'}],{title:'Anmeldung'}); if (!auth) return; raw.auth=auth.value; raw.keyPath=''; raw.agentPath='';
+    if (auth.value === 'key') {
       const files=await vscode.window.showOpenDialog({title:'Lokalen privaten SSH-Schlüssel auswählen',canSelectMany:false,canSelectFolders:false}); if (!files?.length) return;
       if (files[0].scheme !== 'file' || files[0].authority) throw new Error('Nur lokale Schlüsseldateien sind erlaubt.'); raw.keyPath=files[0].fsPath;
     }
-    if (auth === 'agent') { const value=await vscode.window.showInputBox({title:'Expliziter SSH-Agent-Pfad',value:existing?.agentPath ?? '',ignoreFocusOut:true}); if (value === undefined) return; raw.agentPath=value; }
+    if (auth.value === 'agent') { const value=await vscode.window.showInputBox({title:'Expliziter SSH-Agent-Pfad',value:existing?.agentPath || (process.platform==='win32' ? '\\\\.\\pipe\\openssh-ssh-agent':process.env.SSH_AUTH_SOCK ?? ''),ignoreFocusOut:true}); if (value === undefined) return; raw.agentPath=value; }
     guard(); if (quick) return {...validateProfile(raw),ephemeral:true};
     if (existing) await api.sessions?.disconnect(raw.id);
     await profiles.save(raw); changed.fire(); return profiles.get(raw.id);

@@ -11,7 +11,7 @@ exports.run=async (api,id,local) => {
   await vscode.commands.executeCommand('xscp.showTransfers');const pending=path.join(local,'pending');await fs.mkdir(pending);api.transfers.pause(true);const queued=await api.transfers.submit(id,'download',['/data/'+name+'/nested/binary'],pending);proof={pending:queued.ids[0],target:path.join(pending,'binary'),sha:crypto.createHash('sha256').update(content).digest('hex'),completed:api.transfers.list().filter(j => j.state==='completed').map(j => j.id)};await fs.writeFile(marker,JSON.stringify(proof));await api.transfers.flush();
  } else {
   proof=JSON.parse(await fs.readFile(marker,'utf8'));assert.equal(api.transfers.list().find(j => j.id===proof.pending).state,'interrupted');await assert.rejects(fs.stat(proof.target),{code:'ENOENT'});assert.ok(proof.completed.every(id => api.transfers.list().some(j => j.id===id && j.state==='completed')));
-  const batch=api.transfers.retry([proof.pending]);const ids=api.transfers.list().filter(j => j.batchId===batch).map(j => j.id);await wait(ids);assert.equal(crypto.createHash('sha256').update(await fs.readFile(proof.target)).digest('hex'),proof.sha);assert.equal(api.transfers.list().filter(j => j.retryOf).length,1);await api.transfers.flush();
+  const batch=await api.transfers.retry([proof.pending]);const ids=api.transfers.list().filter(j => j.batchId===batch).map(j => j.id);await wait(ids);assert.equal(crypto.createHash('sha256').update(await fs.readFile(proof.target)).digest('hex'),proof.sha);assert.equal(api.transfers.list().filter(j => j.retryOf).length,1);await api.transfers.flush();
  }
  console.log('M3 native installed: recursive hashes, tab-independent transfer, journal restart and explicit targeted retry passed.');
 };

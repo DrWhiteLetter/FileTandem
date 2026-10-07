@@ -15,6 +15,7 @@ export class TransferEngine {
     await this.ready;this.guard();if (!['upload','download'].includes(direction) || !Array.isArray(paths) || !paths.length || paths.length > 1000) throw new Error('Ungültige Transferauswahl.');
     const profile=this.profiles.get(profileId);
     paths=paths.map(direction === 'upload' ? localPath:p => pathFor(p,profile.protocol));destination=direction === 'upload' ? pathFor(destination,profile.protocol):localPath(destination);
+    if (this.sessions.matches && !this.sessions.matches(profile)) throw new Error('Profil wurde geändert; bitte erneut verbinden.');
     const server=serverIdentity(profile.host,profile.port).id;const transport=this.sessions.transport(profileId);if (transport.endpoint?.id && transport.endpoint.id !== server) throw new Error('Profil wurde geändert; bitte erneut verbinden.');const files=await openRemoteFiles(transport,profile.protocol);const batchId=randomUUID(),ids=[];
     const source=direction === 'upload' ? {stat:path => this.local.stat({scheme:'file',fsPath:path}),listNoFollow:path => this.local.listNoFollow(path)}:files;
     const targetJoin=direction === 'upload' ? posix.join:join;const sourceBase=direction === 'upload' ? p => p.replaceAll('\\','/').split('/').at(-1):posix.basename;
@@ -24,7 +25,7 @@ export class TransferEngine {
         const id=randomUUID(),target=node.relative ? targetJoin(root,...node.relative.split('/')):root;
         if (profile.protocol === 'scp') pathFor(direction === 'upload' ? target:node.source,profile.protocol);
         const parent=node.relative ? parents.get(posix.dirname(node.relative) === '.' ? '':posix.dirname(node.relative)):undefined;
-        const job={id,batchId,profileId,server,direction,source:node.source,target,kind:node.kind,metadata:node.metadata,protocol:profile.protocol,parentId:parent,name:node.relative ? posix.basename(node.relative):sourceBase(path)};
+        const job={id,batchId,profileId,server,direction,source:node.source,target,kind:node.kind,metadata:node.metadata,profileKey:profileIdentity(profile),protocol:profile.protocol,parentId:parent,name:node.relative ? posix.basename(node.relative):sourceBase(path)};
         job.lockKey=this.key(job,target);this.queue.add(job);ids.push(id);if (node.kind === 'directory') parents.set(node.relative,id);
       }} catch {const job={id:randomUUID(),batchId,profileId,server,direction,source:path,target:root,kind:'error'};job.lockKey=this.key(job,root);this.queue.add(job);ids.push(job.id);}
     }} finally {files.close();}return {batchId,ids};
@@ -32,7 +33,8 @@ export class TransferEngine {
   async run(job,signal,onProgress) {
     this.guard();signal.throwIfAborted();if (job.kind === 'error') throw Object.assign(new Error(),{publicMessage:'Transferbaum konnte nicht vollständig entdeckt werden.'});
     if (['symlink','other'].includes(job.kind)) return {skipped:true,reason:'Symlink/Spezialdatei übersprungen.'};
-    const profile=this.profiles.get(job.profileId);if (((job.protocol ?? 'sftp') !== profile.protocol) || serverIdentity(profile.host,profile.port).id !== job.server) throw Object.assign(new Error(),{publicMessage:'Profilziel wurde geändert; neuen Auftrag anlegen.'});
+    const profile=this.profiles.get(job.profileId);if ((job.profileKey && job.profileKey!==profileIdentity(profile)) || ((job.protocol ?? 'sftp') !== profile.protocol) || serverIdentity(profile.host,profile.port).id !== job.server) throw Object.assign(new Error(),{publicMessage:'Profilziel wurde geändert; neuen Auftrag anlegen.'});
+    if (this.sessions.matches && !this.sessions.matches(profile)) throw new Error('Profil wurde geändert; bitte erneut verbinden.');
     const session=this.sessions.transport(job.profileId);if (session.endpoint?.id && session.endpoint.id !== job.server) throw new Error('Verbindung gehört zu einem anderen Server.');const files=await openRemoteFiles(session,profile.protocol,{signal});
     try {
       const target=job.direction === 'upload' ? targetFor(files):localTarget;

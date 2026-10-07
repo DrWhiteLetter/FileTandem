@@ -1,3 +1,4 @@
+const signature=p => JSON.stringify([p.host,p.port,p.username,p.protocol,p.auth,p.keyPath,p.agentPath]);
 /** Live transports are backend-only; snapshots contain no reconnect credentials. */
 export class SessionManager {
   #sessions=new Map();
@@ -8,7 +9,7 @@ export class SessionManager {
   async connect(profile,{signal}={}) {
     if (this.#disposed) throw new Error('SessionManager ist beendet.');
     const previous=this.#sessions.get(profile.id); previous?.controller.abort();
-    const record={profile:{id:profile.id,protocol:profile.protocol},controller:new AbortController(),state:'connecting',transport:undefined};
+    const record={profile:{id:profile.id,protocol:profile.protocol,signature:signature(profile)},controller:new AbortController(),state:'connecting',transport:undefined};
     this.#sessions.set(profile.id,record); this.#publish(profile.id);
     const abort=() => record.controller.abort(); signal?.addEventListener('abort',abort,{once:true}); if (signal?.aborted) abort();
     let credentials,transport;
@@ -28,6 +29,7 @@ export class SessionManager {
       throw error;
     } finally {credentials?.dispose(); signal?.removeEventListener('abort',abort);}
   }
+  matches(profile) {return this.#sessions.get(profile.id)?.profile.signature===signature(profile);}
   transport(id) {const s=this.#sessions.get(id); if (s?.state !== 'connected' || !s.transport) throw Object.assign(new Error('Nicht verbunden.'),{code:'NOT_CONNECTED'}); return s.transport;}
   async disconnect(id) {const s=this.#sessions.get(id); if (!s) return; s.controller.abort(); s.state='disconnected'; const transport=s.transport; s.transport=undefined; this.#publish(id); await transport?.close();}
   dispose() {this.#disposed=true; for (const id of this.#sessions.keys()) void this.disconnect(id);}

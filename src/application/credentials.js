@@ -1,6 +1,7 @@
+import { agentAddress } from '../adapters/ssh/authentication.js';
 import { secretReference } from '../domain/profile.js';
 /** Secret values live only here/in the connector, never in profiles or messages. */
-export async function credentialsFor(profile,{secrets,prompt,readKey,encrypted,signal}) {
+export async function credentialsFor(profile,{secrets,prompt,readKey,encrypted,signal,keyboardPrompt}) {
   const config={host:profile.host,port:profile.port,username:profile.username,readyTimeout:30000};
   let key,remember;
   const check=() => signal?.throwIfAborted();
@@ -22,10 +23,11 @@ export async function credentialsFor(profile,{secrets,prompt,readKey,encrypted,s
       key=await readKey(profile.keyPath); check(); config.privateKey=key;
       if (encrypted(key)) config.passphrase=await obtain('passphrase');
     }
-    if (profile.auth === 'agent') config.agent=profile.agentPath;
+    if (profile.auth === 'agent') config.agent=agentAddress(profile.agentPath);
+    if (profile.auth==='interactive') {if (typeof keyboardPrompt!=='function') throw new Error('Interaktive Anmeldung ist nicht verfügbar.');config.keyboardInteractive=request => keyboardPrompt(profile,request);}
     check();
     return {config,commit:async () => {check(); if (remember) await secrets.store(remember.reference,remember.value);},
-      dispose:() => {key?.fill(0); delete config.password; delete config.passphrase; delete config.privateKey; remember=undefined;}};
+      dispose:() => {key?.fill(0); delete config.password; delete config.passphrase; delete config.privateKey; delete config.keyboardInteractive; remember=undefined;}};
   } catch(error) { key?.fill(0); throw error; }
 }
 export async function forgetCredentials(id,secrets) {

@@ -44,7 +44,7 @@ export function activate(context) {
     profiles: {
       list:() => {profileUI.guard();return profileUI.profiles.list();},
       get:id => {profileUI.guard();return profileUI.profiles.get(id);},
-      save:async raw => {profileUI.guard();const result=await profileUI.profiles.save(raw);profileUI.changed.fire();return result;},
+      save:async raw => {profileUI.guard();const result=await profileUI.profiles.save(raw);if (!profileUI.sessions.matches(result)) await profileUI.sessions.disconnect(result.id);profileUI.changed.fire();return result;},
       delete:async id => {profileUI.guard();await profileUI.profiles.delete(id);profileUI.changed.fire();},
       export:() => {profileUI.guard();return profileUI.profiles.export();},
     },

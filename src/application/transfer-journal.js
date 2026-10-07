@@ -2,13 +2,14 @@ import { localPath } from '../adapters/local/files.js';import { remotePath } fro
 import { mkdir,readFile,open,rename,unlink } from 'node:fs/promises';
 import { createHmac,timingSafeEqual } from 'node:crypto';
 import { dirname } from 'node:path';import { randomUUID } from 'node:crypto';
-const fields=['id','batchId','profileId','server','direction','source','target','lockKey','kind','protocol','metadata','parentId','name','state','bytes','error','started','rate','reason','sha256','committed','finalTarget','partialPath','retryOf','attempt','resumeFrom','resumedBytes','partialCleaned'];
+const fields=['id','batchId','profileId','profileKey','server','direction','source','target','lockKey','kind','protocol','metadata','parentId','name','state','bytes','error','started','rate','reason','sha256','committed','finalTarget','partialPath','retryOf','attempt','resumeFrom','resumedBytes','partialCleaned'];
 const states=['queued','running','completed','failed','cancelled','skipped','interrupted'];
 export function journalJob(raw) {
   if (!raw || typeof raw !== 'object' || Object.keys(raw).some(k => !fields.includes(k)) || !['id','batchId','profileId','server','source','target','lockKey'].every(k => typeof raw[k] === 'string' && raw[k].length > 0 && raw[k].length <= 32768) || !['upload','download'].includes(raw.direction) || !states.includes(raw.state) || !['file','directory','symlink','other','error'].includes(raw.kind)) throw new Error('Ungültiger Journaleintrag.');
   (raw.direction === 'upload' ? localPath:remotePath)(raw.source);(raw.direction === 'upload' ? remotePath:localPath)(raw.target);
   if (raw.partialCleaned !== undefined && typeof raw.partialCleaned!=='boolean') throw new Error('Ungültiger Bereinigungszustand.');
   if (raw.committed !== undefined && typeof raw.committed !== 'boolean') throw new Error('Ungültiger Journalabschluss.');
+  if (raw.profileKey !== undefined && !/^[a-f0-9]{64}$/.test(raw.profileKey)) throw new Error('Ungültige Profilidentität.');
   if (raw.protocol !== undefined && !['scp','sftp'].includes(raw.protocol)) throw new Error('Ungültiges Journalprotokoll.');
   for (const key of ['bytes','started','rate']) if (!Number.isFinite(raw[key]) || raw[key] < 0) throw new Error('Ungültiger Journalfortschritt.');
   for (const key of ['parentId','name','error','reason','sha256','finalTarget','partialPath','retryOf']) if (raw[key] !== undefined && (typeof raw[key] !== 'string' || raw[key].length > 32768)) throw new Error('Ungültige Journalmetadaten.');
