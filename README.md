@@ -47,7 +47,7 @@ Die Dateiquelle „Lokal · Mein Rechner“ ist das Desktop-Dateisystem, auch be
 
 ## SSH-Testumgebungen (M0-03)
 
-Drei isolierte OpenSSH-Container stellen SFTP, SFTP-only ohne Shell und echtes SCP ohne SFTP bereit. Sie sind ausschließlich über Loopback erreichbar und verwenden lokal erzeugte disposable Testkeys. Mit laufender lokaler Docker-Laufzeit:
+Drei isolierte OpenSSH-Protokoll-Container stellen SFTP, SFTP-only ohne Shell und echtes SCP ohne SFTP bereit; M0-07 ergänzt eine separate Auth-Fixture. Sie sind ausschließlich über Loopback erreichbar und verwenden lokal erzeugte disposable Testkeys. Mit laufender lokaler Docker-Laufzeit:
 
 ```sh
 npm run fixtures:start
@@ -101,3 +101,18 @@ Geprüft sind Linux/OpenSSH mit POSIX-Shell, vorhandenem `scp`, GNU find/coreuti
 Absolute POSIX-Pfade werden als einzelne Shell-Argumente quotiert, mit `--` von Optionen getrennt. Leerzeichen, Quotes, Unicode und Shell-Sonderzeichen funktionieren wörtlich. Steuerzeichen, Zeilenumbrüche, Backslashes, `.`/`..`-Komponenten und nicht verlustfrei darstellbare UTF-8-Namen werden für diesen SCP-Weg abgewiesen; dafür SFTP verwenden. Die GNU-Liste kann Namen mit Zeilenumbrüchen anzeigen und kennzeichnet sie als nicht transferierbar. Symlink-/Verzeichniseinträge werden nur angezeigt, nicht rekursiv übertragen.
 
 Der Prototyp unterstützt höchstens 1 GiB pro Datei, 4096 Bytes pro SCP-Header und 1 MiB pro Verzeichnisliste. Lokale Ziele entstehen exklusiv; Upload-Ziele werden mit Shell-`noclobber` reserviert. Vorhandene Dateien werden in den geprüften Fällen erhalten. Das ist noch keine atomare Veröffentlichung und schützt nicht vor gleichzeitigen Änderungen durch andere Serverprozesse. Bei Fehler/Abbruch können eigene Teil-Dateien bleiben. Vollständige Parser-Härtung, Integration, Rekursion und Finalisierung folgen in M4. [Nachweis und Grenzen](docs/nachweise/M0-06.md).
+
+## Authentifizierung und Packaging (M0-07)
+
+Der gemeinsame SSH-Adapter unterstützt Passwort, private Ed25519-/RSA-Schlüssel mit optionaler Passphrase, einen ausdrücklich angegebenen Agent-Socket und `keyboardInteractive(request)` als Antwort-Callback. Host-Key-Prüfung bleibt verpflichtend; Agent Forwarding und beliebige `authHandler`-/Algorithmus-Overrides sind ausgeschlossen. Der Callback erhält Serverprompts inklusive `echo`, Endpoint und AbortSignal; er liefert genau eine String-Antwort pro Prompt. Antworten werden weder automatisch aus dem Passwort übernommen noch gespeichert/protokolliert. Die Befehlspalette bietet weiterhin die bisherige Key-Probe; vollständige Profil-/Anmeldedialoge folgen in M2. Die technische Extension-API `probeSshAuthentication` weist weitere Verfahren nach und schließt ihre Sitzung immer.
+
+```sh
+# Laufende Fixtures vorausgesetzt; ggf. XSCP_DOCKER_CONTEXT=colima-xscp:
+npm run test:auth
+# Frische private VSIX, Inhaltsprüfung, isolierte Installation und echte Auth-Tests:
+VSCODE_TEST_EXECUTABLE="/Applications/Visual Studio Code.app/Contents/MacOS/Code" npm run test:packaging
+```
+
+Packaging-Abnahme benötigt Python 3 für ZIP-Prüfung, npm (vsce 4.0.0 wird bei Bedarf in den Cache geladen), VS Code und die Fixture-Testzugänge. Paket/Profile/Agent werden nach dem Test entfernt. Die tatsächliche VSIX aktiviert und authentifiziert sich außerhalb des Entwicklungscheckouts ohne `node_modules`, optionale native SSH-Addons oder Testzugänge im Paket.
+
+macOS/Apple Silicon ist mit Passwort, unverschlüsselten und verschlüsselten Ed25519-/RSA-OpenSSH-Keys, Unix-Agent und OpenSSH/PAM-Keyboard-Interactive geprüft. Linux-Desktop und Windows-Agent sind mangels Testsystem offen. Windows-Named-Pipe-Syntax ist lediglich validiert, keine Windows-Abnahme. Pageant/Cygwin werden ausdrücklich abgewiesen, da ihre Helfer nicht paketiert werden. RSA funktioniert ohne Aktivierung von RSA/SHA-1. Grenzen und vollständige [Ergebnismatrix](docs/nachweise/M0-07.md).

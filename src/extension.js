@@ -1,12 +1,14 @@
 import * as vscode from 'vscode';
 import { randomBytes } from 'node:crypto';
+import { connectSsh } from './adapters/ssh/connect.js';
+import { unknownHostKeyDialog } from './vscode/host-key-dialog.js';
 import { registerHostKeyProof } from './vscode/host-key-proof.js';
 import { executionLocation, registerLocalProof, verifyLocalFile } from './vscode/local-proof.js';
 
 /** @param {import('vscode').ExtensionContext} context */
 export function activate(context) {
   registerLocalProof(context);
-  registerHostKeyProof(context);
+  const { trust } = registerHostKeyProof(context);
   context.subscriptions.push(vscode.commands.registerCommand('xscp.openManager', () => {
     const location = executionLocation(context);
     if (!location.local) {
@@ -34,6 +36,14 @@ export function activate(context) {
     context.subscriptions.push(panel);
   }));
   return {
+    // Technical probe for authentication/installed-package acceptance; never
+    // returns a reconnectable client, credentials or a transfer session.
+    probeSshAuthentication: async (config, { signal, confirmUnknown = unknownHostKeyDialog(vscode.window) } = {}) => {
+      if (!executionLocation(context).local || !vscode.workspace.isTrusted) throw new Error('SSH-Nachweis benötigt den lokalen, vertrauenswürdigen UI Extension Host.');
+      const session = await connectSsh(config, { trust, signal, confirmUnknown });
+      try { return { endpoint: session.endpoint, hostKey: session.hostKey }; }
+      finally { await session.close(); }
+    },
     executionLocation: () => executionLocation(context),
     verifyLocalFile: uri => verifyLocalFile(context, uri),
   };

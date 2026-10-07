@@ -1,0 +1,22 @@
+# Separate auth fixture: original three protocol fixtures remain key-only.
+Port 22
+ListenAddress 0.0.0.0
+HostKey /etc/ssh/ssh_host_ed25519_key
+PidFile /run/sshd.pid
+AuthorizedKeysFile .ssh/authorized_keys
+AllowUsers fixture
+PermitRootLogin no
+PubkeyAuthentication yes
+AuthenticationMethods any
+PasswordAuthentication yes
+PermitEmptyPasswords no
+KbdInteractiveAuthentication yes
+UsePAM yes
+StrictModes yes
+DisableForwarding yes
+PermitTTY no
+PermitTunnel no
+X11Forwarding no
+PrintMotd no
+LogLevel VERBOSE
+Subsystem sftp internal-sftp -d /data

@@ -39,7 +39,7 @@
     "build": "node scripts/build.mjs",
     "watch": "node scripts/build.mjs --watch",
     "start": "npm run build && node scripts/start.mjs",
-    "check": "node --check src/extension.js && node --check scripts/build.mjs && node --check scripts/start.mjs && node --check scripts/test-extension.mjs && node --check src/vscode/local-proof.js && node --check test/extension/smoke.cjs && node --check scripts/ssh-fixtures.mjs && node --check src/adapters/ssh/host-keys.js && node --check src/adapters/ssh/connect.js && node --check src/adapters/storage/host-key-store.js && node --check src/vscode/host-key-proof.js && node --check src/vscode/host-key-dialog.js && node --check src/adapters/sftp/transfer.js && node --check src/adapters/scp/protocol.js && node --check src/adapters/scp/exec.js && node --check src/adapters/scp/transfer.js && node --check src/adapters/scp/list.js",
+    "check": "node --check src/extension.js && node --check scripts/build.mjs && node --check scripts/start.mjs && node --check scripts/test-extension.mjs && node --check src/vscode/local-proof.js && node --check test/extension/smoke.cjs && node --check scripts/ssh-fixtures.mjs && node --check src/adapters/ssh/host-keys.js && node --check src/adapters/ssh/connect.js && node --check src/adapters/storage/host-key-store.js && node --check src/vscode/host-key-proof.js && node --check src/vscode/host-key-dialog.js && node --check src/adapters/sftp/transfer.js && node --check src/adapters/scp/protocol.js && node --check src/adapters/scp/exec.js && node --check src/adapters/scp/transfer.js && node --check src/adapters/scp/list.js && node --check src/adapters/ssh/authentication.js && node --check scripts/test-packaging.mjs && node --check test/extension/packaging.cjs",
     "test": "npm run test:unit && npm run build && node scripts/test-extension.mjs",
     "vscode:prepublish": "npm run build",
     "fixtures:init": "node scripts/ssh-fixtures.mjs init",
@@ -51,7 +51,9 @@
     "test:unit": "node --test test/unit/*.test.js",
     "test:host-keys": "node --test --test-concurrency=1 test/integration/host-keys.test.js",
     "test:sftp": "node --test --test-concurrency=1 test/integration/sftp-streaming.test.js",
-    "test:scp": "node --test --test-concurrency=1 test/integration/scp.test.js"
+    "test:scp": "node --test --test-concurrency=1 test/integration/scp.test.js",
+    "test:auth": "node --test --test-concurrency=1 test/integration/authentication.test.js",
+    "test:packaging": "node scripts/test-packaging.mjs"
   },
   "dependencies": {
     "react": "19.3.0",

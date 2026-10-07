@@ -1,16 +1,18 @@
 import ssh2 from 'ssh2';
+import { authenticationOptions, answerKeyboardChallenge } from './authentication.js';
 import { HostKeyStore, HostKeyError, serverIdentity } from './host-keys.js';
 
 /** Sole SSH creation path. Callers cannot supply hostVerifier, hostHash, sock or algorithms.
- * @param {{host: string, port?: number, username: string, privateKey?: Buffer|string, password?: string, passphrase?: string, readyTimeout?: number}} config
+ * @param {{host: string, port?: number, username: string, privateKey?: Buffer|string, password?: string, passphrase?: string, agent?: string, keyboardInteractive?: Function, readyTimeout?: number}} config
  * @param {{trust: HostKeyStore, confirmUnknown?: Function, signal?: AbortSignal}} policy
  */
 export async function connectSsh(config, { trust, confirmUnknown, signal } = {}) {
   if (!(trust instanceof HostKeyStore)) throw new HostKeyError('MISSING_HOST_KEY_POLICY', 'Verpflichtender Host-Key-Speicher fehlt.');
-  const allowed = new Set(['host', 'port', 'username', 'privateKey', 'password', 'passphrase', 'readyTimeout']);
+  const allowed = new Set(['host', 'port', 'username', 'privateKey', 'password', 'passphrase', 'agent', 'keyboardInteractive', 'readyTimeout']);
   if (!config || Object.keys(config).some(key => !allowed.has(key))) {
     throw new HostKeyError('INVALID_SSH_CONFIG', 'Nicht unterstützte SSH-Verbindungsoption.');
   }
+  const auth = authenticationOptions(config);
   const endpoint = serverIdentity(config.host, config.port);
   if (typeof config.username !== 'string' || !config.username || /[\x00-\x1f]/.test(config.username)) {
     throw new HostKeyError('INVALID_SSH_CONFIG', 'SSH-Benutzer fehlt oder ist ungültig.');
@@ -41,6 +43,15 @@ export async function connectSsh(config, { trust, confirmUnknown, signal } = {})
     };
     signal?.addEventListener('abort', abort, { once: true });
     client.on('error', error => { fail(failure ?? error); });
+    client.on('keyboard-interactive', (name, instructions, language, prompts, finish) => {
+      if (!verified || !config.keyboardInteractive || controller.signal.aborted) {
+        fail(new HostKeyError('AUTH_NOT_PERMITTED', 'Keyboard-Interactive wurde nicht freigegeben.'));
+        return;
+      }
+      answerKeyboardChallenge(config.keyboardInteractive, { endpoint, name, instructions, language, prompts }, controller.signal).then(answers => {
+        if (!closed && !controller.signal.aborted) finish(answers);
+      }).catch(error => fail(failure ?? error));
+    });
     client.once('close', () => {
       closed = true;
       clearTimeout(timer);
@@ -73,7 +84,7 @@ export async function connectSsh(config, { trust, confirmUnknown, signal } = {})
     timer = setTimeout(() => fail(new HostKeyError('CONNECTION_TIMEOUT', 'SSH-Verbindung oder Host-Key-Entscheidung hat das Zeitlimit überschritten.')), timeout);
     try {
       client.connect({ host: endpoint.host, port: endpoint.port, username: config.username,
-        privateKey: config.privateKey, password: config.password, passphrase: config.passphrase,
+        ...auth,
         readyTimeout: timeout, keepaliveInterval: 15000, keepaliveCountMax: 3,
         hostVerifier: (rawKey, finish) => {
           trust.verify(endpoint, rawKey, confirmUnknown, controller.signal).then(key => {

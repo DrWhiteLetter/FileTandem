@@ -9,6 +9,7 @@ RUN apt-get update \
  && chown fixture:fixture /data \
  && chmod 700 /home/fixture/.ssh
 COPY sshd_config /etc/ssh/sshd_config.base
+COPY sshd_config.auth /etc/ssh/sshd_config.auth
 COPY entrypoint.sh /usr/local/bin/fixture-entrypoint
 RUN chmod 755 /usr/local/bin/fixture-entrypoint
 EXPOSE 22

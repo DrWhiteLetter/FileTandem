@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { mkdir, readFile, writeFile, access, rm, chmod } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
@@ -8,9 +8,9 @@ const fixtureRoot = fileURLToPath(new URL('../test/fixtures/ssh/', import.meta.u
 const runtime = join(fixtureRoot, '.runtime');
 const owner = createHash('sha256').update(fixtureRoot).digest('hex').slice(0, 12);
 const prefix = `xscp-ssh-${owner}`;
-const modes = ['sftp', 'sftp-only', 'scp'];
+const modes = ['sftp', 'sftp-only', 'scp', 'auth'];
 const base = Number(process.env.XSCP_SSH_PORT_BASE ?? 22220);
-if (!Number.isInteger(base) || base < 1024 || base > 65533) throw new Error('XSCP_SSH_PORT_BASE must be 1024..65533.');
+if (!Number.isInteger(base) || base < 1024 || base > 65532) throw new Error('XSCP_SSH_PORT_BASE must be 1024..65532.');
 const context = process.env.XSCP_DOCKER_CONTEXT;
 const dockerPrefix = context ? ['--context', context] : [];
 const image = `${prefix}:m0`;
@@ -45,13 +45,32 @@ async function init() {
   await chmod(runtime, 0o700);
   await key(join(runtime, 'client_ed25519'));
   const publicKey = await readFile(join(runtime, 'client_ed25519.pub'), 'utf8');
+  const authRoot = join(runtime, 'auth');
+  await mkdir(authRoot, { recursive: true, mode: 0o700 });
+  const credentialsPath = join(authRoot, 'credentials.json');
+  if (!await exists(credentialsPath)) await writeFile(credentialsPath, JSON.stringify({
+    password: randomBytes(24).toString('base64url'), passphrase: randomBytes(24).toString('base64url'),
+  }) + '\n', { mode: 0o600 });
+  const credentials = JSON.parse(await readFile(credentialsPath, 'utf8'));
+  for (const [filename, type, encrypted] of [['encrypted_ed25519', 'ed25519', true], ['client_rsa', 'rsa', false], ['encrypted_rsa', 'rsa', true]]) {
+    const path = join(authRoot, filename);
+    if (!await exists(path)) run('ssh-keygen', ['-q', '-t', type, ...(type === 'rsa' ? ['-b', '3072'] : []),
+      '-N', encrypted ? credentials.passphrase : '', '-C', 'xScp auth fixture ONLY', '-f', path]);
+    await chmod(path, 0o600);
+  }
   let knownHosts = '';
   let config = '';
   for (const [index, mode] of modes.entries()) {
     const directory = join(runtime, 'servers', mode);
     await mkdir(directory, { recursive: true, mode: 0o700 });
     await key(join(directory, 'host_ed25519'));
-    await writeFile(join(directory, 'authorized_keys'), publicKey, { mode: 0o644 });
+    let authorized = publicKey;
+    if (mode === 'auth') {
+      for (const filename of ['encrypted_ed25519', 'client_rsa', 'encrypted_rsa']) authorized += await readFile(join(authRoot, `${filename}.pub`), 'utf8');
+      const hash = run('openssl', ['passwd', '-6', '-stdin'], { input: credentials.password + '\n' }).stdout.trim();
+      await writeFile(join(directory, 'password_hash'), `fixture:${hash}\n`, { mode: 0o600 });
+    }
+    await writeFile(join(directory, 'authorized_keys'), authorized, { mode: 0o644 });
     knownHosts += `[127.0.0.1]:${base + index} ${await readFile(join(directory, 'host_ed25519.pub'), 'utf8')}`;
     config += `Host xscp-fixture-${mode}\n  HostName 127.0.0.1\n  Port ${base + index}\n  User fixture\n  IdentityFile ${quoted(join(runtime, 'client_ed25519'))}\n  UserKnownHostsFile ${quoted(join(runtime, 'known_hosts'))}\n  StrictHostKeyChecking yes\n  IdentitiesOnly yes\n  BatchMode yes\n  PasswordAuthentication no\n  KbdInteractiveAuthentication no\n  RequestTTY no\n  LogLevel ERROR\n  ConnectTimeout 5\n\n`;
   }
@@ -160,7 +179,7 @@ async function verify() {
         '-i', wrongKey, '-o', 'IdentitiesOnly=yes', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes',
         '-o', `UserKnownHostsFile=${join(runtime, 'known_hosts')}`, '-o', 'ConnectTimeout=5',
         'fixture@127.0.0.1', 'true'], { allowFailure: true });
-      assert(denied.status !== 0 && /Permission denied \(publickey\)/.test(denied.stderr), `${mode}: wrong-key rejection not proven.`);
+      assert(denied.status !== 0 && /Permission denied \(publickey(?:,password,keyboard-interactive)?\)/.test(denied.stderr), `${mode}: wrong-key rejection not proven.`);
       const fingerprint = run('ssh-keygen', ['-lf', join(runtime, 'servers', mode, 'host_ed25519.pub')]).stdout.trim();
       const version = docker(['exec', name(mode), 'sh', '-c', 'sshd -V 2>&1; uname -srm; getconf GNU_LIBC_VERSION']).stdout.trim();
       results.push({ mode, port: base + modes.indexOf(mode), fingerprint, version,

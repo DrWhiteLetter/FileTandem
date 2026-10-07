@@ -100,7 +100,7 @@ test('Memento trust persists across store instances and does not request Setting
 test('Connection factory refuses missing policy and verifier/algorithm/socket overrides', async () => {
   const config = { host: '127.0.0.1', username: 'fixture' };
   await assert.rejects(connectSsh(config), { code: 'MISSING_HOST_KEY_POLICY' });
-  for (const extra of ['hostVerifier', 'hostHash', 'sock', 'algorithms']) {
+  for (const extra of ['hostVerifier', 'hostHash', 'sock', 'algorithms', 'authHandler', 'tryKeyboard', 'agentForward']) {
     await assert.rejects(connectSsh({ ...config, [extra]: true }, { trust: memory().trust }), { code: 'INVALID_SSH_CONFIG' });
   }
 });

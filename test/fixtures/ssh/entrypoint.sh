@@ -4,6 +4,10 @@ cp /etc/ssh/sshd_config.base /etc/ssh/sshd_config
 case "${FIXTURE_MODE:-}" in
   sftp) printf '\nSubsystem sftp internal-sftp -d /data\n' >> /etc/ssh/sshd_config ;;
   sftp-only) printf '\nSubsystem sftp internal-sftp -d /data\nForceCommand internal-sftp -d /data\n' >> /etc/ssh/sshd_config ;;
+  auth)
+    cp /etc/ssh/sshd_config.auth /etc/ssh/sshd_config
+    chpasswd -e < /fixtures/password_hash
+    ;;
   scp) ;; # No Subsystem sftp: modern scp's SFTP mode must fail.
   *) echo 'Unknown fixture mode' >&2; exit 1 ;;
 esac

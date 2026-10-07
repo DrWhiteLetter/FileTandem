@@ -1,6 +1,6 @@
 # Meilensteine zum Abarbeiten
 
-Dieser Backlog konkretisiert den [Umsetzungsplan](../../UMSETZUNGSPLAN.md). Er beschreibt geplante Arbeit und ihren Fortschritt; M0-01 und M0-03 bis M0-06 sind umgesetzt und geprüft; die Remote-Abnahme von M0-02 ist noch offen. JavaScript/JSX, SFTP als Standard und echtes SCP bleiben die Grundlage.
+Dieser Backlog konkretisiert den [Umsetzungsplan](../../UMSETZUNGSPLAN.md). Er beschreibt geplante Arbeit und ihren Fortschritt; M0-01 und M0-03 bis M0-07 sind umgesetzt und geprüft; die Remote-Abnahme von M0-02 ist noch offen. JavaScript/JSX, SFTP als Standard und echtes SCP bleiben die Grundlage.
 
 **59 einzeln abhakbare Items** mit stabilen IDs, Abhängigkeiten, Umsetzung und Fertig-Kriterium.
 
