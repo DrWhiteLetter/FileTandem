@@ -60,3 +60,6 @@ body.vscode-high-contrast .selected, body.vscode-high-contrast-light .selected {
 
 .pathbar { flex-wrap: wrap; }
 .pane-actions { display: flex; flex-wrap: wrap; gap: .4rem; padding: .4rem; }
+.drop-target { outline: 2px dashed var(--vscode-focusBorder); outline-offset: -3px; }
+.drop-hint { padding: .5rem; background: var(--vscode-editorInfo-background, var(--vscode-sideBar-background)); }
+.file-menu { display: flex; flex-wrap: wrap; gap: .3rem; padding: .5rem; border: 2px solid var(--vscode-focusBorder); background: var(--vscode-menu-background, var(--vscode-editor-background)); }

@@ -54,6 +54,16 @@ test('Real browser selection survives refresh; per-pane filters, symlinks and pr
   await act(() => button('Fehlgeschlagene erneut starten').click());assert.deepEqual(JSON.parse(JSON.stringify(messages.at(-1).ids)),['failed']);
   await act(() => button('Geprüft fortsetzen').click());assert.equal(messages.at(-1).action,'resume');assert.deepEqual(JSON.parse(JSON.stringify(messages.at(-1).ids)),['failed']);
   await act(() => button('Teil-Datei bereinigen').click());assert.equal(messages.at(-1).action,'cleanup');
+  const localRow=doc.querySelector('.pane tbody tr');const targetPane=doc.querySelector('.pane:last-child');
+  const store=new Map();const dataTransfer={setData:(key,value) => store.set(key,value),getData:key => store.get(key)||'',dropEffect:'',effectAllowed:''};
+  const dragEvent=type => {const event=new dom.window.Event(type,{bubbles:true,cancelable:true});Object.defineProperty(event,'dataTransfer',{value:dataTransfer});return event;};
+  await act(() => localRow.dispatchEvent(dragEvent('dragstart')));await act(() => targetPane.dispatchEvent(dragEvent('dragover')));assert.ok(targetPane.classList.contains('drop-target'));assert.ok(doc.body.textContent.includes('Kopieren nach: /'));
+  await act(() => targetPane.dispatchEvent(dragEvent('drop')));assert.equal(messages.at(-1).type,'transfer');assert.equal(messages.at(-1).destinationPath,'/');
+  const count=messages.length;await act(() => targetPane.dispatchEvent(dragEvent('drop')));assert.equal(messages.length,count,'OS/forged drop has no matching internal drag');
+  await act(() => localRow.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'F5',bubbles:true})));assert.equal(messages.length,count,'Commander shortcuts default off');
+  model.commanderKeys=true;await render();await act(() => localRow.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'F5',bubbles:true})));assert.equal(messages.at(-1).type,'transfer');
+  const shortcutCount=messages.length;await act(() => doc.querySelector('.pathbar input').dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'F8',bubbles:true})));assert.equal(messages.length,shortcutCount,'Inputs never trigger destructive shortcuts');
+  await act(() => localRow.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'F10',shiftKey:true,bubbles:true})));assert.equal(doc.activeElement.getAttribute('role'),'menuitem');await act(() => doc.activeElement.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true})));assert.equal(doc.querySelector('[role=menu]'),null);
   const filter=doc.querySelector('input[aria-label="local: Namensfilter"]');
   await act(() => {Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype,'value').set.call(filter,'link');filter.dispatchEvent(new dom.window.Event('input',{bubbles:true}));});
   assert.equal(doc.querySelectorAll('.pane:first-child tbody tr').length,1);assert.equal(doc.querySelectorAll('.pane:last-child tbody tr').length,1);

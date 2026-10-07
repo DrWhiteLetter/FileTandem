@@ -263,6 +263,12 @@
           "maximum": 60,
           "scope": "application",
           "description": "Prüfintervall in Sekunden für die aktive SFTP-Editor-Datei (2–60). Keine Verzeichnisüberwachung."
+        },
+        "xscp.commanderKeys": {
+          "type": "boolean",
+          "default": false,
+          "scope": "application",
+          "description": "F3/F4 Öffnen, F5 Kopieren, F6 Umbenennen, F7 Ordner, F8 Löschen, ausschließlich bei Fokus in einer Dateiliste. Löschbestätigung bleibt aktiv."
         }
       }
     },
