@@ -27,6 +27,8 @@ exports.run = async () => {
   await assert.rejects(api.verifyLocalFile(vscode.Uri.file('/xscp-nonexistent-test-file')), /ENOENT/);
   await assert.rejects(api.verifyLocalFile(vscode.Uri.file(require('node:path').dirname(process.env.XSCP_PROOF_FILE))), /reguläre/);
   assert.ok((await vscode.commands.getCommands(true)).includes('xscp.verifyLocalFile'));
+  assert.ok((await vscode.commands.getCommands(true)).includes('xscp.verifySshHostKey'));
+  assert.equal(extension.packageJSON.dependencies.ssh2, '1.17.0');
   console.log(`M0-02: Desktop-Dateizugriff, SHA-256 und URI-Abgrenzung erfolgreich (${process.env.XSCP_EXPECT_REMOTE || 'lokales Fenster'}).`);
   assert.ok((await vscode.commands.getCommands(true)).includes('xscp.openManager'));
   await vscode.commands.executeCommand('xscp.openManager');

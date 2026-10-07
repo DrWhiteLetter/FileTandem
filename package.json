@@ -28,6 +28,10 @@
       {
         "command": "xscp.verifyLocalFile",
         "title": "xScp: Lokalen Dateizugriff nachweisen"
+      },
+      {
+        "command": "xscp.verifySshHostKey",
+        "title": "xScp: SSH-Host-Key prüfen"
       }
     ]
   },
@@ -35,24 +39,27 @@
     "build": "node scripts/build.mjs",
     "watch": "node scripts/build.mjs --watch",
     "start": "npm run build && node scripts/start.mjs",
-    "check": "node --check src/extension.js && node --check scripts/build.mjs && node --check scripts/start.mjs && node --check scripts/test-extension.mjs && node --check src/vscode/local-proof.js && node --check test/extension/smoke.cjs && node --check scripts/ssh-fixtures.mjs",
-    "test": "npm run build && node scripts/test-extension.mjs",
+    "check": "node --check src/extension.js && node --check scripts/build.mjs && node --check scripts/start.mjs && node --check scripts/test-extension.mjs && node --check src/vscode/local-proof.js && node --check test/extension/smoke.cjs && node --check scripts/ssh-fixtures.mjs && node --check src/adapters/ssh/host-keys.js && node --check src/adapters/ssh/connect.js && node --check src/adapters/storage/host-key-store.js && node --check src/vscode/host-key-proof.js && node --check src/vscode/host-key-dialog.js",
+    "test": "npm run test:unit && npm run build && node scripts/test-extension.mjs",
     "vscode:prepublish": "npm run build",
     "fixtures:init": "node scripts/ssh-fixtures.mjs init",
     "fixtures:start": "node scripts/ssh-fixtures.mjs start",
     "fixtures:stop": "node scripts/ssh-fixtures.mjs stop",
     "fixtures:reset": "node scripts/ssh-fixtures.mjs reset",
     "fixtures:verify": "node scripts/ssh-fixtures.mjs verify",
-    "fixtures:status": "node scripts/ssh-fixtures.mjs status"
+    "fixtures:status": "node scripts/ssh-fixtures.mjs status",
+    "test:unit": "node --test test/unit/*.test.js",
+    "test:host-keys": "node --test --test-concurrency=1 test/integration/host-keys.test.js"
   },
   "dependencies": {
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "ssh2": "1.17.0"
   },
   "devDependencies": {
-    "esbuild": "0.28.2",
     "@types/vscode": "1.138.0",
-    "@vscode/test-electron": "3.1.0"
+    "@vscode/test-electron": "3.1.0",
+    "esbuild": "0.28.2"
   },
   "extensionKind": [
     "ui"

@@ -68,7 +68,7 @@ scp -O -F test/fixtures/ssh/.runtime/ssh_config ./README.md \
   xscp-fixture-scp:/data/readme-probe.md
 ```
 
-Die App-Host-Key-Dialoge folgen erst in M0-04. Hier prüfen OpenSSH-Clients die kontrollierten Fixture-Hostidentitäten. Testkeys nie für andere Server verwenden. Die privaten Client-Keys werden nicht in das Container-Image oder in Servercontainer kopiert; nur der jeweilige Host-Key und öffentliche Authorized Key werden read-only eingebunden.
+Die App-Host-Key-Prüfung ist in M0-04 implementiert; `npm run test:host-keys` nutzt diese Fixtures für echte Key-Wechsel. Die Container-Konfiguration wird auch beim Daemon-Neustart aus der unveränderten Basis neu erstellt. Hier prüfen OpenSSH-Clients die kontrollierten Fixture-Hostidentitäten. Testkeys nie für andere Server verwenden. Die privaten Client-Keys werden nicht in das Container-Image oder in Servercontainer kopiert; nur der jeweilige Host-Key und öffentliche Authorized Key werden read-only eingebunden.
 
 ## Was `fixtures:verify` nachweist
 

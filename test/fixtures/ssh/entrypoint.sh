@@ -1,5 +1,6 @@
 #!/bin/sh
 set -eu
+cp /etc/ssh/sshd_config.base /etc/ssh/sshd_config
 case "${FIXTURE_MODE:-}" in
   sftp) printf '\nSubsystem sftp internal-sftp -d /data\n' >> /etc/ssh/sshd_config ;;
   sftp-only) printf '\nSubsystem sftp internal-sftp -d /data\nForceCommand internal-sftp -d /data\n' >> /etc/ssh/sshd_config ;;

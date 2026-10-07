@@ -1,10 +1,11 @@
 import { build, context } from 'esbuild';
+import { hostBundleOptions } from './build-options.mjs';
 
 const watch = process.argv.includes('--watch');
 const shared = { bundle: true, sourcemap: true, logLevel: 'info' };
 const bundles = [
   { ...shared, entryPoints: ['src/extension.js'], outfile: 'dist/extension.cjs',
-    platform: 'node', format: 'cjs', target: 'node22', external: ['vscode'] },
+    ...hostBundleOptions },
   { ...shared, entryPoints: ['webview/src/main.jsx'], outfile: 'dist/webview.js',
     platform: 'browser', format: 'iife', target: 'es2022', jsx: 'automatic' },
 ];

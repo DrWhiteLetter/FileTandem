@@ -1,10 +1,12 @@
 import * as vscode from 'vscode';
 import { randomBytes } from 'node:crypto';
+import { registerHostKeyProof } from './vscode/host-key-proof.js';
 import { executionLocation, registerLocalProof, verifyLocalFile } from './vscode/local-proof.js';
 
 /** @param {import('vscode').ExtensionContext} context */
 export function activate(context) {
   registerLocalProof(context);
+  registerHostKeyProof(context);
   context.subscriptions.push(vscode.commands.registerCommand('xscp.openManager', () => {
     const location = executionLocation(context);
     if (!location.local) {

@@ -56,3 +56,20 @@ npm run fixtures:stop
 ```
 
 Auf diesem Mac wurde dafür das separate Colima-Profil `xscp` eingerichtet; nach der Abnahme ist es gestoppt. Für den nächsten Lauf `colima start xscp --activate=false` und `export XSCP_DOCKER_CONTEXT=colima-xscp` ausführen. Alle Zugänge, Voraussetzungen, Reset und Details stehen in der [Fixture-Anleitung](test/fixtures/ssh/README.md). Der [M0-03-Nachweis](docs/nachweise/M0-03.md) dokumentiert die Abnahme. Produktive Server werden für diese Fixtures nicht verwendet.
+
+## SSH-Host-Key-Prüfung (M0-04)
+
+**xScp: SSH-Host-Key prüfen** in der Befehlspalette startet einen minimalen SSH-Nachweis: Host, Port, Benutzer und eine lokale unverschlüsselte private Testschlüsseldatei auswählen. Für die Fixtures `127.0.0.1`, Port `22220`/`22221`/`22222`, Benutzer `fixture` und `test/fixtures/ssh/.runtime/client_ed25519` verwenden. Der Befehl authentifiziert sich und schließt die Verbindung anschließend wieder; Dateioperationen folgen in M0-05/M0-06.
+
+Ein unbekannter Host-Key wird mit Algorithmus und OpenSSH-SHA-256-Fingerprint im nativen Dialog angezeigt. Den Fingerprint unabhängig vergleichen, dann ausdrücklich **Vertrauen und verbinden** wählen. **Ablehnen** oder Schließen des Dialogs beendet die Verbindung. Für die kontrollierten Fixtures zeigt `ssh-keygen -lf test/fixtures/ssh/.runtime/servers/<variante>/host_ed25519.pub` den erwarteten Fingerprint.
+
+Bestätigte öffentliche Host Keys werden im lokalen Erweiterungsspeicher getrennt von Zugangsdaten für **Host und Port** gespeichert; kein Settings Sync. Eine Wiederverbindung prüft den vollständigen Schlüssel. Bei Änderungen wird blockiert und der alte sowie neue Fingerprint angezeigt. Dieser Prototyp bietet noch keinen Befehl zum Entfernen/Ersetzen von Vertrauen; einen Schlüsselwechsel zunächst unabhängig klären. Ein Fixture-Key-Reset führt daher bei zuvor vertrauten Ports erwartungsgemäß zur Blockade. Ein frisches Development-Testprofil hat einen leeren Trust-Speicher.
+
+```sh
+npm run test:unit       # Policy, Speicherfehler, Parallelität und Dialogentscheidungen
+# Laufende Fixtures vorausgesetzt; ggf. XSCP_DOCKER_CONTEXT=colima-xscp setzen:
+npm run test:host-keys  # echte SSH-Ablehnung, Zustimmung, Wiederverbindung und Key-Rotation
+npm test               # Unit-Tests plus Build und echter Extension-Host-Smoke-Test
+```
+
+Die Integrationstests ändern ausschließlich Schlüssel innerhalb eigener Fixture-Container und stellen die Originalschlüssel anschließend wieder her. Sie verwenden einen eigenen Test-Trust-Speicher, nicht den Trust-Speicher deines VS-Code-Profils. `ssh2` wird in das Host-Bundle eingebunden; optionale native Beschleuniger sind nicht Teil der VSIX. Bibliothekslizenzen stehen in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Details und Grenzen: [M0-04-Nachweis](docs/nachweise/M0-04.md).
