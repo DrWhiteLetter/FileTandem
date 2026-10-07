@@ -50,3 +50,8 @@ test('GNU-find metadata uses NUL fields; unsafe transfer names remain visibly ma
   assert.equal(result[1].name, 'line\nname'); assert.equal(result[1].transferable, false);
   for (const bytes of [Buffer.from('incomplete\0'), Buffer.from(['../file', 'f', '1', '1.0', '600', '', ''].join('\0')), Buffer.from([255, 0])]) assert.throws(() => parseListing(bytes), { code: 'INVALID_LISTING' });
 });
+test('SCP size/state limits allow files over 4 GiB and require exact completion',async () => {
+ assert.equal(parseHeader('C0600 4294967297 file','file').size,4294967297);
+ const reader=new ScpReader(Readable.from([Buffer.from('C0600 2 file\nx')]));await reader.header('file');await assert.rejects(reader.ack(),{code:'SCP_STATE'});assert.equal((await reader.readSome(2)).toString(),'x');await assert.rejects(reader.readSome(1),{code:'SCP_EOF'});
+ const empty=new ScpReader(Readable.from([Buffer.from('C0600 0 file\n\0')]));await empty.header('file');await assert.rejects(empty.eof(),{code:'SCP_STATE'});await empty.ack();await empty.eof();
+});
