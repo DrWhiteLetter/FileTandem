@@ -34,3 +34,20 @@ test('Rendered Commander: selection, folders, filter, safe names, queue and all 
   assert.ok(messages.every(message => message.type === 'ready'),'Restoring UI never starts a connection');
   dom.window.close();
 });
+test('Real browser selection survives refresh; per-pane filters, symlinks and preferences',async () => {
+  const dom=new JSDOM('<div id="root"></div>',{runScripts:'outside-only',url:'https://xscp.test'});
+  dom.window.MessageChannel=class {constructor() {this.port1={onmessage:null};this.port2={postMessage:() => setTimeout(() => this.port1.onmessage?.(),0)};}};
+  dom.window.IS_REACT_ACT_ENVIRONMENT=true;dom.window.eval(result.outputFiles.find(f => f.path.endsWith('.js')).text);
+  let saved;const messages=[];await dom.window.testMountBrowser({getState:() => undefined,setState:v => {saved=v;},postMessage:v => messages.push(v)},'browser-session');
+  const act=action => dom.window.testAct(action);const entry=(name,kind='file') => ({id:`/tmp/${name}`,path:`/tmp/${name}`,name,kind,size:10,modified:0,mode:0o644,linkTarget:'target'});
+  const model={version:1,type:'browserModel',sessionId:'browser-session',connection:{name:'Test',state:'connected'},showHiddenFiles:false,local:{path:'/tmp',status:'ready',entries:[entry('a.txt'),entry('link','symlink'),entry('.hidden')]},remote:{path:'/',status:'ready',entries:[entry('remote')]}};
+  const render=() => act(() => dom.window.dispatchEvent(new dom.window.MessageEvent('message',{data:dom.window.JSON.parse(JSON.stringify(model))})));
+  await render();const doc=dom.window.document;assert.ok(doc.body.textContent.includes('Symlink → target'));assert.ok(!doc.body.textContent.includes('.hidden'));
+  const row=doc.querySelector('.pane tbody tr');await act(() => row.click());assert.equal(row.getAttribute('aria-selected'),'true');
+  await render();assert.equal(doc.querySelector('.pane tbody tr').getAttribute('aria-selected'),'true');
+  const filter=doc.querySelector('input[aria-label="local: Namensfilter"]');
+  await act(() => {Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype,'value').set.call(filter,'link');filter.dispatchEvent(new dom.window.Event('input',{bubbles:true}));});
+  assert.equal(doc.querySelectorAll('.pane:first-child tbody tr').length,1);assert.equal(doc.querySelectorAll('.pane:last-child tbody tr').length,1);
+  await act(() => doc.querySelector('button[aria-label="local: Pfadfavorit"]').click());assert.ok(saved.panes.local.favorites.includes('/tmp'));assert.equal(saved.panes.remote.filter,'');
+  assert.equal(messages[0].type,'ready');dom.window.close();
+});

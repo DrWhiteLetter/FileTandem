@@ -1,18 +1,48 @@
 import { useEffect,useState } from 'react';
 import { browserResponse } from '../../src/shared/browser-messages.js';
-function FilePane({side,model,send}) {
-  const [path,setPath]=useState('');useEffect(() => setPath(model?.path ?? ''),[model?.path]);
+import { browserViewState } from '../../src/shared/browser-view-state.js';
+import { sortEntries } from '../../src/domain/file-entry.js';
+const sides=['local','remote'];
+function FilePane({side,model,send,prefs,update,defaultHidden}) {
+  const [path,setPath]=useState('');const [selection,setSelection]=useState([]);const [focused,setFocused]=useState(null);const [anchor,setAnchor]=useState(null);
+  useEffect(() => {setPath(model?.path ?? '');setSelection([]);setFocused(null);setAnchor(null);},[model?.path]);
+  const hidden=prefs.hidden ?? defaultHidden;
+  const entries=sortEntries((model?.entries ?? []).filter(e => (hidden || !e.name.startsWith('.')) && e.name.toLocaleLowerCase().includes(prefs.filter.toLocaleLowerCase())),prefs.sort.column,prefs.sort.direction);
+  useEffect(() => {setSelection(current => {const next=current.filter(id => entries.some(e => e.id === id));return next.length === current.length ? current:next;});},[model?.entries,prefs.filter,hidden]);
+  const choose=(entry,event) => {
+    if (event.shiftKey && entries.some(e => e.id === anchor)) {const a=entries.findIndex(e => e.id === anchor),b=entries.findIndex(e => e.id === entry.id);setSelection(entries.slice(Math.min(a,b),Math.max(a,b)+1).map(e => e.id));}
+    else {setAnchor(entry.id);setSelection(current => event.ctrlKey || event.metaKey ? current.includes(entry.id) ? current.filter(id => id !== entry.id):[...current,entry.id]:[entry.id]);}
+    setFocused(entry.id);
+  };
+  const navigate=entry => {if (['directory','symlink'].includes(entry.kind)) send('navigate',{side,path:entry.path});};
+  const keyboard=(entry,event) => {
+    const index=entries.findIndex(e => e.id === entry.id);const offsets={ArrowDown:Math.min(index+1,entries.length-1),ArrowUp:Math.max(index-1,0),Home:0,End:entries.length-1};
+    if (Object.hasOwn(offsets,event.key)) {event.preventDefault();const target=entries[offsets[event.key]];choose(target,event);event.currentTarget.parentElement.children[offsets[event.key]].focus();}
+    else if (event.key === 'Enter') {event.preventDefault();navigate(entry);}
+    else if (event.key === ' ') {event.preventDefault();choose(entry,event);}
+    else if (event.key === 'Backspace') {event.preventDefault();send('history',{side,direction:'up'});}
+    else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'a') {event.preventDefault();setSelection(entries.map(e => e.id));}
+  };
+  const columns=[['name','Name'],...(prefs.columns.size ? [['size','Größe']]:[]),...(prefs.columns.modified ? [['modified','Geändert']]:[]),...(prefs.columns.mode ? [['mode','Rechte']]:[])];
+  const order=column => update({...prefs,sort:{column,direction:prefs.sort.column === column && prefs.sort.direction === 'asc' ? 'desc':'asc'}});
+  const favorite=prefs.favorites.includes(model?.path);
   return <section className="pane" aria-label={side === 'local' ? 'Lokale Dateien':'Entfernte Dateien'}><header className="pane-title"><strong>{side === 'local' ? 'Lokal · Mein Rechner':'Remote'}</strong></header>
     <form className="pathbar" onSubmit={e => {e.preventDefault();send('navigate',{side,path});}}>
       {['back','forward','up'].map(direction => <button type="button" key={direction} aria-label={`${side}: ${direction}`} onClick={() => send('history',{side,direction})}><span className={`codicon codicon-arrow-${direction === 'back' ? 'left':direction === 'forward' ? 'right':'up'}`} aria-hidden="true" /></button>)}
       <input aria-label={`${side === 'local' ? 'Lokaler':'Remote'} Pfad`} value={path} onChange={e => setPath(e.target.value)} /><button>Öffnen</button><button type="button" onClick={() => send('refresh',{side})}>Aktualisieren</button>
-    </form><div className="file-scroll"><table><thead><tr><th>Name</th><th>Größe</th><th>Geändert</th></tr></thead><tbody>{model?.entries.map(entry => <tr key={entry.id} tabIndex={0} onDoubleClick={() => {if (entry.kind === 'directory') send('navigate',{side,path:entry.path});}} onKeyDown={e => {if (e.key === 'Enter' && entry.kind === 'directory') send('navigate',{side,path:entry.path});}}><td><span className={`codicon codicon-${entry.kind === 'directory' ? 'folder':entry.kind === 'symlink' ? 'file-symlink-file':'file'}`} aria-hidden="true" /> {entry.name}{entry.kind === 'symlink' && ` → ${entry.linkTarget}`}</td><td>{entry.size}</td><td>{new Date(entry.modified).toLocaleDateString('de-DE')}</td></tr>)}</tbody></table>
-      {model?.status === 'loading' && <p role="status">Dateiliste wird geladen …</p>}{model?.status === 'error' && <p role="alert">{model.error}</p>}{model?.status === 'disconnected' && <p>Nicht verbunden.</p>}{model?.status === 'ready' && !model.entries.length && <p>Dieser Ordner ist leer.</p>}
-    </div><footer>{model?.entries.length ?? 0} Einträge</footer></section>;
+    </form><div className="pane-options"><label>Namensfilter<input aria-label={`${side}: Namensfilter`} maxLength={256} value={prefs.filter} onChange={e => update({...prefs,filter:e.target.value})} /></label><label><input type="checkbox" checked={!!hidden} onChange={e => update({...prefs,hidden:e.target.checked})} /> Versteckte Dateien</label>
+    <button disabled={!model?.path} aria-label={`${side}: Pfadfavorit`} aria-pressed={favorite} onClick={() => update({...prefs,favorites:favorite ? prefs.favorites.filter(p => p !== model.path):[...prefs.favorites.slice(-49),model.path]})}><span className={`codicon codicon-${favorite ? 'star-full':'star-empty'}`} aria-hidden="true" /> Favorit</button>
+    <select aria-label={`${side}: Pfadfavoriten`} value="" onChange={e => {if (e.target.value) send('navigate',{side,path:e.target.value});}}><option value="">Pfadfavoriten</option>{prefs.favorites.map(p => <option key={p} value={p}>{p}</option>)}</select>
+    <details><summary>Spalten</summary>{['size','modified','mode'].map(column => <label key={column}><input type="checkbox" checked={prefs.columns[column]} onChange={e => update({...prefs,columns:{...prefs.columns,[column]:e.target.checked}})} />{column === 'size' ? 'Größe':column === 'modified' ? 'Geändert':'Rechte'}</label>)}</details></div>
+    <div className="file-scroll"><table role="grid" aria-multiselectable="true" aria-label={`${side}: Dateiliste`}><thead><tr>{columns.map(([column,label]) => <th key={column} aria-sort={prefs.sort.column === column ? prefs.sort.direction === 'asc' ? 'ascending':'descending':'none'}><button onClick={() => order(column)}>{label}</button></th>)}</tr></thead><tbody>{entries.map(entry => <tr key={entry.id} tabIndex={entry.id === (entries.some(e => e.id === focused) ? focused:entries[0]?.id) ? 0:-1} onFocus={() => setFocused(entry.id)} className={selection.includes(entry.id) ? 'selected':''} aria-selected={selection.includes(entry.id)} onClick={event => choose(entry,event)} onDoubleClick={() => navigate(entry)} onKeyDown={event => keyboard(entry,event)}>{columns.map(([column]) => <td key={column}>{column === 'name' ? <><span className={`codicon codicon-${entry.kind === 'directory' ? 'folder':entry.kind === 'symlink' ? 'file-symlink-file':'file'}`} aria-hidden="true" /> {entry.name}{entry.kind === 'symlink' && <span> (Symlink → {entry.linkTarget})</span>}</>:column === 'modified' ? new Date(entry.modified).toLocaleString('de-DE'):column === 'mode' ? entry.mode.toString(8).padStart(3,'0'):entry.size.toLocaleString('de-DE')}</td>)}</tr>)}</tbody></table>
+      {model?.status === 'loading' && <p role="status">Dateiliste wird geladen …</p>}{model?.status === 'error' && <p role="alert">{model.error}</p>}{model?.status === 'disconnected' && <p>Nicht verbunden.</p>}{model?.status === 'ready' && !entries.length && <p>{prefs.filter ? 'Keine passenden Dateien.':'Dieser Ordner ist leer.'}</p>}
+    </div><footer>{entries.length} Einträge · {selection.length} ausgewählt</footer></section>;
 }
 export function BrowserApp({bridge,sessionId}) {
-  const [model,setModel]=useState(null);const send=(type,extra={}) => bridge.postMessage({version:1,type,id:crypto.randomUUID(),sessionId,...extra});
+  const [model,setModel]=useState(null);const [state,setState]=useState(() => browserViewState(bridge.getState?.()));const send=(type,extra={}) => bridge.postMessage({version:1,type,id:crypto.randomUUID(),sessionId,...extra});
   useEffect(() => {const receive=event => {if (browserResponse(event.data,sessionId)) setModel(event.data);};window.addEventListener('message',receive);send('ready');return () => window.removeEventListener('message',receive);},[sessionId]);
-  useEffect(() => {if (model) bridge.setState?.({version:1,paths:{local:model.local.path,remote:model.remote.path}});},[model]);
-  return <main className="commander"><header className="appbar"><h1>xScp</h1><span>Commander</span></header><div className="toolbar">{model?.connection.name ?? 'Lokal'} · {model?.connection.state ?? 'Laden'}<button disabled>Hochladen</button><button disabled>Herunterladen</button></div><div className="panes">{['local','remote'].map(side => <FilePane key={side} side={side} model={model?.[side]} send={send} />)}</div><footer className="status" role="status">Lokal: Desktop-Rechner · Transfers folgen in M3.</footer></main>;
+  useEffect(() => {bridge.setState?.({...state,paths:model ? {local:model.local.path,remote:model.remote.path}:state.paths});},[state,model]);
+  return <main className="commander"><header className="appbar"><h1>xScp</h1><span>Commander</span></header><div className="toolbar">{model?.connection.name ?? 'Lokal'} · {model?.connection.state ?? 'Laden'}<button disabled>Hochladen</button><button disabled>Herunterladen</button></div>
+    <div className="split-control"><label>Bereichsbreite<input type="range" min={30} max={70} value={state.split} onChange={e => setState({...state,split:Number(e.target.value)})} /></label></div>
+    <div className="panes" style={{'--local-width':`${state.split}%`}}>{sides.map(side => <FilePane key={side} side={side} model={model?.[side]} send={send} prefs={state.panes[side]} defaultHidden={model?.showHiddenFiles} update={value => setState(current => ({...current,panes:{...current.panes,[side]:value}}))} />)}</div><footer className="status" role="status">Lokal: Desktop-Rechner · Transfers folgen in M3.</footer></main>;
 }

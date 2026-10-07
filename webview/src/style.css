@@ -53,3 +53,7 @@ body.vscode-high-contrast input, body.vscode-high-contrast-light input {
 body.vscode-high-contrast .selected, body.vscode-high-contrast-light .selected {
   outline: 1px solid var(--vscode-contrastActiveBorder, var(--vscode-focusBorder)); outline-offset: -1px;
 }
+.pathbar input { flex: 1; min-width: 4rem; }
+.pane-options { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; padding: .5rem; border-bottom: 1px solid var(--vscode-panel-border); }
+.pane-options input:not([type='checkbox']), .pane-options select { max-width: 12rem; }
+.pane-options details label { display: block; }
