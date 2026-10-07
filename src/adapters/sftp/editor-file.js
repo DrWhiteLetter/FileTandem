@@ -6,7 +6,7 @@ const hash = data => createHash('sha256').update(data).digest('hex');
 const failure = message => Object.assign(new Error(message), { code: 'EDITOR_CONFLICT' });
 
 /** A bounded editor snapshot, separate from the streaming transfer engine. */
-export async function openEditorFile(session, path) {
+export async function openEditorFile(session, path, { closeSession = true } = {}) {
   if (typeof path !== 'string' || !path.startsWith('/') || path.includes('\0') || posix.normalize(path) !== path || path.endsWith('/')) throw new Error('Ungültiger absoluter Dateipfad.');
   const sftp = await new Promise((resolve, reject) => session.sftp((e, channel) => e ? reject(e) : resolve(channel)));
   sftp.on('error', () => {});
@@ -35,7 +35,8 @@ export async function openEditorFile(session, path) {
       return { data, metadata: before };
     } finally { await call('close', handle); }
   };
-  let reference = hash((await read()).data);
+  let reference;
+  try {reference = hash((await read()).data);} catch (e) {sftp.end();throw e;}
   let queue = Promise.resolve();
   return {
     metadata, read: async () => (await read()).data,
@@ -64,6 +65,6 @@ export async function openEditorFile(session, path) {
       queue = operation.catch(() => {});
       return operation;
     },
-    async close() { await queue; sftp.end(); await session.close(); },
+    async close() { await queue; sftp.end(); if (closeSession) await session.close(); },
   };
 }

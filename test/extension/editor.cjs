@@ -18,7 +18,20 @@ exports.run = async () => {
   const runtime = process.env.XSCP_EDITOR_RUNTIME;
   const server = () => { const p = spawnSync('ssh', ['-F', join(runtime, 'ssh_config'), 'xscp-fixture-remote', 'cat /data/editor-proof.txt'], { encoding: 'utf8' }); assert.equal(p.status, 0, p.stderr); return p.stdout; };
   const config = { host: '127.0.0.1', port: Number(process.env.XSCP_SSH_PORT_BASE) + 4, username: 'fixture', privateKey: await readFile(join(runtime, 'client_ed25519')) };
+  console.log('M5: opening proof');
   const uri = await api.editorProof.open(config, '/data/editor-proof.txt', { confirmUnknown: async () => true });
+  console.log('M5: profile save');
+  const profile=await api.profiles.save({version:1,id:'m5-editor',name:'M5 Editor',host:config.host,port:config.port,username:config.username,auth:'key',keyPath:join(runtime,'client_ed25519'),protocol:'sftp',localPath:runtime,remotePath:'/data'});
+  console.log('M5: profile connect');
+  await vscode.commands.executeCommand('xscp.connectProfile',profile.id);
+  console.log('M5: production open');
+  const production=await api.editor.open(profile,'/data/editor-proof.txt');
+  assert.equal(production.scheme,'xscp');
+  assert.equal((await vscode.workspace.fs.stat(production)).permissions,vscode.FilePermission.Readonly);
+  assert.ok((await vscode.workspace.fs.readDirectory(production.with({path:'/data'}))).some(([name]) => name==='editor-proof.txt'));
+  assert.equal(Buffer.from(await vscode.workspace.fs.readFile(production)).toString(),'editor-initial');
+  await assert.rejects(vscode.workspace.fs.writeFile(production,Buffer.from('blocked')));
+  await api.editor.close(production);
   const second = await api.editorProof.open(config, '/data/editor-proof.txt', { confirmUnknown: async () => true });
   try {
     assert.equal(uri.toString().includes('fixture'), false, 'No username/credentials in URI');

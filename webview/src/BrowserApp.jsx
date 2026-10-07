@@ -16,7 +16,7 @@ function FilePane({side,model,send,prefs,update,defaultHidden,connected}) {
     else {setAnchor(entry.id);setSelection(current => event.ctrlKey || event.metaKey ? current.includes(entry.id) ? current.filter(id => id !== entry.id):[...current,entry.id]:[entry.id]);}
     setFocused(entry.id);
   };
-  const navigate=entry => {if (['directory','symlink'].includes(entry.kind)) send('navigate',{side,path:entry.path});};
+  const navigate=entry => {if (['directory','symlink'].includes(entry.kind)) send('navigate',{side,path:entry.path});else if (entry.kind==='file') send('action',{side,action:'open',ids:[entry.id]});};
   const keyboard=(entry,event) => {
     const index=entries.findIndex(e => e.id === entry.id);const offsets={ArrowDown:Math.min(index+1,entries.length-1),ArrowUp:Math.max(index-1,0),Home:0,End:entries.length-1};
     if (Object.hasOwn(offsets,event.key)) {event.preventDefault();const target=entries[offsets[event.key]];choose(target,event);event.currentTarget.parentElement.children[offsets[event.key]].focus();}

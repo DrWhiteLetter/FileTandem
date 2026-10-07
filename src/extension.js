@@ -1,3 +1,4 @@
+import { registerSessionEditor } from './vscode/session-editor.js';
 let transferLifecycle;
 import { registerTransfers } from './vscode/transfers.js';
 import { registerBrowser } from './vscode/browser-panel.js';
@@ -35,6 +36,7 @@ export function activate(context) {
   profileUI.command('xscp.disconnectProfile',async id => {const p=typeof id === 'string' ? profileUI.profiles.get(id) : id?.profileId ? profileUI.profiles.get(id.profileId) : await profileUI.choose(); if (p) return profileUI.sessions.disconnect(p.id);});
   const transfers=registerTransfers(context,profileUI);transferLifecycle=transfers;
   const editorProof = registerEditorProvider(context, trust);
+  const editor=registerSessionEditor(context,profileUI);profileUI.editor=editor;
   registerManager(context);
   const manager = registerBrowser(context,profileUI);
   registerConnectionsView(context,profileUI);
@@ -44,11 +46,12 @@ export function activate(context) {
     profiles: {
       list:() => {profileUI.guard();return profileUI.profiles.list();},
       get:id => {profileUI.guard();return profileUI.profiles.get(id);},
-      save:async raw => {profileUI.guard();const result=await profileUI.profiles.save(raw);if (!profileUI.sessions.matches(result)) await profileUI.sessions.disconnect(result.id);profileUI.changed.fire();return result;},
+      save:async raw => {profileUI.guard();await profileUI.profiles.save(raw);const result=profileUI.profiles.get(raw.id);if (!profileUI.sessions.matches(result)) await profileUI.sessions.disconnect(result.id);profileUI.changed.fire();return result;},
       delete:async id => {profileUI.guard();await profileUI.profiles.delete(id);profileUI.changed.fire();},
       export:() => {profileUI.guard();return profileUI.profiles.export();},
     },
     editorProof,
+    editor,
     // Technical probe for authentication/installed-package acceptance; never
     // returns a reconnectable client, credentials or a transfer session.
     probeSshAuthentication: async (config, { signal, confirmUnknown = unknownHostKeyDialog(vscode.window) } = {}) => {

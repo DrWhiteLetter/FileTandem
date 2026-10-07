@@ -72,6 +72,7 @@ export function registerBrowser(context,profileUI) {
         if (browser.state.status !== 'ready') throw new Error('Bitte erst einen Ordner laden.');
         const selected=message.ids.map(id => browser.state.entries.find(entry => entry.id === id));
         if (selected.some(entry => !entry)) throw new Error('Auswahl ist veraltet; bitte aktualisieren.');
+        if (message.action==='open') {if (selected.length!==1 || selected[0].kind!=='file') throw new Error('Bitte eine reguläre Datei auswählen.');if (message.side==='local') await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(vscode.Uri.file(selected[0].path)));else await profileUI.editor.show(profile,selected[0].path,() => transfer({side:'remote',ids:message.ids,destination:'choose'}));return;}
         const parent=browser.state.path;const windows=message.side === 'local' && process.platform === 'win32';
         const options={windows,join:message.side === 'local' ? join:posix.join};
         const adapter=message.side === 'local' ? {
