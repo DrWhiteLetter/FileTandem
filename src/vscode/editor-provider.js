@@ -7,7 +7,7 @@ import { openEditorFile } from '../adapters/sftp/editor-file.js';
 import { executionLocation } from './local-proof.js';
 import { unknownHostKeyDialog } from './host-key-dialog.js';
 
-export function registerEditorProvider(context, trust) {
+export function registerEditorProvider(context, trust, currentEditor) {
   const entries = new Map();
   const changes = new vscode.EventEmitter();
   const guard = () => {
@@ -82,8 +82,8 @@ export function registerEditorProvider(context, trust) {
     try { await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(uri)); } catch (e) { await api.close(uri); throw e; }
   });
   const active = () => { const uri = vscode.window.activeTextEditor?.document.uri; if (!uri || uri.scheme !== 'xscp-remote') throw new Error('Zuerst eine xScp-Remote-Datei öffnen.'); return uri; };
-  command('xscp.enableEditorEditing', () => api.enable(active()));
-  command('xscp.lockEditorFile', () => api.lock(active()));
+  command('xscp.enableEditorEditing', () => vscode.window.activeTextEditor?.document.uri.scheme==='xscp' ? currentEditor.enable(vscode.window.activeTextEditor.document.uri):api.enable(active()));
+  command('xscp.lockEditorFile', () => vscode.window.activeTextEditor?.document.uri.scheme==='xscp' ? currentEditor.lock(vscode.window.activeTextEditor.document.uri):api.lock(active()));
   context.subscriptions.push(changes, status, vscode.workspace.registerFileSystemProvider('xscp-remote', provider, { isCaseSensitive: true }), vscode.window.onDidChangeActiveTextEditor(refresh), vscode.workspace.onDidCloseTextDocument(document => {
     if (document.uri.scheme === 'xscp-remote' && entries.has(document.uri.authority)) void api.close(document.uri);
   }), { dispose() { for (const e of entries.values()) { e.allowed = false; void e.file.close(); } entries.clear(); } });

@@ -35,8 +35,8 @@ export function activate(context) {
   profileUI.command('xscp.connectProfile',async id => {const p=typeof id === 'string' ? profileUI.profiles.get(id) : id?.profileId ? profileUI.profiles.get(id.profileId) : await profileUI.choose(); if (p) { await profileUI.connect(p); return profileUI.open(p); }});
   profileUI.command('xscp.disconnectProfile',async id => {const p=typeof id === 'string' ? profileUI.profiles.get(id) : id?.profileId ? profileUI.profiles.get(id.profileId) : await profileUI.choose(); if (p) return profileUI.sessions.disconnect(p.id);});
   const transfers=registerTransfers(context,profileUI);transferLifecycle=transfers;
-  const editorProof = registerEditorProvider(context, trust);
   const editor=registerSessionEditor(context,profileUI);profileUI.editor=editor;
+  const editorProof = registerEditorProvider(context, trust,editor);
   registerManager(context);
   const manager = registerBrowser(context,profileUI);
   registerConnectionsView(context,profileUI);

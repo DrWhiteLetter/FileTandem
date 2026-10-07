@@ -110,6 +110,10 @@
       {
         "command": "xscp.uploadFromExplorer",
         "title": "xScp: Auswahl hochladen"
+      },
+      {
+        "command": "xscp.newRemoteFile",
+        "title": "xScp: Neue Remote-Datei anlegen"
       }
     ],
     "viewsContainers": {

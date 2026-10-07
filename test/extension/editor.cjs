@@ -31,7 +31,23 @@ exports.run = async () => {
   assert.ok((await vscode.workspace.fs.readDirectory(production.with({path:'/data'}))).some(([name]) => name==='editor-proof.txt'));
   assert.equal(Buffer.from(await vscode.workspace.fs.readFile(production)).toString(),'editor-initial');
   await assert.rejects(vscode.workspace.fs.writeFile(production,Buffer.from('blocked')));
-  await api.editor.close(production);
+  const isolated=await api.editor.open(profile,'/data/editor-proof.txt');
+  assert.equal(await api.editor.enable(production,async () => false),false);
+  await api.editor.enable(production,async () => true);
+  await assert.rejects(api.editor.write(production,Buffer.from('no-replace'),{create:true,overwrite:false}));
+  await Promise.all([vscode.workspace.fs.writeFile(production,Buffer.from('first')),vscode.workspace.fs.writeFile(production,Buffer.from('editor-initial'))]);
+  assert.equal(server(),'editor-initial');
+  await assert.rejects(vscode.workspace.fs.writeFile(isolated,Buffer.from('other')));
+  const created=await api.editor.open(profile,'/data/m5-new-'+Date.now()+'.txt',{create:true});
+  await api.editor.enable(created,async () => true);
+  await assert.rejects(api.editor.write(created,Buffer.from('no-create'),{create:false,overwrite:true}));
+  await api.editor.write(created,Buffer.from('new'),{create:true,overwrite:false});
+  assert.equal(Buffer.from(await vscode.workspace.fs.readFile(created)).toString(),'new');
+  await assert.rejects(api.editor.write(created,Buffer.from('duplicate'),{create:true,overwrite:false}));
+  const remove=spawnSync('ssh',['-F',join(runtime,'ssh_config'),'xscp-fixture-remote','rm -- '+created.path]);assert.equal(remove.status,0);
+  api.editor.lock(production);await assert.rejects(vscode.workspace.fs.writeFile(production,Buffer.from('locked')));
+  await api.editor.close(created);await api.editor.close(isolated);await api.editor.close(production);
+  console.log('M5-01/02: production provider, opaque URI, directory read, grant isolation, serial saves, create/overwrite passed.');
   const second = await api.editorProof.open(config, '/data/editor-proof.txt', { confirmUnknown: async () => true });
   try {
     assert.equal(uri.toString().includes('fixture'), false, 'No username/credentials in URI');
