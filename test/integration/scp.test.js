@@ -182,3 +182,7 @@ test('production SCP owns its channel, streams empty/binary files and cancellati
  await writeFile(source,'');const empty=await streamScpFile(observed.session,{direction:'upload',local:source,remote:remote+'-empty'});assert.equal(empty.bytes,0);assert.equal((await streamScpFile(observed.session,{direction:'download',local:join(directory,'empty'),remote:remote+'-empty'})).sha256,empty.sha256);
  } finally {await withExec(session,`rm -f -- ${shellQuote(remote)} ${shellQuote(remote+'-abort')} ${shellQuote(remote+'-empty')}`,async ch => {ch.end();for await (const chunk of ch) void chunk;},{closeSession:false}).catch(() => {});await session.close();await rm(directory,{recursive:true,force:true});}
 });
+test('production GNU metadata probes capabilities and preserves shared SSH transport', {timeout:10000},async () => {
+ const {probeScp,statScp}=await import('../../src/adapters/scp/metadata.js');const session=await connection();try {assert.equal((await probeScp(session)).browse,true);const entries=await listScp(session,{path:'/data',closeSession:false});assert.ok(entries.some(e => e.name==='server-marker.txt'));assert.equal((await statScp(session,'/data/server-marker.txt')).kind,'file');await assert.rejects(statScp(session,'/data/nonexistent-'+randomUUID()),{code:'ENOENT'});} finally {await session.close();}
+ const restricted=await connection(1);try {await assert.rejects(probeScp(restricted),{code:'SCP_CAPABILITIES'});} finally {await restricted.close();}
+});

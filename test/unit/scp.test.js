@@ -55,3 +55,6 @@ test('SCP size/state limits allow files over 4 GiB and require exact completion'
  const reader=new ScpReader(Readable.from([Buffer.from('C0600 2 file\nx')]));await reader.header('file');await assert.rejects(reader.ack(),{code:'SCP_STATE'});assert.equal((await reader.readSome(2)).toString(),'x');await assert.rejects(reader.readSome(1),{code:'SCP_EOF'});
  const empty=new ScpReader(Readable.from([Buffer.from('C0600 0 file\n\0')]));await empty.header('file');await assert.rejects(empty.eof(),{code:'SCP_STATE'});await empty.ack();await empty.eof();
 });
+test('GNU listing rejects duplicate entries and oversized record counts',() => {
+ const record=['file','f','0','1','600','',''].join('\0');assert.throws(() => parseListing(Buffer.from(record+record)),{code:'INVALID_LISTING'});assert.throws(() => parseListing(Buffer.from(record.repeat(10001))),{code:'SCP_LIST_LIMIT'});
+});
