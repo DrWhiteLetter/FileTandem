@@ -45,6 +45,13 @@ exports.run = async () => {
   assert.equal(Buffer.from(await vscode.workspace.fs.readFile(created)).toString(),'new');
   await assert.rejects(api.editor.write(created,Buffer.from('duplicate'),{create:true,overwrite:false}));
   const remove=spawnSync('ssh',['-F',join(runtime,'ssh_config'),'xscp-fixture-remote','rm -- '+created.path]);assert.equal(remove.status,0);
+  const mutate=value => {const result=spawnSync('ssh',['-F',join(runtime,'ssh_config'),'xscp-fixture-remote','printf '+value+' > /data/editor-proof.txt']);assert.equal(result.status,0);};
+  mutate('external');await assert.rejects(vscode.workspace.fs.writeFile(production,Buffer.from('lost-update')));assert.equal(server(),'external');
+  const review=await api.editor.review(production);assert.equal((await vscode.workspace.openTextDocument(review)).getText(),'external');
+  mutate('newer');await assert.rejects(api.editor.acceptReview(production,async () => true));assert.equal(server(),'newer');
+  await api.editor.review(production);assert.equal(await api.editor.acceptReview(production,async () => false),false);
+  await api.editor.acceptReview(production,async () => true);await vscode.workspace.fs.writeFile(production,Buffer.from('editor-initial'));assert.equal(server(),'editor-initial');
+  console.log('M5-03: external conflict, exact reviewed snapshot and later change rejection passed.');
   api.editor.lock(production);await assert.rejects(vscode.workspace.fs.writeFile(production,Buffer.from('locked')));
   await api.editor.close(created);await api.editor.close(isolated);await api.editor.close(production);
   console.log('M5-01/02: production provider, opaque URI, directory read, grant isolation, serial saves, create/overwrite passed.');

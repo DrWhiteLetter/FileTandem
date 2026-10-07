@@ -33,6 +33,9 @@ export async function openEditorFile(session,path,{closeSession=true,allowCreate
   let queue=Promise.resolve();
   return {
     metadata:() => metadata(),read:async () => (await read()).data,
+    rebase(expected) {
+      const operation=queue.then(async () => {if (closed) throw new Error('Editor-Sitzung geschlossen.');const value=await current();if (!value || hash(value.data)!==hash(expected)) throw failure('Remote-Datei wurde seit dem Vergleich erneut geändert.');baseline=Buffer.from(value.data);reference=hash(value.data);});queue=operation.catch(() => {});return operation;
+    },
     baseline:() => baseline===null ? null:Buffer.from(baseline),
     write(data,allowed,{create=true,overwrite=true}={}) {
       const operation=queue.then(async () => {

@@ -114,6 +114,14 @@
       {
         "command": "xscp.newRemoteFile",
         "title": "xScp: Neue Remote-Datei anlegen"
+      },
+      {
+        "command": "xscp.reviewRemoteFile",
+        "title": "xScp: Aktuellen Serverstand ansehen"
+      },
+      {
+        "command": "xscp.acceptEditorReview",
+        "title": "xScp: Verglichenen Serverstand als Basis übernehmen"
       }
     ],
     "viewsContainers": {
@@ -187,6 +195,28 @@
         {
           "command": "xscp.uploadFromExplorer",
           "when": "resourceScheme == file",
+          "group": "xscp"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "xscp.enableEditorEditing",
+          "when": "resourceScheme == xscp || resourceScheme == xscp-review",
+          "group": "xscp"
+        },
+        {
+          "command": "xscp.lockEditorFile",
+          "when": "resourceScheme == xscp || resourceScheme == xscp-review",
+          "group": "xscp"
+        },
+        {
+          "command": "xscp.reviewRemoteFile",
+          "when": "resourceScheme == xscp || resourceScheme == xscp-review",
+          "group": "xscp"
+        },
+        {
+          "command": "xscp.acceptEditorReview",
+          "when": "resourceScheme == xscp || resourceScheme == xscp-review",
           "group": "xscp"
         }
       ]
