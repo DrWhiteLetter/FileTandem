@@ -1,3 +1,4 @@
+import { credentialProvider } from './vscode/credentials.js';
 import { registerProfiles } from './vscode/profile-commands.js';
 import * as vscode from 'vscode';
 import { requireDesktopAccess } from './application/access-policy.js';
@@ -13,6 +14,7 @@ import { executionLocation, registerLocalProof, verifyLocalFile } from './vscode
 /** @param {import('vscode').ExtensionContext} context */
 export function activate(context) {
   const profileUI=registerProfiles(context);
+  profileUI.credentials=credentialProvider(context,profileUI);
   registerLocalProof(context);
   registerConnectionsView(context);
   const { trust } = registerHostKeyProof(context);

@@ -65,6 +65,10 @@
       {
         "command": "xscp.exportProfiles",
         "title": "xScp: Profile ohne Geheimnisse exportieren"
+      },
+      {
+        "command": "xscp.forgetCredentials",
+        "title": "xScp: Gespeicherte Anmeldung vergessen"
       }
     ],
     "viewsContainers": {
