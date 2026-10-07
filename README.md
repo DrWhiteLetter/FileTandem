@@ -136,3 +136,7 @@ Der Remote-Test verwendet die separate Debian-Fixture auf Port `22224` und ein i
 ## Abschluss M0 und weiterer Aufwand
 
 [M0-09](docs/nachweise/M0-09.md) schließt alle neun technischen Nachweise ab. `ssh2` und beide Protokollwege bleiben gewählt; VS-Code-Untergrenze, Serverfähigkeiten, Paketstrategie und Ersatzwege sind verbindlich dokumentiert. Nächster Schritt ist M1-01. Restaufwand M1–M6: 31–46 Personenarbeitstage, mit Reserve 38–56; [Begründung](docs/entscheidungen.md#d10--aufwand-und-übergang-in-m1). M0-Abschluss ist keine Freigabe der noch fehlenden Produktmodule oder der ungeprüften Plattformen.
+
+## Qualitätsbefehle (M1-01)
+
+`npm run quality` führt ESLint, automatische JavaScript-Syntaxprüfung, Unit-Tests und beide Builds aus. Einzeln: `npm run lint`, `npm run check`, `npm run test:unit`, `npm run build`. Domain unter `src/domain` bleibt frei von Runtime-/UI-Bibliotheken; Application koordiniert injizierte Adapter, VS-Code-Integration liegt unter `src/vscode`. JSX bleibt JavaScript ohne TypeScript-Compiler.

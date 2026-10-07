@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { probeAuthentication } from './application/authentication-probe.js';
 import { registerEditorProvider } from './vscode/editor-provider.js';
 import { randomBytes } from 'node:crypto';
 import { connectSsh } from './adapters/ssh/connect.js';
@@ -43,9 +44,7 @@ export function activate(context) {
     // returns a reconnectable client, credentials or a transfer session.
     probeSshAuthentication: async (config, { signal, confirmUnknown = unknownHostKeyDialog(vscode.window) } = {}) => {
       if (!executionLocation(context).local || !vscode.workspace.isTrusted) throw new Error('SSH-Nachweis benötigt den lokalen, vertrauenswürdigen UI Extension Host.');
-      const session = await connectSsh(config, { trust, signal, confirmUnknown });
-      try { return { endpoint: session.endpoint, hostKey: session.hostKey }; }
-      finally { await session.close(); }
+      return probeAuthentication(connectSsh, config, { trust, signal, confirmUnknown });
     },
     executionLocation: () => executionLocation(context),
     verifyLocalFile: uri => verifyLocalFile(context, uri),
