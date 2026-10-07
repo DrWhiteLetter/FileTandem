@@ -22,7 +22,7 @@ try {
   await writeFile(join(user,'User','settings.json'),JSON.stringify({'window.restoreWindows':'none','workbench.startupEditor':'none','security.workspace.trust.emptyWindow':true}));
   await writeFile(marker,content,{mode:0o600});
   await writeFile(join(harness,'package.json'),JSON.stringify({name:'browser-harness',publisher:'xscp-test',version:'0.0.1',engines:{vscode:'^1.140.0'},main:'./main.cjs',activationEvents:['onStartupFinished'],extensionKind:['ui']}));
-  await copyFile(join(source,'smoke.cjs'),join(harness,'smoke.cjs'));await copyFile(join(source,'browser.cjs'),join(harness,'browser.cjs'));
+  await copyFile(join(source,'transfers.cjs'),join(harness,'transfers.cjs'));await copyFile(join(source,'smoke.cjs'),join(harness,'smoke.cjs'));await copyFile(join(source,'browser.cjs'),join(harness,'browser.cjs'));
   await writeFile(join(harness,'main.cjs'),`exports.activate=async () => { const fs=require('node:fs/promises');try {await require('./smoke.cjs').run();await fs.writeFile(process.env.XSCP_TEST_RESULT,JSON.stringify({ok:true}));} catch(error) {await fs.writeFile(process.env.XSCP_TEST_RESULT,JSON.stringify({ok:false,error:error.stack}));} };`);
   const installed=spawnSync(cli,['--user-data-dir',user,'--extensions-dir',extensions,'--install-extension',vsix,'--force'],{env:environment,encoding:'utf8',timeout:120000,shell:process.platform === 'win32'});
   if (installed.error || installed.status !== 0) throw installed.error ?? new Error(installed.stderr);

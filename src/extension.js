@@ -1,3 +1,4 @@
+let transferLifecycle;
 import { registerTransfers } from './vscode/transfers.js';
 import { registerBrowser } from './vscode/browser-panel.js';
 import { SessionManager } from './application/session-manager.js';
@@ -32,7 +33,7 @@ export function activate(context) {
   };
   profileUI.command('xscp.connectProfile',async id => {const p=typeof id === 'string' ? profileUI.profiles.get(id) : id?.profileId ? profileUI.profiles.get(id.profileId) : await profileUI.choose(); if (p) { await profileUI.connect(p); return profileUI.open(p); }});
   profileUI.command('xscp.disconnectProfile',async id => {const p=typeof id === 'string' ? profileUI.profiles.get(id) : id?.profileId ? profileUI.profiles.get(id.profileId) : await profileUI.choose(); if (p) return profileUI.sessions.disconnect(p.id);});
-  const transfers=registerTransfers(context,profileUI);
+  const transfers=registerTransfers(context,profileUI);transferLifecycle=transfers;
   const editorProof = registerEditorProvider(context, trust);
   registerManager(context);
   const manager = registerBrowser(context,profileUI);
@@ -58,3 +59,5 @@ export function activate(context) {
     verifyLocalFile: uri => verifyLocalFile(context, uri),
   };
 }
+
+export async function deactivate() {await transferLifecycle?.flush();}

@@ -5,12 +5,12 @@ import { TransferQueue } from './transfer-queue.js';import { discoverTree } from
 import { serverIdentity } from '../adapters/ssh/host-keys.js';
 export class TransferEngine {
   constructor({sessions,profiles,choose,guard=() => {},onChange=() => {}}) {
-    this.sessions=sessions;this.profiles=profiles;this.guard=guard;this.local=new LocalFiles();this.conflicts=new ConflictRules(choose);
+    this.ready=Promise.resolve();this.sessions=sessions;this.profiles=profiles;this.guard=guard;this.local=new LocalFiles();this.conflicts=new ConflictRules(choose);
     this.queue=new TransferQueue({run:(j,s,p) => this.run(j,s,p),onChange});
   }
   key(job,path) {if (job.direction === 'upload') return 'remote:'+job.server+':'+posix.normalize(path);const local=resolve(path).replaceAll('\\','/');return 'local:'+(process.platform === 'win32' ? local.toLowerCase():local);}
   async submit(profileId,direction,paths,destination) {
-    this.guard();if (!['upload','download'].includes(direction) || !Array.isArray(paths) || !paths.length || paths.length > 1000) throw new Error('Ungültige Transferauswahl.');
+    await this.ready;this.guard();if (!['upload','download'].includes(direction) || !Array.isArray(paths) || !paths.length || paths.length > 1000) throw new Error('Ungültige Transferauswahl.');
     paths=paths.map(direction === 'upload' ? localPath:remotePath);destination=(direction === 'upload' ? remotePath:localPath)(destination);
     const profile=this.profiles.get(profileId);if (profile.protocol !== 'sftp') throw new Error('Transfers sind in M3 nur über SFTP verfügbar.');
     const server=serverIdentity(profile.host,profile.port).id;const transport=this.sessions.transport(profileId);if (transport.endpoint?.id && transport.endpoint.id !== server) throw new Error('Profil wurde geändert; bitte erneut verbinden.');const files=await RemoteFiles.open(transport);const batchId=randomUUID(),ids=[];
@@ -29,7 +29,8 @@ export class TransferEngine {
   async run(job,signal,onProgress) {
     this.guard();signal.throwIfAborted();if (job.kind === 'error') throw Object.assign(new Error(),{publicMessage:'Transferbaum konnte nicht vollständig entdeckt werden.'});
     if (['symlink','other'].includes(job.kind)) return {skipped:true,reason:'Symlink/Spezialdatei übersprungen.'};
-    const session=this.sessions.transport(job.profileId);const files=await RemoteFiles.open(session,{signal});
+    const profile=this.profiles.get(job.profileId);if (profile.protocol !== 'sftp' || serverIdentity(profile.host,profile.port).id !== job.server) throw Object.assign(new Error(),{publicMessage:'Profilziel wurde geändert; neuen Auftrag anlegen.'});
+    const session=this.sessions.transport(job.profileId);if (session.endpoint?.id && session.endpoint.id !== job.server) throw new Error('Verbindung gehört zu einem anderen Server.');const files=await RemoteFiles.open(session,{signal});
     try {
       const target=job.direction === 'upload' ? remoteTarget(files):localTarget;
       const parent=job.parentId && this.queue.list().find(j => j.id === job.parentId);

@@ -3,6 +3,7 @@ export class TransferQueue {
   #jobs=new Map();#active=new Map();#scheduled=false;#disposed=false;#progressAt=0;
   constructor({run,onChange=() => {},limit=2}) {this.run=run;this.onChange=onChange;this.limit=limit;this.paused=false;}
   list(profileId) {return [...this.#jobs.values()].filter(j => !profileId || j.profileId === profileId).map(j => ({...j}));}
+  restore(jobs) {if (this.#jobs.size) throw new Error('Queue bereits initialisiert.');for (const job of jobs) this.#jobs.set(job.id,{...job});this.#notify();}
   batches() {return [...new Set(this.list().map(j => j.batchId))].map(id => ({id,state:batchState(this.list().filter(j => j.batchId === id))}));}
   add(raw) {
     if (this.#disposed || this.#jobs.has(raw.id) || !['upload','download'].includes(raw.direction) || ![raw.id,raw.batchId,raw.profileId,raw.server,raw.source,raw.target,raw.lockKey].every(v => typeof v === 'string' && v)) throw new Error('Ungültiger Transferauftrag.');
@@ -25,7 +26,7 @@ export class TransferQueue {
         this.#jobs.set(job.id,{...current,bytes,rate:bytes/Math.max(.001,(Date.now()-current.started)/1000)});if (Date.now()-this.#progressAt >= 100) {this.#progressAt=Date.now();this.#notify();}
       })).then(result => {
         const current=this.#jobs.get(job.id);this.#jobs.set(job.id,{...transition(current,controller.signal.aborted && !result?.committed ? 'cancelled':result?.skipped ? 'skipped':'completed'),...result, state:controller.signal.aborted && !result?.committed ? 'cancelled':result?.skipped ? 'skipped':'completed'});
-      },error => {const current=this.#jobs.get(job.id);this.#jobs.set(job.id,{...transition(current,controller.signal.aborted || error.code === 'USER_CANCELLED' ? 'cancelled':'failed'),error:controller.signal.aborted ? 'Abgebrochen.':error.publicMessage ?? 'Transfer fehlgeschlagen; Quelle/Ziel und Verbindung prüfen.'});})
+      },error => {const current=this.#jobs.get(job.id);this.#jobs.set(job.id,{...transition(current,this.#disposed ? 'interrupted':controller.signal.aborted || error.code === 'USER_CANCELLED' ? 'cancelled':'failed'),error:controller.signal.aborted ? 'Abgebrochen.':error.publicMessage ?? 'Transfer fehlgeschlagen; Quelle/Ziel und Verbindung prüfen.'});})
         .finally(() => {this.#active.delete(job.id);this.#notify();this.#schedule();});
     }
   }
@@ -52,5 +53,5 @@ export class TransferQueue {
     try {return await action();} finally {active.extra=active.extra.filter(value => value !== key);}
   }
   async idle() {while (this.list().some(j => !TERMINAL.includes(j.state))) await new Promise(resolve => setTimeout(resolve,10));}
-  dispose() {this.#disposed=true;for (const a of this.#active.values()) a.controller.abort();for (const [id,j] of this.#jobs) if (j.state === 'queued') this.#jobs.set(id,transition(j,'cancelled'));}
+  dispose() {this.#disposed=true;for (const a of this.#active.values()) a.controller.abort();for (const [id,j] of this.#jobs) if (j.state === 'queued') this.#jobs.set(id,transition(j,'interrupted'));this.#notify();}
 }
