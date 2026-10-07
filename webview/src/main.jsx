@@ -1,19 +1,21 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './style.css';
+import { validateResponse } from '../../src/shared/messages.js';
 
 const vscode = acquireVsCodeApi();
+const sessionId = document.querySelector('meta[name="xscp-session"]').content;
+const send = (type, extra = {}) => vscode.postMessage({ version: 1, type, id: crypto.randomUUID(), sessionId, ...extra });
 
 function App() {
   const [location, setLocation] = useState(null);
   useEffect(() => {
     const receive = event => {
       const message = event.data;
-      if (message?.type === 'executionLocation' && typeof message.local === 'boolean'
-        && typeof message.remoteWindow === 'boolean') setLocation(message);
+      if (validateResponse(message,sessionId)) setLocation(message.location);
     };
     window.addEventListener('message', receive);
-    vscode.postMessage({ type: 'ready' });
+    send('ready');
     return () => window.removeEventListener('message', receive);
   }, []);
   return <main>

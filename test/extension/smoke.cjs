@@ -47,5 +47,8 @@ exports.run = async () => {
   }
   assert.ok(hasTab(),
     'Startbefehl öffnet einen Webview-Tab');
-  console.log('M0-01: Aktivierung und Webview-Start erfolgreich.');
+  const readyDeadline = Date.now() + 10000;
+  while (api.manager.status().handshakes === 0 && Date.now() < readyDeadline) await new Promise(resolve => setTimeout(resolve,50));
+  assert.ok(api.manager.status().handshakes > 0, 'Actual nonce-protected webview script sends a validated ready handshake');
+  console.log('M1-03: tatsächlicher Webview-Handshake und Hostaktivierung erfolgreich.');
 };

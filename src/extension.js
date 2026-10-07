@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
-import { hasDesktopAccess, requireDesktopAccess } from './application/access-policy.js';
+import { requireDesktopAccess } from './application/access-policy.js';
 import { registerConnectionsView } from './vscode/connections-view.js';
 import { probeAuthentication } from './application/authentication-probe.js';
 import { registerEditorProvider } from './vscode/editor-provider.js';
-import { randomBytes } from 'node:crypto';
+import { registerManager } from './vscode/manager-panel.js';
 import { connectSsh } from './adapters/ssh/connect.js';
 import { unknownHostKeyDialog } from './vscode/host-key-dialog.js';
 import { registerHostKeyProof } from './vscode/host-key-proof.js';
@@ -15,33 +15,9 @@ export function activate(context) {
   registerConnectionsView(context);
   const { trust } = registerHostKeyProof(context);
   const editorProof = registerEditorProvider(context, trust);
-  context.subscriptions.push(vscode.commands.registerCommand('xscp.openManager', () => {
-    const location = executionLocation(context);
-    if (!hasDesktopAccess(location, vscode.workspace.isTrusted)) {
-      void vscode.window.showErrorMessage('xScp benötigt einen vertrauenswürdigen Kontext und den lokalen UI Extension Host. Bitte lokal installieren und remote.extensionKind prüfen.');
-      return;
-    }
-    const assets = vscode.Uri.joinPath(context.extensionUri, 'dist');
-    const panel = vscode.window.createWebviewPanel('xscp.manager', 'xScp',
-      vscode.ViewColumn.One, { enableScripts: true, localResourceRoots: [assets] });
-    context.subscriptions.push(panel.webview.onDidReceiveMessage(message => {
-      if (message && message.type === 'ready') {
-        void panel.webview.postMessage({ type: 'executionLocation', local: location.local,
-          remoteWindow: location.windowRemoteName !== null });
-      }
-    }));
-    const script = panel.webview.asWebviewUri(vscode.Uri.joinPath(assets, 'webview.js'));
-    const style = panel.webview.asWebviewUri(vscode.Uri.joinPath(assets, 'webview.css'));
-    const nonce = randomBytes(24).toString('base64');
-    panel.webview.html = `<!DOCTYPE html>
-<html lang="de"><head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${panel.webview.cspSource}; script-src 'nonce-${nonce}';">
-<link rel="stylesheet" href="${style}"><title>xScp</title></head>
-<body><div id="root"></div><script nonce="${nonce}" src="${script}"></script></body></html>`;
-    context.subscriptions.push(panel);
-  }));
+  const manager = registerManager(context);
   return {
+    manager,
     editorProof,
     // Technical probe for authentication/installed-package acceptance; never
     // returns a reconnectable client, credentials or a transfer session.
