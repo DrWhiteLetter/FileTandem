@@ -26,8 +26,8 @@ export class RemoteFiles {
     });
   }
   async stat(value) {const path=remotePath(value);const attrs=await this.call('lstat',path);return entry(path,attrs,attrs.isSymbolicLink() ? await this.call('readlink',path) : '');}
-  async list(value) {
-    const path=remotePath(value);const attrs=await this.call('stat',path);if (!attrs.isDirectory()) throw Object.assign(new Error('Kein Ordner.'),{code:'ENOTDIR'});
+  async list(value,{follow=true}={}) {
+    const path=remotePath(value);const attrs=await this.call(follow ? 'stat':'lstat',path);if (!attrs.isDirectory()) throw Object.assign(new Error('Kein Ordner.'),{code:'ENOTDIR'});
     const values=await this.call('readdir',path);if (values.length > 10000) throw new Error('Ordner enthält mehr als 10.000 Einträge.');
     const entries=[];let next=0;
     await Promise.all(Array.from({length:Math.min(16,values.length)},async () => {while (next < values.length) {
@@ -37,6 +37,8 @@ export class RemoteFiles {
       entries.push(entry(full,value.attrs,target));
     }}));return {path,entries};
   }
+  listNoFollow(path) {return this.list(path,{follow:false});}
+  async chmod(path,mode) {if ((await this.stat(path)).kind === 'symlink') throw new Error('Symlink-Rechte werden nicht geändert.');return this.call('chmod',remotePath(path),mode);}
   mkdir(path) {return this.call('mkdir',remotePath(path),{mode:0o755});}
   rename(source,target) {return this.call('rename',remotePath(source),remotePath(target));}
   close() {this.channel.end();}

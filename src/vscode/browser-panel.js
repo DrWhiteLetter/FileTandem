@@ -1,5 +1,9 @@
 import * as vscode from 'vscode';
 import { randomUUID,randomBytes } from 'node:crypto';
+import { planRemoteDelete,executeRemoteDelete } from '../application/remote-delete.js';
+import { trashLocal } from './local-operations.js';
+import { hasDesktopAccess } from '../application/access-policy.js';
+import { executionLocation } from './local-proof.js';
 import { createFolder,renameEntry } from '../application/file-operations.js';
 import { fileName } from '../domain/file-name.js';
 import { posix,join } from 'node:path';
@@ -41,10 +45,33 @@ export function registerBrowser(context,profileUI) {
         const options={windows,join:message.side === 'local' ? join:posix.join};
         const adapter=message.side === 'local' ? {
           stat:path => files.stat(vscode.Uri.file(localPath(path))),
-          mkdir:path => vscode.workspace.fs.createDirectory(vscode.Uri.file(localPath(path))),
+          mkdir:path => files.mkdir(path),
+          chmod:(path,mode) => files.chmod(path,mode),
           rename:(source,target) => vscode.workspace.fs.rename(vscode.Uri.file(localPath(source)),vscode.Uri.file(localPath(target)),{overwrite:false}),
         } : await service();
-        if (message.action === 'rename' && selected.length !== 1) throw new Error('Bitte genau einen Eintrag zum Umbenennen auswählen.');
+        if (['delete','properties','chmod'].includes(message.action)) {
+          if (!selected.length || (message.action !== 'delete' && selected.length !== 1)) throw new Error('Bitte passende Einträge auswählen.');
+          const allowed=() => alive && browser.state.path === parent && hasDesktopAccess(executionLocation(context),vscode.workspace.isTrusted);
+          if (message.action === 'properties') {
+            const info=await adapter.stat(selected[0].path);
+            await vscode.window.showInformationMessage(`Eigenschaften: ${info.name}`,{modal:true,detail:`Pfad: ${info.path}\nTyp: ${info.kind}\nGröße: ${info.size} Bytes\nGeändert: ${new Date(info.modified).toLocaleString()}\nRechte: ${info.mode.toString(8).padStart(3,'0')}${info.kind === 'symlink' ? `\nLinkziel: ${info.linkTarget}`:''}`},'Schließen');return;
+          }
+          if (message.action === 'chmod') {
+            if (selected[0].kind === 'symlink') throw new Error('Symlink-Rechte werden nicht geändert.');
+            const mode=await vscode.window.showInputBox({title:`xScp: Rechte für ${selected[0].name} (oktal, z. B. 644)`,value:selected[0].mode.toString(8).padStart(3,'0'),validateInput:value => /^[0-7]{3}$/.test(value) ? undefined:'Drei Oktalziffern 000–777 eingeben.'});
+            if (mode === undefined) return;if (!allowed()) throw new Error('Freigabe ungültig.');if (!/^[0-7]{3}$/.test(mode)) throw new Error('Ungültige Rechte.');await adapter.chmod(selected[0].path,parseInt(mode,8));
+          } else {
+            const plan=message.side === 'remote' ? await planRemoteDelete(adapter,selected.map(e => e.path)) : undefined;
+            const choice=message.side === 'remote' ? 'Endgültig löschen':'In Papierkorb verschieben';
+            const count=plan?.length ?? selected.length;
+            const confirmed=await vscode.window.showWarningMessage(message.side === 'remote' ? `Remote: ${count} Einträge endgültig löschen?`:`Lokal: ${count} ausgewählte Einträge in den Papierkorb verschieben?`,{modal:true,detail:`Ordner: ${parent}\n${selected.slice(0,10).map(e => e.name).join('\n')}${selected.length > 10 ? '\n…':''}\n${message.side === 'remote' ? 'Unterordner eingeschlossen; Symlink-Ziele werden nicht gelöscht.':'Unterordner eingeschlossen. Bei Papierkorbfehler wird nicht endgültig gelöscht.'}`},choice);
+            if (confirmed !== choice) return;if (!allowed()) throw new Error('Freigabe ungültig.');
+            try {if (plan) await executeRemoteDelete(adapter,plan,allowed);else await trashLocal(selected.map(e => e.path),allowed);}
+            finally {if (alive) await browser.refresh();}
+          }
+          await browser.refresh();return;
+        }
+        if (message.action === 'rename'  && selected.length !== 1) throw new Error('Bitte genau einen Eintrag zum Umbenennen auswählen.');
         const name=await vscode.window.showInputBox({title:message.action === 'mkdir' ? 'xScp: Neuen Ordner anlegen':'xScp: Eintrag umbenennen',value:message.action === 'rename' ? selected[0].name:'',ignoreFocusOut:true,validateInput:value => {try {fileName(value,windows);return undefined;} catch(error) {return error.message;}}});
         if (name === undefined) return;
         profileUI.guard();if (!alive || browser.state.path !== parent) throw new Error('Ordner wurde während des Dialogs gewechselt.');

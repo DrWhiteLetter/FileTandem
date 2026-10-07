@@ -11,6 +11,7 @@ test('local browser without workspace: stat, symlinks, history, invalid URIs and
     await mkdir(join(root,'child'));await writeFile(join(root,'a.txt'),'a');await symlink('a.txt',join(root,'link'));
     const files=new LocalFiles();const browser=new DirectoryBrowser({start:root,parent:value => join(value,'..'),list:path => files.list(uri(path))});
     await browser.refresh();assert.equal(browser.state.entries.find(e => e.name === 'link').kind,'symlink');assert.equal((await files.stat(uri(join(root,'a.txt')))).size,1);
+    await files.chmod(join(root,'a.txt'),0o640);assert.equal((await files.stat(uri(join(root,'a.txt')))).mode,0o640);await assert.rejects(files.chmod(join(root,'link'),0o600));
     await browser.navigate(join(root,'child'));await browser.back();assert.equal(browser.state.path,root);await browser.forward();assert.ok(browser.state.path.endsWith('/child'));
     await browser.navigate(join(root,'missing'));assert.equal(browser.state.status,'error');assert.match(browser.state.error,/nicht gefunden/);
     assert.throws(() => localFileUri({scheme:'vscode-remote',fsPath:root}),/file:/);

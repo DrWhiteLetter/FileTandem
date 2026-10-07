@@ -1,3 +1,4 @@
+import { planRemoteDelete,executeRemoteDelete } from '../../src/application/remote-delete.js';
 import { randomUUID } from 'node:crypto';
 import { createFolder,renameEntry } from '../../src/application/file-operations.js';
 import { posix } from 'node:path';
@@ -34,6 +35,14 @@ test('real SFTP mkdir and rename preserve conflicts and special-character names'
     await createFolder(files,root,'existing',{join:posix.join});
     await assert.rejects(renameEntry(files,`${root}/neu`,root,'existing',{join:posix.join}),/existiert/);
     assert.equal((await files.stat(`${root}/neu`)).kind,'directory');
+    const marker=await files.call('readFile','/data/server-marker.txt');
+    await files.call('writeFile',`${root}/neu/file.txt`,Buffer.from('own-test'));
+    await files.call('symlink','/data',`${root}/outside-link`);
+    await files.chmod(`${root}/neu/file.txt`,0o640);assert.equal((await files.stat(`${root}/neu/file.txt`)).mode,0o640);
+    const plan=await planRemoteDelete(files,[root]);assert.ok(plan.some(e => e.kind === 'symlink'));
+    await executeRemoteDelete(files,plan,() => true);
+    assert.deepEqual(await files.call('readFile','/data/server-marker.txt'),marker);
+    await assert.rejects(files.stat(root));
   } finally {
     for (const child of ['neu','existing',"Grüße '2026' &"]) await files.call('rmdir',`${root}/${child}`).catch(() => {});
     await files.call('rmdir',root).catch(() => {});files.close();await session.close();

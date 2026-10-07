@@ -1,4 +1,5 @@
-import { readdir,lstat,stat,readlink } from 'node:fs/promises';
+import { readdir,lstat,stat,readlink,mkdir,open } from 'node:fs/promises';
+import { constants } from 'node:fs';
 import { isAbsolute,resolve,join,dirname,basename } from 'node:path';
 import { homedir } from 'node:os';
 export function localPath(value) {
@@ -26,6 +27,12 @@ export class LocalFiles {
       }
     }));
     return {path,entries};
+  }
+  mkdir(path) {return mkdir(localPath(path));}
+  async chmod(path,mode) {
+    if (process.platform === 'win32') throw new Error('POSIX-Rechte werden unter Windows nicht unterstützt.');
+    const handle=await open(localPath(path),constants.O_RDONLY | constants.O_NOFOLLOW);
+    try {await handle.chmod(mode);} finally {await handle.close();}
   }
   async stat(uri) {const path=localFileUri(uri); const info=await lstat(path); return localEntry(path,info,info.isSymbolicLink() ? await readlink(path) : '');}
 }
