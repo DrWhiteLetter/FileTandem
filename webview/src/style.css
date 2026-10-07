@@ -1,0 +1,8 @@
+body {
+  color: var(--vscode-foreground);
+  background: var(--vscode-editor-background);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+}
+main { max-width: 48rem; margin: 2rem auto; padding: 0 1rem; }
+h1 { font-size: 1.6rem; }

@@ -1,0 +1,47 @@
+{
+  "name": "xscp",
+  "displayName": "xScp",
+  "description": "Entwicklungsprototyp eines SFTP-/SCP-Dateimanagers f\u00fcr VS Code Desktop.",
+  "version": "0.0.1",
+  "private": true,
+  "publisher": "xscp-dev",
+  "type": "module",
+  "engines": {
+    "vscode": "^1.139.0",
+    "node": ">=22.13.1"
+  },
+  "main": "./dist/extension.cjs",
+  "categories": [
+    "Other"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "xscp.openManager",
+        "title": "xScp: Dateimanager \u00f6ffnen"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "watch": "node scripts/build.mjs --watch",
+    "start": "npm run build && node scripts/start.mjs",
+    "check": "node --check src/extension.js && node --check scripts/build.mjs && node --check scripts/start.mjs && node --check scripts/test-extension.mjs",
+    "test": "npm run build && node scripts/test-extension.mjs",
+    "vscode:prepublish": "npm run build"
+  },
+  "dependencies": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "@types/vscode": "1.138.0",
+    "@vscode/test-electron": "3.1.0"
+  }
+}

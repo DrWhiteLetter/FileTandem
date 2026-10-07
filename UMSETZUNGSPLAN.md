@@ -1,6 +1,8 @@
 # xScp – VS-Code-Erweiterung: Recherche und Umsetzungsplan
 
-Stand: 6. Oktober 2026. Verbindliche Produktrichtung: VS-Code-Desktop-Erweiterung, SFTP als Standard und echtes SCP als zusätzliche Übertragungsart. Native macOS-Gestaltung und Swift/AppKit entfallen. xScp bleibt ein ungeklärter Arbeitstitel. Es existiert noch kein Anwendungscode. Der frühere Plan liegt unter `docs/archiv/UMSETZUNGSPLAN-native-macos.md` und ist abgelöst.
+Stand: 6. Oktober 2026. Verbindliche Produktrichtung: VS-Code-Desktop-Erweiterung, SFTP als Standard und echtes SCP als zusätzliche Übertragungsart. Native macOS-Gestaltung und Swift/AppKit entfallen. xScp bleibt ein ungeklärter Arbeitstitel. M0-01 liefert seit dem 7. Oktober 2026 das startbare Entwicklungsgrundgerüst; Dateiübertragungen sind noch nicht implementiert. Der frühere Plan liegt unter `docs/archiv/UMSETZUNGSPLAN-native-macos.md` und ist abgelöst.
+
+Die konkrete Arbeitsliste mit einzelnen abhakbaren Aufgaben steht unter [Meilensteine zum Abarbeiten](docs/meilensteine/README.md).
 
 ## 1. Ziel und Produktentscheidungen
 
