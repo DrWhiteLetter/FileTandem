@@ -1,10 +1,10 @@
 # xScp
 
-Entwicklungsprototyp einer VS-Code-Desktop-Erweiterung für SFTP und SCP. M0-01 liefert den Startbefehl und ein minimales React-Webview; M0-05/M0-06 weisen SFTP-Streaming und echtes SCP in den Adaptern nach. Die Dateimanager-Oberfläche bietet noch keine Transfers.
+Entwicklungsprototyp einer VS-Code-Desktop-Erweiterung für SFTP und SCP. M0 ist abgeschlossen: Start-Webview, SFTP-Streaming, echtes SCP, Authentifizierung und abgesicherter SFTP-Editor sind nachgewiesen. Die Dateimanager-Oberfläche bietet noch keine Transfers.
 
 ## Entwicklung
 
-Voraussetzungen: Node.js ab 22.13.1 mit npm sowie VS Code Desktop 1.139.1 (M0-01) bzw. 1.140.0 (M0-02 lokal). Die vorläufige Manifest-Untergrenze 1.139.0 wird in M0-09 überprüft. macOS ist die zuerst geprüfte Plattform.
+Voraussetzungen: Node.js ab 22.13.1 mit npm sowie **VS Code Desktop ab 1.140.0**. macOS/Apple Silicon ist geprüft; Windows/Linux sind noch nicht abgenommen. Anwender der späteren VSIX benötigen kein separat installiertes Node/npm. [Technische Entscheidungen](docs/entscheidungen.md) · [Kompatibilität](docs/kompatibilitaet.md).
 
 ```sh
 # Mit nvm, falls vorhanden:
@@ -21,7 +21,7 @@ Im Extension Development Host die Befehlspalette öffnen und **xScp: Dateimanage
 ```sh
 npm run watch  # beide Bundles bei Änderungen neu bauen; Host anschließend neu laden
 npm run check  # JavaScript-Syntax prüfen
-npm test       # echter Extension-Host-Smoke-Test; lädt VS Code 1.139.1 bei Bedarf
+npm test       # echter Extension-Host-Smoke-Test; lädt die geprüfte Mindestversion VS Code 1.140.0 bei Bedarf
 ```
 
 Für Tests mit einer vorhandenen Installation kann `VSCODE_TEST_EXECUTABLE` auf die VS-Code-Programmdatei gesetzt werden (macOS: `/Applications/Visual Studio Code.app/Contents/MacOS/Code`). Start und Tests verwenden separate VS-Code-Entwicklungs-/Testprofile unter `.vscode-test/`. Bei sehr langen Checkout-Pfaden kann VS Code unter macOS an der Socket-Pfadgrenze scheitern; dann das Repository unter einem kürzeren Pfad auschecken. Der automatisierte Test prüft Aktivierung, Befehl und Webview-Tab; die sichtbare React-Ausgabe zusätzlich manuell prüfen.
@@ -33,7 +33,7 @@ Für Tests mit einer vorhandenen Installation kann `VSCODE_TEST_EXECUTABLE` auf 
 - `scripts/build.mjs`: esbuild erzeugt `dist/extension.cjs` für Node sowie `dist/webview.js` und `dist/webview.css` für die Webview. `vscode` bleibt extern; Source Maps unterstützen Debugging.
 - `jsconfig.json`: JavaScript/JSX-Projekt und Editor-Unterstützung mit VS-Code-Typen und JSDoc; kein TypeScript-Compiler.
 
-Die Webview nutzt nur lokale Assets mit CSP. Restricted Mode deaktiviert die Erweiterung. `extensionKind: ["ui"]` bindet die Erweiterung an den lokalen Desktop-Host; Packaging, CI und die vollständige Oberfläche folgen in späteren Items.
+Die Webview nutzt nur lokale Assets mit CSP. Restricted Mode deaktiviert die Erweiterung. `extensionKind: ["ui"]` bindet die Erweiterung an den lokalen Desktop-Host; Private VSIX-Installation ist nachgewiesen; CI und vollständige Oberfläche folgen in späteren Items.
 
 [M0-02-Nachweis und Remote-Prüfschritte](docs/nachweise/M0-02.md) · [Backlog](docs/meilensteine/README.md) · [Umsetzungsplan](UMSETZUNGSPLAN.md) · [M0-01-Nachweis](docs/nachweise/M0-01.md)
 
@@ -43,11 +43,11 @@ Build-Konzept nach der [offiziellen VS-Code-Anleitung](https://code.visualstudio
 
 Die Dateiquelle „Lokal · Mein Rechner“ ist das Desktop-Dateisystem, auch bei einem Remote-Workspace. Der Befehl **xScp: Lokalen Dateizugriff nachweisen** öffnet eine Dateiauswahl mit lokalem `file:`-Startpfad im Home-Verzeichnis. Eine bewusst erstellte, kleine Testdatei auswählen; der Ausgabekanal **xScp: Ausführungsort** zeigt Ausführungsart, Remote-Fenster-Kontext, Betriebssystem, Hostnamen, lokale Datei, Bytezahl und SHA-256. Dateiinhalt wird nicht ausgegeben. Der Dateipfad und Hostname dienen dem lokalen technischen Nachweis; vor Weitergabe des Protokolls gegebenenfalls kürzen.
 
-`npm test` prüft den lokalen Zugriff gegen einen vom Desktop-Teststarter erzeugten Zufallsmarker. Der Marker wird anschließend entfernt. Der tatsächliche Remote-SSH-Nachweis bleibt offen: Der nachträglich freigegebene SSH-Testserver erlaubt die Anmeldung, erfüllt aber nicht die Laufzeitvoraussetzungen von VS Code Server. Ein kompatibler Testhost ist erforderlich. Vorgehen und automatischer Remote-Test stehen im [Nachweis](docs/nachweise/M0-02.md). Eine `remote.extensionKind`-Übersteuerung auf `workspace` wird nicht unterstützt. Remote-Workspace-URIs werden nie als lokale Pfade gelesen. Der Prototyp-Nachweis akzeptiert keine `file:`-Authority/UNC-Pfade; Windows-/UNC-Unterstützung bleibt separat zu testen.
+`npm test` prüft den lokalen Zugriff gegen einen vom Desktop-Teststarter erzeugten Zufallsmarker. Der Marker wird anschließend entfernt. Der tatsächliche Remote-SSH-Nachweis ist mit der kompatiblen isolierten Debian-Fixture aus M0-08 bestanden. Der zuvor angebotene externe Server war nur für VS Code Server inkompatibel; eine solche Serverinstallation ist keine Voraussetzung für xScp-SFTP/SCP. Vorgehen und automatischer Remote-Test stehen im [Nachweis](docs/nachweise/M0-02.md). Eine `remote.extensionKind`-Übersteuerung auf `workspace` wird nicht unterstützt. Remote-Workspace-URIs werden nie als lokale Pfade gelesen. Der Prototyp-Nachweis akzeptiert keine `file:`-Authority/UNC-Pfade; Windows-/UNC-Unterstützung bleibt separat zu testen.
 
 ## SSH-Testumgebungen (M0-03)
 
-Drei isolierte OpenSSH-Protokoll-Container stellen SFTP, SFTP-only ohne Shell und echtes SCP ohne SFTP bereit; M0-07 ergänzt eine separate Auth-Fixture. Sie sind ausschließlich über Loopback erreichbar und verwenden lokal erzeugte disposable Testkeys. Mit laufender lokaler Docker-Laufzeit:
+Drei isolierte OpenSSH-Protokoll-Container stellen SFTP, SFTP-only ohne Shell und echtes SCP ohne SFTP bereit; M0-07 ergänzt eine Auth-Fixture, M0-08 eine separate Remote-SSH-Fixture. Sie sind ausschließlich über Loopback erreichbar und verwenden lokal erzeugte disposable Testkeys. Mit laufender lokaler Docker-Laufzeit:
 
 ```sh
 npm run fixtures:start
@@ -132,3 +132,7 @@ npm run test:editor:remote
 ```
 
 Der Remote-Test verwendet die separate Debian-Fixture auf Port `22224` und ein isoliertes VS-Code-Profil. Lokales Fenster, echtes Remote-SSH-Fenster, Auto Save, Konflikte und Zugriff aus einer Remote-Workspace-Erweiterung sind geprüft. Der bislang offene technische M0-02-Remote-Nachweis ist damit ebenfalls abgeschlossen. Kein Push-Watching fremder Serveränderungen, keine großen Dateien, keine dauerhaften Editorsitzungen; vollständige Editorintegration folgt in M5. [Nachweis und Grenzen](docs/nachweise/M0-08.md).
+
+## Abschluss M0 und weiterer Aufwand
+
+[M0-09](docs/nachweise/M0-09.md) schließt alle neun technischen Nachweise ab. `ssh2` und beide Protokollwege bleiben gewählt; VS-Code-Untergrenze, Serverfähigkeiten, Paketstrategie und Ersatzwege sind verbindlich dokumentiert. Nächster Schritt ist M1-01. Restaufwand M1–M6: 31–46 Personenarbeitstage, mit Reserve 38–56; [Begründung](docs/entscheidungen.md#d10--aufwand-und-übergang-in-m1). M0-Abschluss ist keine Freigabe der noch fehlenden Produktmodule oder der ungeprüften Plattformen.

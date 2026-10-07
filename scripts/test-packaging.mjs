@@ -53,11 +53,12 @@ with zipfile.ZipFile(package) as archive:
         assert required in names, 'Missing runtime artifact/license notice'
     manifest = json.loads(archive.read('extension/package.json'))
     assert manifest['extensionKind'] == ['ui']
+    assert manifest['engines']['vscode'] == '^1.140.0', 'Unverified VS Code baseline in package'
     assert manifest['dependencies']['ssh2'] == '1.17.0'
     print(json.dumps({'files': len(names), 'bytes': pathlib.Path(package).stat().st_size, 'fixtureSecretsExcluded': True, 'nativeFilesExcluded': True}))
 `, vsix, runtime]));
   await mkdir(harness, { recursive: true });
-  await writeFile(join(harness, 'package.json'), JSON.stringify({ name: 'xscp-package-test-harness', publisher: 'xscp-test', version: '0.0.1', engines: { vscode: '^1.139.0' } }));
+  await writeFile(join(harness, 'package.json'), JSON.stringify({ name: 'xscp-package-test-harness', publisher: 'xscp-test', version: '0.0.1', engines: { vscode: '^1.140.0' } }));
   run(cli, ['--user-data-dir', user, '--extensions-dir', extensions, '--install-extension', vsix, '--force']);
   const material = await authMaterial(); agent = await startTestAgent(material); agent.loadKey('encrypted_ed25519');
   await runTests({ vscodeExecutablePath: executable,

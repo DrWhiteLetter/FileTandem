@@ -18,7 +18,7 @@ const content = randomBytes(128);
 await writeFile(fixture, content, { mode: 0o600 });
 try {
   await runTests({
-    version: '1.139.1',
+    version: '1.140.0',
     ...(process.env.VSCODE_TEST_EXECUTABLE ? { vscodeExecutablePath: process.env.VSCODE_TEST_EXECUTABLE } : {}),
     extensionDevelopmentPath: fileURLToPath(new URL('..', import.meta.url)),
     extensionTestsPath: fileURLToPath(new URL('../test/extension/smoke.cjs', import.meta.url)),

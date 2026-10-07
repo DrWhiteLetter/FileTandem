@@ -1,6 +1,6 @@
 # xScp – VS-Code-Erweiterung: Recherche und Umsetzungsplan
 
-Stand: 6. Oktober 2026. Verbindliche Produktrichtung: VS-Code-Desktop-Erweiterung, SFTP als Standard und echtes SCP als zusätzliche Übertragungsart. Native macOS-Gestaltung und Swift/AppKit entfallen. xScp bleibt ein ungeklärter Arbeitstitel. M0-01 liefert seit dem 7. Oktober 2026 das startbare Entwicklungsgrundgerüst; Dateiübertragungen sind noch nicht implementiert. Der frühere Plan liegt unter `docs/archiv/UMSETZUNGSPLAN-native-macos.md` und ist abgelöst.
+Stand: 7. Oktober 2026, nach Abschluss von M0. Verbindliche Produktrichtung: VS-Code-Desktop-Erweiterung, SFTP als Standard und echtes SCP als zusätzliche Übertragungsart. Native macOS-Gestaltung und Swift/AppKit entfallen. M0 belegt die Adapter, Authentifizierung, Packaging sowie lokalen und echten Remote-Editor; die vollständige Dateimanager-Oberfläche und Transferqueue fehlen noch. Verbindliche technische Festlegungen stehen in [Entscheidungen](docs/entscheidungen.md), geprüfte Systeme und Release-Grenzen in [Kompatibilität](docs/kompatibilitaet.md). Der frühere native Plan unter `docs/archiv/UMSETZUNGSPLAN-native-macos.md` ist abgelöst. xScp bleibt die Entwicklungsidentität bis zur öffentlichen Produktprüfung.
 
 Die konkrete Arbeitsliste mit einzelnen abhakbaren Aufgaben steht unter [Meilensteine zum Abarbeiten](docs/meilensteine/README.md).
 
@@ -17,12 +17,12 @@ Die erste vollständige Version enthält SFTP und SCP. Eine vorgezogene SFTP-Alp
 | Linker Bereich | Immer der Rechner, auf dem VS Code Desktop läuft |
 | Oberfläche | Commander-Webview im Editorbereich plus native Verbindungs-TreeView |
 | Protokolle | SFTP voreingestellt, SCP explizit auswählbar; kein stiller Fallback |
-| SSH-Basis | `ssh2` als bevorzugter Kandidat, Freigabe durch Technik-Prototyp |
+| SSH-Basis | `ssh2` 1.17.0, nach M0 freigegeben |
 | Entwicklung | JavaScript (ES-Module), JSDoc, React für Webview, esbuild, npm mit Lockfile |
 | Veröffentlichung | Installierbare VSIX zuerst; Marketplace nach Produktnamen-/Publisher-Klärung |
-| Nicht Teil von 1.0 | Browser-Version, Synchronisierung, Terminal, Jump Hosts, Auto-Upload beim Speichern |
+| Nicht Teil von 1.0 | Browser-Version, Synchronisierung, Terminal, Jump Hosts, automatischer Upload lokaler Projektdateien |
 
-Diese Festlegungen sind technische Planungsentscheidungen. Bibliotheksversionen, minimale VS-Code-Version und genaue Plattformmatrix werden in Meilenstein M0 anhand der tatsächlich verwendeten APIs festgeschrieben, nicht als ungeprüfte Versionsnummer vorgegeben.
+M0 hat diese Festlegungen geprüft: VS Code mindestens 1.140.0, Entwicklungs-Node 22.13.1, gebündelte SSH-/UI-Versionen exakt fixiert. macOS arm64 ist nachgewiesen; Windows/Linux bleiben konkrete Release-Gates. [Versionen und Nachweise](docs/kompatibilitaet.md).
 
 ## 2. Recherche und Konsequenzen
 
@@ -169,7 +169,7 @@ SSH-Subsystem verwenden; keine Shell voraussetzen. Streaming über `ssh2`-SFTP-S
 
 ### Echtes SCP
 
-`ssh2` liefert Exec-Kanäle, aber keinen dokumentierten fertigen SCP-Transferadapter. Geplant ist ein eng begrenzter SCP-Sender/Empfänger über diese Kanäle. SSH/Kryptografie werden nicht selbst implementiert. Der SCP-Parser ist ein eigenständiges, intensiv getestetes Modul und der größte technische Risikopunkt.
+`ssh2` liefert Exec-Kanäle, aber keinen dokumentierten fertigen SCP-Transferadapter. M0-06 weist den gewählten begrenzten SCP-Sender/Empfänger über diese Kanäle nach; Integration und vollständige Härtung folgen in M4. SSH/Kryptografie werden nicht selbst implementiert. Der SCP-Parser ist ein eigenständiges, intensiv getestetes Modul und der größte technische Risikopunkt.
 
 Für Version 1.0 zunächst Linux-Server mit POSIX-Shell, GNU find/coreutils und vorhandenem `scp`. Capability-Probe ermittelt Werkzeuge; unbekannte oder eingeschränkte Umgebungen werden präzise abgelehnt. BSD/macOS-, BusyBox- und Windows-SCP-Server sind zunächst nicht zugesagt.
 
@@ -180,7 +180,7 @@ Für Version 1.0 zunächst Linux-Server mit POSIX-Shell, GNU find/coreutils und 
 - Zeilenumbrüche und andere für diesen SCP-Weg nicht sicher darstellbare Dateinamen früh ablehnen; SFTP als Alternative nennen.
 - Tests gegen einen Server mit deaktiviertem SFTP. Ein normaler `scp`-CLI-Test genügt nicht.
 
-Fallback bei gescheitertem M0: getrennte Evaluierung eines gepflegten SCP-Adapters oder lokalem OpenSSH mit `-O`. Ein CLI-Wechsel muss Authentifizierung, Packaging und Prozessabbruch erneut lösen; er ist kein stiller Ersatz und kein Anlass, SCP aus 1.0 zu streichen.
+Ersatzweg bei gescheiterter SCP-Härtung in M4: getrennte Evaluierung eines gepflegten SCP-Adapters oder lokalem OpenSSH mit `-O`. Ein CLI-Wechsel muss Authentifizierung, Packaging und Prozessabbruch erneut lösen; er ist kein stiller Ersatz und kein Anlass, SCP aus 1.0 zu streichen.
 
 ## 7. Transfer-Engine, Konflikte und Wiederanlauf
 
@@ -201,7 +201,9 @@ Zielkonflikte innerhalb einer Extension-Instanz durch Pfadsperren verhindern. Me
 
 ## 8. Remote-Dateien im Editor
 
-Version 1.0 verwendet einen eigenen `FileSystemProvider` mit URIs wie `xscp-remote://<profil-id>/<pfad>`; URIs enthalten keine Passwörter. Er implementiert stat, readDirectory, readFile, writeFile, rename, delete, createDirectory und Änderungsereignisse. Semantik der create-/overwrite-Flags und VS-Code-Fehlertypen korrekt abbilden. [API-Referenz](https://code.visualstudio.com/api/references/vscode-api)
+Version 1.0 verwendet für SFTP einen eigenen `FileSystemProvider` mit URIs wie `xscp-remote://<sitzungs-id>/<pfad>`; die zufällige Sitzungs-ID wird intern einem Profil zugeordnet, URIs enthalten keine Zugangsdaten. Freigaben werden nicht über Profil- oder Fenstergrenzen geteilt. Er implementiert stat, readDirectory, readFile, writeFile, rename, delete, createDirectory und Änderungsereignisse. Semantik der create-/overwrite-Flags und VS-Code-Fehlertypen korrekt abbilden. [API-Referenz](https://code.visualstudio.com/api/references/vscode-api)
+
+SCP-Dateien werden lokal heruntergeladen, im nativen lokalen Editor bearbeitet und ausdrücklich über die Transferqueue zurückgeladen. Auto Save dieser lokalen Kopie löst keinen SCP-Upload aus. Die Abnahme in M5 prüft beide Bearbeitungswege; ein direkter SCP-Provider-Speicherweg wird nicht zugesagt.
 
 Editorzugriff und große Transfers bleiben getrennt. Startwert: maximal 10 MiB für Remote-Editorinhalte; größere Dateien per Transfer herunterladen. Diff mit `vscode.diff` auf lokalen und entfernten bzw. zwischengespeicherten Fassungen.
 
@@ -254,7 +256,7 @@ Einstellungen: Parallelität, Timeout/Keepalive, versteckte Dateien, Queue-Darst
 
 - Unit-Tests: Pfade, Namenskollisionen, Queue-Zustände, Konfliktregeln, Nachrichtenvalidierung und SCP-Parser einschließlich zerstückelter/missgebildeter Pakete. Parser zusätzlich mit zufällig variierten Eingaben testen.
 - SSH-Integration: isolierte OpenSSH-Container/VMs mit SFTP, SFTP-only ohne Shell, deaktiviertem SFTP für SCP, falschen Keys und eingeschränkten Rechten. Testschlüssel sind ausschließlich Fixtures.
-- Extension-Tests über `@vscode/test-cli` und `@vscode/test-electron` mit Mocha, Mindestversion und aktuellem Stable. Trust-Zustände mit getrennten Benutzerprofilen. [Testing Extensions](https://code.visualstudio.com/api/working-with-extensions/testing-extension)
+- Extension-Tests über das nachgewiesene `@vscode/test-electron` mit eigenem Host-Harness, `node:test` für Unit-/Protokolltests, Mindestversion und geprüftem aktuellem Stable. Kein zusätzlicher Test-CLI-/Mocha-Zwang. Trust-Zustände mit getrennten Benutzerprofilen. [Testing Extensions](https://code.visualstudio.com/api/working-with-extensions/testing-extension)
 - Webview-Komponententests plus Browser-Interaktionstests für Auswahl, Virtualisierung und Konfliktdialoge; zusätzlich echte VS-Code-Smoke-Tests für Messaging und Commands. Ein Browser-Harness allein gilt nicht als Extension-Abnahme.
 - CI auf macOS/Windows/Linux; Linux-SSH-Fixtures für Protokolltests, Plattformtests mit erreichbarem isoliertem Testserver. Apple-Silicon-Smoke-Test auf passender Hardware.
 
@@ -268,19 +270,19 @@ Abnahme 1.0: frische VSIX-Installation ohne zusätzliche npm-/SSH-Bibliotheksins
 
 ## 13. Meilensteine und Aufwand
 
-Schätzung für eine erfahrene Vollzeitkraft, keine feste Terminzusage. Tage sind Personenarbeitstage; nach M0 neu schätzen. Die Reihenfolge minimiert das Risiko, erst nach dem UI-Bau an SCP oder Extension-Host-Grenzen zu scheitern.
+Aktualisierte Schätzung nach M0 für eine erfahrene Vollzeitkraft, keine feste Terminzusage. Tage sind Personenarbeitstage. M0 ist abgeschlossen; sein früheres 4–6-Tage-Budget ist keine gemessene Ist-Zeit. M1–M6 sind verbleibender Aufwand. [Begründung und Vergleich](docs/entscheidungen.md#d10--aufwand-und-übergang-in-m1). Die Reihenfolge minimiert das Risiko, erst nach dem UI-Bau an SCP oder Extension-Host-Grenzen zu scheitern.
 
 | Meilenstein | Ergebnis / Abnahme | Aufwand |
 | --- | --- | --- |
-| M0: Technische Nachweise | Lokaler Host auch im Remote-Fenster; ssh2-Build ohne native Pflichtmodule; Host Keys; Auth-Matrix; SFTP und echtes SCP; Shell-Probe; Editor-Provider-Minimaltest; Versionsmatrix dokumentiert | 4–6 Tage |
+| M0: Technische Nachweise | Lokaler Host auch im Remote-Fenster; ssh2-Build ohne native Pflichtmodule; Host Keys; Auth-Matrix; SFTP und echtes SCP; Shell-Probe; Editor-Provider-Minimaltest; Versionsmatrix dokumentiert | abgeschlossen; 0 Resttage |
 | M1: Extension-Grundgerüst | Manifest, Build, CI, VSIX, Profil-TreeView, Commands, Mock-Commander mit Themes und Fokus | 3–5 Tage |
 | M2: Verbindungen und Dateibrowser | SecretStorage, Profile, SFTP-Navigation, CRUD, native Dialoge, lokale Pfade, Fehlerbehandlung | 4–6 Tage |
-| M3: Transfer-Engine / Alpha | Streaming, Rekursion, Konflikte, Teil-Dateien, Queue, Abbruch, Journal; nutzbare SFTP-VSIX | 6–9 Tage |
-| M4: SCP und Wiederanlauf | Gehärteter SCP-Adapter, GNU-Shell-Profil, negatives SFTP-Testsystem, sichere Resume-Prüfung und Wiederanlauf | 5–8 Tage |
-| M5: Editor und Bedienung | Provider, Read-only/Editing, Diff, externe Änderungskonflikte, Sitzungen, interne Drag-and-drop-Aktionen, Accessibility | 4–6 Tage |
-| M6: Release-Härtung | Plattformmatrix, große Dateien, Fehlerfälle, VSIX-Inspektion, Dokumentation und Release-Kandidat | 5–8 Tage |
+| M3: Transfer-Engine / Alpha | Streaming, Rekursion, Konflikte, Teil-Dateien, Queue, Abbruch, Journal; nutzbare SFTP-VSIX | 7–10 Tage |
+| M4: SCP und Wiederanlauf | Gehärteter SCP-Adapter, GNU-Shell-Profil, negatives SFTP-Testsystem, sichere Resume-Prüfung und Wiederanlauf | 6–9 Tage |
+| M5: Editor und Bedienung | Provider, Read-only/Editing, Diff, externe Änderungskonflikte, Sitzungen, interne Drag-and-drop-Aktionen, Accessibility | 5–7 Tage |
+| M6: Release-Härtung | Plattformmatrix, große Dateien, Fehlerfälle, VSIX-Inspektion, Dokumentation und Release-Kandidat | 6–9 Tage |
 
-Summe: 31–48 Tage; mit 20 % Reserve etwa 38–58 Arbeitstage bzw. 8–12 Arbeitswochen. SFTP-Alpha nach M0–M3: ungefähr 17–26 Arbeitstage ohne Reserve. Echtes SCP und sichere Remote-Bearbeitung verhindern eine unrealistisch kurze Gesamtschätzung.
+Restaufwand M1–M6: **31–46 Tage**, mit 20 % Reserve aufgerundet **38–56 Arbeitstage**, etwa 8–12 Vollzeitwochen. SFTP-Alpha ab jetzt (M1–M3): 14–21 Tage ohne Reserve, 17–26 mit Reserve. Vergleichbarer Gesamtrahmen einschließlich des früheren M0-Budgets: 35–52 Tage, mit Reserve 42–63. Verfügbare Plattform-Testsysteme vorausgesetzt; Wartezeit und Scope-Erweiterungen sind nicht eingerechnet.
 
 Abhängigkeiten: M0 → M1 → M2 → M3; M4 benötigt M0/M3; M5 benötigt M2/M3; M6 benötigt alle. Jede Phase endet mit einer ausführbaren VSIX oder einem dokumentierten technischen Nachweis. Kein Marketplace-Release aus einem nicht geprüften Zwischenstand.
 
@@ -294,19 +296,10 @@ Zunächst lokale/private VSIX-Verteilung. Öffentliche Veröffentlichung benöti
 
 Versionsschema: 0.x für Alpha/Beta, 1.0 nach vollständiger Abnahme. Vorabversion und stabile Version trennen; Datenmigrationen vorwärtsverträglich planen. Abhängigkeiten regelmäßig auf Sicherheitsmeldungen prüfen. Fehlerberichte enthalten Extension-/VS-Code-Version und bereinigte Diagnosen. Keine automatische Veröffentlichung im Rahmen dieses Planungsauftrags.
 
-## 15. Offene Punkte und konkrete Startaufgaben
+## 15. Übergang nach M0 und externe Voraussetzungen
 
-Keine weitere Produktentscheidung ist nötig, um M0 zu beginnen. Vorläufige Annahmen: Linux-Zielserver, Desktop-Nutzung, macOS als erste Entwicklungsplattform, Passwort/Key/Agent als Zielumfang, keine öffentliche Namensfreigabe.
+M0-01 bis M0-09 sind abgeschlossen. Beide Protokollwege sind tragfähig, der lokale Host im echten Remote-Fenster ist nachgewiesen, die Mindestversion und Ersatzwege sind entschieden. [Abschlussnachweis](docs/nachweise/M0-09.md).
 
-M0-Backlog in Reihenfolge:
+Nächste Arbeit: M1-01 – Module und Qualitätsbefehle strukturieren, vorhandene M0-Adapter übernehmen, anschließend Manifest/Mock-Commander/CI ergänzen. Keine weitere technische Grundsatzfreigabe ist dafür erforderlich. Windows/Linux/Agent, größere Dateien, produktive Transferfinalisierung und vollständige Bedienabnahme bleiben den fest zugeordneten M1–M6-Items vorbehalten.
 
-1. JavaScript-Extension mit minimalem Command und zwei getrennten Bundles erstellen; Laufzeit-/API-Versionen fixieren.
-2. Local-Host-Verhalten in lokalem und Remote-SSH-Fenster nachweisen; linke Dateiquelle korrekt beschriften.
-3. Isolierte OpenSSH-Testumgebungen und Testschlüssel anlegen.
-4. Host-Key-Dialog und SFTP-Upload/Download mit Hashvergleich bauen.
-5. Echten SCP-Einzeltransfer und maschinenlesbare GNU-Verzeichnisauflistung nachweisen; Sonderzeichen testen.
-6. Authentifizierungs- und Plattformmatrix protokollieren, Windows-Agent als gesonderten Prüffall behandeln.
-7. Minimalen Editor-Provider samt Schreibschutz, Auto-Save-Verhalten und Remote-Fenster testen.
-8. Ergebnisse als Architekturentscheidungen festhalten; Aufwand und unterstützte Serverprofile konkretisieren.
-
-Vor öffentlichem Release noch erforderlich: finaler Produktname/Identifier, Lizenzwahl und Publisher. Diese Punkte werden erst dann entscheidend; die technische Umsetzung kann mit dem Arbeitstitel beginnen.
+Vor öffentlichem Release noch erforderlich: finaler Produktname/Identifier, Umsetzung der gewählten MIT-Lizenz und ein tatsächlich verfügbarer Publisher. Diese Punkte werden erst dann entscheidend; die technische Umsetzung kann mit dem Arbeitstitel beginnen.
