@@ -36,3 +36,12 @@ test('finalization verifies target hashes and preserves old destinations on canc
     const download=await transferFile(session,{id:randomUUID(),direction:'download',source:remote,target:destination},{target:localTarget,replace:true});assert.equal(download.sha256,upload.sha256);
   } finally {for (const p of [remote,remoteTarget(files).partial(remote,id)]) await files.call('unlink',p).catch(() => {});files.close();await session.close();await rm(directory,{recursive:true,force:true});}
 });
+test('recursive engine preserves binary bytes and empty directories; links are skipped', {timeout:20000},async () => {
+  const {TransferEngine}=await import('../../src/application/transfer-engine.js');const {mkdir,symlink}=await import('node:fs/promises');
+  const session=await fixture(),files=await RemoteFiles.open(session),directory=await mkdtemp(join(tmpdir(),'xscp-tree-')),name=`m3-${randomUUID()}`,root=join(directory,name);
+  await mkdir(join(root,'nested','empty'),{recursive:true});await writeFile(join(root,'nested','binary'),Buffer.from([0,13,10,255,128]));await symlink('nested',join(root,'link'));
+  const profile={id:'p',host:'127.0.0.1',port:22221,protocol:'sftp'};const engine=new TransferEngine({profiles:{get:() => profile},sessions:{transport:() => session},choose:async () => ({choice:'replace'})});
+  try {await engine.submit('p','upload',[root],'/data');await engine.queue.idle();assert.ok(engine.queue.list().some(j => j.state === 'skipped'));assert.ok(engine.queue.list().every(j => ['completed','skipped'].includes(j.state)));assert.equal((await files.stat(`/data/${name}/nested/empty`)).kind,'directory');
+    const download=join(directory,'download');await mkdir(download);await engine.submit('p','download',[`/data/${name}`],download);await engine.queue.idle();assert.deepEqual(await readFile(join(download,name,'nested','binary')),Buffer.from([0,13,10,255,128]));
+  } finally {const {planRemoteDelete,executeRemoteDelete}=await import('../../src/application/remote-delete.js');await executeRemoteDelete(files,await planRemoteDelete(files,[`/data/${name}`]),() => true).catch(() => {});engine.dispose();files.close();await session.close();await rm(directory,{recursive:true,force:true});}
+});

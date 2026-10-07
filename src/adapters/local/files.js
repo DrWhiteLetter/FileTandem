@@ -28,6 +28,7 @@ export class LocalFiles {
     }));
     return {path,entries};
   }
+  async listNoFollow(path) {const uri={scheme:'file',fsPath:localPath(path)};if ((await this.stat(uri)).kind !== 'directory') throw new Error('Ordner wurde ersetzt.');return this.list(uri);}
   mkdir(path) {return mkdir(localPath(path));}
   async chmod(path,mode) {
     if (process.platform === 'win32') throw new Error('POSIX-Rechte werden unter Windows nicht unterstützt.');

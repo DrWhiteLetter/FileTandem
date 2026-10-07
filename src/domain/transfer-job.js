@@ -1,6 +1,6 @@
 /** @typedef {{id:string,batchId:string,profileId:string,server:string,direction:'upload'|'download',source:string,target:string,lockKey:string,state:string,bytes:number}} TransferJob */
 export const TERMINAL=['completed','skipped','failed','cancelled','interrupted'];
-const transitions={queued:['running','cancelled','interrupted'],running:['completed','skipped','failed','cancelled','interrupted']};
+const transitions={queued:['running','cancelled','interrupted','skipped'],running:['completed','skipped','failed','cancelled','interrupted']};
 export function transition(job,state) {if (!transitions[job.state]?.includes(state)) throw new Error(`Ungültiger Auftragsübergang: ${job.state} → ${state}`);return {...job,state};}
 export function batchState(jobs) {
   if (jobs.some(j => j.state === 'running')) return 'running';

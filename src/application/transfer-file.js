@@ -8,6 +8,7 @@ export async function transferFile(session,job,{target,replace=false,signal,onPr
   const part=target.partial(job.target,job.id);signal?.throwIfAborted();
   const result=await streamFile(session,{direction:job.direction,local:job.direction === 'upload' ? job.source:part,remote:job.direction === 'upload' ? part:job.source,signal,onProgress});
   if ((await target.stat(part)).size !== result.bytes || await target.hash(part,signal) !== result.sha256) throw new Error('Teil-Datei hat falsche Größe oder Prüfsumme.');
+  await target.prepare?.(part,job.metadata);
   signal?.throwIfAborted();
   if (!snapshotEqual(before,await targetSnapshot(target,job.target))) throw Object.assign(new Error('Ziel wurde zwischenzeitlich geändert.'),{publicMessage:'Ziel wurde während des Transfers geändert; Teil-Datei bleibt zur Prüfung erhalten.'});
   await target.publish(part,job.target,!!before);return {...result,committed:true,partialPath:part};
