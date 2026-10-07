@@ -15,3 +15,9 @@ package-lock.json
 **/*.log
 .env
 .env.*
+
+.github/**
+out/**
+coverage/**
+eslint.config.js
+**/*.vsix
