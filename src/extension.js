@@ -1,3 +1,4 @@
+import { SessionManager } from './application/session-manager.js';
 import { credentialProvider } from './vscode/credentials.js';
 import { registerProfiles } from './vscode/profile-commands.js';
 import * as vscode from 'vscode';
@@ -18,6 +19,18 @@ export function activate(context) {
   registerLocalProof(context);
   registerConnectionsView(context);
   const { trust } = registerHostKeyProof(context);
+  profileUI.sessions=new SessionManager({connect:connectSsh,credentials:profileUI.credentials,policy:{trust,confirmUnknown:unknownHostKeyDialog(vscode.window)},onChange:() => profileUI.changed.fire()});
+  context.subscriptions.push(profileUI.sessions);
+  profileUI.connect=async profile => {
+    profileUI.guard();
+    return vscode.window.withProgress({location:vscode.ProgressLocation.Notification,title:`xScp: Verbinde ${profile.name}`,cancellable:true},async (_,token) => {
+      const controller=new AbortController(); const cancellation=token.onCancellationRequested(() => controller.abort());
+      if (token.isCancellationRequested) controller.abort();
+      try { return await profileUI.sessions.connect(profile,{signal:controller.signal}); } finally {cancellation.dispose();}
+    });
+  };
+  profileUI.command('xscp.connectProfile',async id => {const p=typeof id === 'string' ? profileUI.profiles.get(id) : await profileUI.choose(); if (p) return profileUI.connect(p);});
+  profileUI.command('xscp.disconnectProfile',async id => {const p=typeof id === 'string' ? profileUI.profiles.get(id) : await profileUI.choose(); if (p) return profileUI.sessions.disconnect(p.id);});
   const editorProof = registerEditorProvider(context, trust);
   const manager = registerManager(context);
   return {

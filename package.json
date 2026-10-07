@@ -69,6 +69,14 @@
       {
         "command": "xscp.forgetCredentials",
         "title": "xScp: Gespeicherte Anmeldung vergessen"
+      },
+      {
+        "command": "xscp.connectProfile",
+        "title": "xScp: Profil verbinden"
+      },
+      {
+        "command": "xscp.disconnectProfile",
+        "title": "xScp: Verbindung trennen"
       }
     ],
     "viewsContainers": {
