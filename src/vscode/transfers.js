@@ -2,7 +2,7 @@ import { serverIdentity } from '../adapters/ssh/host-keys.js';
 import { profileIdentity } from '../application/transfer-resume.js';
 import { join } from 'node:path';import { TransferJournal } from '../application/transfer-journal.js';
 import { randomUUID,randomBytes } from 'node:crypto';
-import * as vscode from 'vscode';import { TransferEngine } from '../application/transfer-engine.js';import { localFileUri } from '../adapters/local/files.js';import { conflictDialog } from './transfer-conflicts.js';
+import { vscode } from './localized-vscode.js';import { TransferEngine } from '../application/transfer-engine.js';import { localFileUri } from '../adapters/local/files.js';import { conflictDialog } from './transfer-conflicts.js';
 export function registerTransfers(context,profileUI) {
   const changed=new vscode.EventEmitter();const ephemeral=new Map();
   const profiles={get:id => {try {return profileUI.profiles.get(id);} catch(error) {if (ephemeral.has(id)) return ephemeral.get(id);throw error;}}};

@@ -1,5 +1,5 @@
 import { hasDesktopAccess } from '../application/access-policy.js';
-import * as vscode from 'vscode';
+import { vscode } from './localized-vscode.js';
 import { readFile, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { executionLocation } from './local-proof.js';

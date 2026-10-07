@@ -1,5 +1,5 @@
 import { hasDesktopAccess } from '../application/access-policy.js';
-import * as vscode from 'vscode';
+import { vscode,t } from './localized-vscode.js';
 import { randomUUID } from 'node:crypto';
 import { readFile, stat } from 'node:fs/promises';
 import { connectSsh } from '../adapters/ssh/connect.js';
@@ -25,12 +25,12 @@ export function registerEditorProvider(context, trust, currentEditor) {
     onDidChangeFile: changes.event,
     watch: () => new vscode.Disposable(() => {}),
     async stat(uri) { const e = entry(uri); const s = await e.file.metadata(); return { type: vscode.FileType.File, size: s.size, ctime: 0, mtime: Math.max(s.mtime * 1000, e.modified), ...(e.allowed ? {} : { permissions: vscode.FilePermission.Readonly }) }; },
-    readFile: uri => entry(uri).file.read(),
+    readFile: async uri => {try {return await entry(uri).file.read();} catch(e) {e.message=t(e.message);throw e;}},
     async writeFile(uri, data, options) {
       const e = entry(uri);
       if (!e.allowed) throw vscode.FileSystemError.NoPermissions('Bearbeitung zuerst ausdrücklich freigeben.');
       if (!options.overwrite) throw vscode.FileSystemError.FileExists(uri);
-      await e.file.write(Buffer.from(data), () => entries.get(uri.authority) === e && e.allowed && hasDesktopAccess(executionLocation(context), vscode.workspace.isTrusted));
+      try {await e.file.write(Buffer.from(data), () => entries.get(uri.authority) === e && e.allowed && hasDesktopAccess(executionLocation(context), vscode.workspace.isTrusted));} catch(e) {e.message=t(e.message);throw e;}
       e.modified = Math.max(Date.now(), e.modified + 1); changed(uri);
     },
     readDirectory: denied, createDirectory: denied, delete: denied, rename: denied,

@@ -22,10 +22,13 @@ with zipfile.ZipFile(sys.argv[1]) as archive:
         assert not name.endswith(('.node','.exe','.map','.vsix')), 'Unexpected native/helper artifact'
         assert 'eslint.config.js' not in parts, 'Development configuration in VSIX'
         assert not any(secret in archive.read(name) for secret in secrets), 'Fixture secret in VSIX'
-    for required in ('package.json','dist/extension.cjs','dist/webview.js','dist/webview.css','THIRD_PARTY_NOTICES.md','media/CODICONS-LICENSE.txt'):
+    for required in ('package.json','package.nls.json','package.nls.de.json','dist/extension.cjs','dist/webview.js','dist/webview.css','THIRD_PARTY_NOTICES.md','media/CODICONS-LICENSE.txt'):
         assert 'extension/'+required in names, 'Missing runtime artifact or notice'
     assert any(name.endswith('.ttf') for name in names), 'Missing local icon font'
     manifest = json.loads(archive.read('extension/package.json'))
+    en = json.loads(archive.read('extension/package.nls.json'))
+    de = json.loads(archive.read('extension/package.nls.de.json'))
+    assert set(en) == set(de), 'Incomplete manifest localization'
     assert manifest['extensionKind'] == ['ui']
     assert manifest['engines']['vscode'] == '^1.140.0'
     print(f'VSIX geprüft: {len(names)} Dateien; keine Entwicklungsdateien, nativen Addons oder Fixture-Geheimnisse.')

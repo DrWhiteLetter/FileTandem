@@ -1,6 +1,6 @@
 # xScp
 
-Entwicklungsprototyp einer VS-Code-Desktop-Erweiterung für SFTP und SCP. M0 bis M4 sind implementiert: Start-Webview, SFTP-Streaming, echtes SCP, Authentifizierung und abgesicherter SFTP-Editor sind nachgewiesen. Die Commander-Ansicht bietet lokale und SFTP-Dateiverwaltung sowie Uploads, Downloads und Ordnertransfers mit Queue. [Version 0.0.4 installieren und testen](docs/nachweise/M4-Anleitung.md).
+Entwicklungsprototyp einer VS-Code-Desktop-Erweiterung für SFTP und SCP. M0 bis M5 sind implementiert: Start-Webview, SFTP-Streaming, echtes SCP, Authentifizierung und abgesicherter SFTP-Editor sind nachgewiesen. Die Commander-Ansicht bietet lokale und SFTP-Dateiverwaltung sowie Uploads, Downloads und Ordnertransfers mit Queue. [Version 0.0.5 installieren und testen](docs/nachweise/M5-Anleitung.md).
 
 ## Entwicklung
 
@@ -119,7 +119,7 @@ macOS/Apple Silicon ist mit Passwort, unverschlüsselten und verschlüsselten Ed
 
 ## SFTP-Editor-Prototyp (M0-08)
 
-**xScp: SFTP-Datei im Editor öffnen** öffnet eine bestehende reguläre Datei bis 10 MiB zunächst schreibgeschützt. Host, Port, Benutzer, absoluter Remote-Pfad und lokaler privater Testschlüssel werden abgefragt; für die SFTP-only-Fixture Port `22221` verwenden. Die Host-Key-Prüfung bleibt verpflichtend.
+**xScp: SFTP-Datei im Editor öffnen** (technischer M0-Einzeldateitest) öffnet eine bestehende reguläre Datei bis 10 MiB zunächst schreibgeschützt. Host, Port, Benutzer, absoluter Remote-Pfad und lokaler privater Testschlüssel werden abgefragt; für die SFTP-only-Fixture Port `22221` verwenden. Die Host-Key-Prüfung bleibt verpflichtend.
 
 **Remote-Bearbeitung freigeben** verlangt eine ausdrückliche Bestätigung: Speichern und Auto Save schreiben direkt auf den Server. Die Freigabe gilt nur für die ausgewählte Datei/Sitzung. Die Statusleiste zeigt den Zustand und ermöglicht Freigeben bzw. Sperren. Schließen/Neustart verwirft die Freigabe. Bei Konflikten bleiben Änderungen ungespeichert; Datei neu öffnen und Inhalte abgleichen.
 
@@ -131,7 +131,7 @@ npm run test:editor
 npm run test:editor:remote
 ```
 
-Der Remote-Test verwendet die separate Debian-Fixture auf Port `22224` und ein isoliertes VS-Code-Profil. Lokales Fenster, echtes Remote-SSH-Fenster, Auto Save, Konflikte und Zugriff aus einer Remote-Workspace-Erweiterung sind geprüft. Der bislang offene technische M0-02-Remote-Nachweis ist damit ebenfalls abgeschlossen. Kein Push-Watching fremder Serveränderungen, keine großen Dateien, keine dauerhaften Editorsitzungen; vollständige Editorintegration folgt in M5. [Nachweis und Grenzen](docs/nachweise/M0-08.md).
+Der Remote-Test verwendet die separate Debian-Fixture auf Port `22224` und ein isoliertes VS-Code-Profil. Lokales Fenster, echtes Remote-SSH-Fenster, Auto Save, Konflikte und Zugriff aus einer Remote-Workspace-Erweiterung sind geprüft. Der bislang offene technische M0-02-Remote-Nachweis ist damit ebenfalls abgeschlossen. Kein Push-Watching fremder Serveränderungen, keine großen Dateien, keine dauerhaften Editorsitzungen; die produktive Editorintegration ist seit M5 verfügbar. [Nachweis und Grenzen](docs/nachweise/M0-08.md).
 
 ## Abschluss M0 und weiterer Aufwand
 
@@ -151,7 +151,7 @@ npm run quality
 npm run package
 ```
 
-In VS Code Desktop ab 1.140.0: Erweiterungsansicht → Menü „…“ → „Aus VSIX installieren…“ → `out/xscp-0.0.4.vsix`. Dann die xScp-Activity-Bar öffnen oder **xScp: Dateimanager öffnen** über die Befehlspalette ausführen. Alternativ startet `npm start` den Entwicklungs-Host. Die aktuelle Commander-Ansicht liest das echte lokale Dateisystem und kann SFTP-Profile verbinden. Die ursprüngliche M1-Demo bleibt unter **xScp: Mock-Demo öffnen** verfügbar. Die SFTP-Transferknöpfe sind angebunden; [Alpha-Anleitung](docs/nachweise/M3-Alpha.md).
+In VS Code Desktop ab 1.140.0: Erweiterungsansicht → Menü „…“ → „Aus VSIX installieren…“ → `out/xscp-0.0.5.vsix`. Dann die xScp-Activity-Bar öffnen oder **xScp: Dateimanager öffnen** über die Befehlspalette ausführen. Alternativ startet `npm start` den Entwicklungs-Host. Die aktuelle Commander-Ansicht liest das echte lokale Dateisystem und kann SFTP-Profile verbinden. Die ursprüngliche M1-Demo bleibt unter **xScp: Mock-Demo öffnen** verfügbar. Die SFTP-Transferknöpfe sind angebunden; [Alpha-Anleitung](docs/nachweise/M3-Alpha.md).
 
 `npm run test:installed` installiert und testet die VSIX ausschließlich in einem temporären, anschließend entfernten Profil. Bei vorhandener VS-Code-Installation lässt sich `VSCODE_TEST_EXECUTABLE` auf die Programmdatei setzen; sonst wird die festgelegte Testversion geladen. Python 3 wird für die unabhängige ZIP-Prüfung benötigt.
 
@@ -178,10 +178,14 @@ Diese Tests benötigen laufende Fixtures (siehe oben). Der zweite Test installie
 
 ## SFTP-Alpha (M3)
 
-Private VSIX: `out/xscp-0.0.4.vsix`. [Anleitung, Prüfergebnisse und Grenzen](docs/nachweise/M3-Alpha.md). Reproduzierbar: `npm run quality`, `npm run test:transfers` mit laufenden eigenen Fixtures, `npm run package`, `npm run test:browser:installed`. Der Installationstest verwendet zwei reguläre isolierte Fenster und prüft zusätzlich Upload nach Tab-Schließen, Ordner-Rundlauf sowie Journal und gezielten Retry nach Neustart.
+Private VSIX: `out/xscp-0.0.5.vsix`. [Anleitung, Prüfergebnisse und Grenzen](docs/nachweise/M3-Alpha.md). Reproduzierbar: `npm run quality`, `npm run test:transfers` mit laufenden eigenen Fixtures, `npm run package`, `npm run test:browser:installed`. Der Installationstest verwendet zwei reguläre isolierte Fenster und prüft zusätzlich Upload nach Tab-Schließen, Ordner-Rundlauf sowie Journal und gezielten Retry nach Neustart.
 
 ## SCP und Wiederanlauf (M4)
 
 Version 0.0.4 verbindet echtes SCP mit Commander und Queue. SFTP-Teil-Dateien können ausdrücklich nach Quellen-/Präfixprüfung fortgesetzt werden; SCP startet vollständig neu. Eigene Partials lassen sich bestätigt bereinigen. Profile unterstützen außerdem Agent und interaktive Serveranmeldung. [Bedienung und Grenzen](docs/nachweise/M4-Anleitung.md) · [Abschluss](docs/nachweise/M4-Abschluss.md).
 
 Mit laufenden eigenen Fixtures prüft `npm run test:protocols` die gemeinsame Server-/Auth-/Transfermatrix. `npm run test:browser:installed` prüft die frische VSIX mit zwei regulären isolierten VS-Code-Starts, SFTP-only und SCP-only sowie SFTP-Fortsetzung nach Neustart.
+
+## Editor und Komfort (M5)
+
+Serverdateien im Commander doppelklicken oder mit Enter öffnen. SFTP startet schreibgeschützt; nach ausdrücklicher dateiweiser Freigabe schreiben Speichern und Auto Save auf den Server. Diff und geprüfte Basisübernahme helfen bei externen Änderungen. SCP verwendet lokale Kopien mit ausschließlich ausdrücklichem Queue-Upload. Weitere Tabs, internes Drag-and-drop, Kontextmenüs, optionale Commander-Tasten, virtualisierte 10.000 Einträge und Deutsch/Englisch sind verfügbar. [Anleitung und Grenzen](docs/nachweise/M5-Anleitung.md) · [Abschluss und Prüfergebnisse](docs/nachweise/M5-Abschluss.md).

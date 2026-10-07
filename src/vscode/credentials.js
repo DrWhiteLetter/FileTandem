@@ -1,4 +1,4 @@
-import * as vscode from 'vscode';
+import { vscode,t } from './localized-vscode.js';
 import ssh2 from 'ssh2';
 import { readFile,stat } from 'node:fs/promises';
 import { isAbsolute } from 'node:path';
@@ -25,7 +25,7 @@ export function credentialProvider(context,profileUI) {
     },
     encrypted:key => { const parsed=ssh2.utils.parseKey(key); if (parsed instanceof Error) { if (/encrypted|passphrase/i.test(parsed.message)) return true; throw new Error('Schlüsseldatei hat ein nicht unterstütztes Format.'); } return false; },
     prompt:async (kind,profile,signal) => {
-      const box=vscode.window.createInputBox(); box.title=`xScp: ${kind === 'password' ? 'Passwort':'Schlüssel-Passphrase'} für ${profile.name}`; box.password=true; box.ignoreFocusOut=true;
+      const box=vscode.window.createInputBox(); box.title=`xScp: ${kind === 'password' ? t('Passwort'):t('Schlüssel-Passphrase')} für ${profile.name}`; box.password=true; box.ignoreFocusOut=true;
       let value;
       try { value=await new Promise(resolve => {
         const accepted=box.onDidAccept(() => resolve(box.value)); const hidden=box.onDidHide(() => resolve(undefined));

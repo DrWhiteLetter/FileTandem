@@ -1,3 +1,4 @@
+import { registerLocalEditorCopies } from './vscode/local-editor-copy.js';
 import { registerSessionEditor } from './vscode/session-editor.js';
 let transferLifecycle;
 import { registerTransfers } from './vscode/transfers.js';
@@ -5,7 +6,7 @@ import { registerBrowser } from './vscode/browser-panel.js';
 import { SessionManager } from './application/session-manager.js';
 import { credentialProvider } from './vscode/credentials.js';
 import { registerProfiles } from './vscode/profile-commands.js';
-import * as vscode from 'vscode';
+import { vscode } from './vscode/localized-vscode.js';
 import { requireDesktopAccess } from './application/access-policy.js';
 import { registerConnectionsView } from './vscode/connections-view.js';
 import { probeAuthentication } from './application/authentication-probe.js';
@@ -40,6 +41,7 @@ export function activate(context) {
   };
   profileUI.command('xscp.disconnectProfile',async id => {const p=typeof id === 'string' ? profileUI.profiles.get(id) : id?.profileId ? profileUI.profiles.get(id.profileId) : await profileUI.choose(); if (p) return profileUI.disconnect(p);});
   const transfers=registerTransfers(context,profileUI);transferLifecycle=transfers;
+  const editorCopies=registerLocalEditorCopies(context,profileUI);profileUI.editorCopies=editorCopies;
   const editor=registerSessionEditor(context,profileUI);profileUI.editor=editor;
   const editorProof = registerEditorProvider(context, trust,editor);
   registerManager(context);
@@ -55,6 +57,7 @@ export function activate(context) {
       delete:async id => {profileUI.guard();await profileUI.profiles.delete(id);profileUI.changed.fire();},
       export:() => {profileUI.guard();return profileUI.profiles.export();},
     },
+    editorCopies,
     editorProof,
     editor,
     // Technical probe for authentication/installed-package acceptance; never

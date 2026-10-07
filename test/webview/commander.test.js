@@ -62,12 +62,13 @@ test('Real browser selection survives refresh; per-pane filters, symlinks and pr
   const count=messages.length;await act(() => targetPane.dispatchEvent(dragEvent('drop')));assert.equal(messages.length,count,'OS/forged drop has no matching internal drag');
   await act(() => localRow.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'F5',bubbles:true})));assert.equal(messages.length,count,'Commander shortcuts default off');
   model.commanderKeys=true;await render();await act(() => localRow.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'F5',bubbles:true})));assert.equal(messages.at(-1).type,'transfer');
+  await act(() => localRow.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'F4',bubbles:true})));assert.equal(messages.at(-1).action,'edit');
   const shortcutCount=messages.length;await act(() => doc.querySelector('.pathbar input').dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'F8',bubbles:true})));assert.equal(messages.length,shortcutCount,'Inputs never trigger destructive shortcuts');
   await act(() => localRow.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'F10',shiftKey:true,bubbles:true})));assert.equal(doc.activeElement.getAttribute('role'),'menuitem');await act(() => doc.activeElement.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true})));assert.equal(doc.querySelector('[role=menu]'),null);
-  const filter=doc.querySelector('input[aria-label="local: Namensfilter"]');
+  const filter=doc.querySelector('input[aria-label="Lokal: Namensfilter"]');
   await act(() => {Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype,'value').set.call(filter,'link');filter.dispatchEvent(new dom.window.Event('input',{bubbles:true}));});
   assert.equal(doc.querySelectorAll('.pane:first-child tbody tr').length,1);assert.equal(doc.querySelectorAll('.pane:last-child tbody tr').length,1);
-  await act(() => doc.querySelector('button[aria-label="local: Pfadfavorit"]').click());assert.ok(saved.panes.local.favorites.includes('/tmp'));assert.equal(saved.panes.remote.filter,'');
+  await act(() => doc.querySelector('button[aria-label="Lokal: Pfadfavorit"]').click());assert.ok(saved.panes.local.favorites.includes('/tmp'));assert.equal(saved.panes.remote.filter,'');
   await act(() => {Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype,'value').set.call(filter,'');filter.dispatchEvent(new dom.window.Event('input',{bubbles:true}));});
   model.local.entries=Array.from({length:10000},(_,i) => entry('file-'+String(i).padStart(5,'0')));await render();
   assert.equal(doc.querySelector('.pane table').getAttribute('aria-rowcount'),'10001');assert.ok(doc.querySelectorAll('.pane:first-child tr[data-entry-id]').length<80,'DOM stays bounded for 10,000 entries');
@@ -75,4 +76,12 @@ test('Real browser selection survives refresh; per-pane filters, symlinks and pr
   await act(() => doc.activeElement.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'F10',shiftKey:true,bubbles:true})));await act(() => doc.activeElement.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true})));assert.equal(doc.activeElement.dataset.entryId,'/tmp/file-09999','Menu returns focus to virtualized source row');
   await act(() => doc.activeElement.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'a',ctrlKey:true,bubbles:true})));assert.ok(doc.querySelector('.pane footer').textContent.includes('10000 ausgewählt'));assert.equal(button('Hochladen →').disabled,true,'Large selection cannot exceed transfer root limit');
   assert.equal(messages[0].type,'ready');dom.window.close();
+});
+test('English Commander and switching back localize labels, menus, errors and accessibility names',async () => {
+ const dom=new JSDOM('<html lang="en"><div id="root"></div></html>',{runScripts:'outside-only',url:'https://xscp.test'});dom.window.MessageChannel=class {constructor(){this.port1={onmessage:null};this.port2={postMessage:()=>setTimeout(()=>this.port1.onmessage?.(),0)};}};dom.window.IS_REACT_ACT_ENVIRONMENT=true;dom.window.eval(result.outputFiles.find(f=>f.path.endsWith('.js')).text);const messages=[];await dom.window.testMountBrowser({postMessage:m=>messages.push(m)},'english-session');
+ const act=action=>dom.window.testAct(action);const model={version:1,type:'browserModel',sessionId:'english-session',locale:'en',connection:{name:'Kein Server',state:'disconnected',protocol:'sftp'},local:{path:'/tmp',status:'error',error:'Keine Berechtigung für diesen Ordner.',entries:[]},remote:{path:'/',status:'disconnected',entries:[]},queue:[{id:'failed',source:'/a',target:'/b',state:'failed',direction:'upload',bytes:0,rate:0,error:'Transfer fehlgeschlagen; Quelle/Ziel und Verbindung prüfen.'}]};
+ const render=()=>act(()=>dom.window.dispatchEvent(new dom.window.MessageEvent('message',{data:dom.window.JSON.parse(JSON.stringify(model))})));await render();const doc=dom.window.document;
+ for (const text of ['Connect profile','New session','Hidden files','Permission denied for this folder.','Retry failed jobs','Transfer failed; check source/destination and connection.','No server']) assert.ok(doc.body.textContent.includes(text),text);
+ assert.ok(doc.querySelector('input[aria-label="Local: Name filter"]'));assert.ok(doc.querySelector('table[aria-label="Local: File list"]'));assert.equal(doc.documentElement.lang,'en');assert.ok(!/Versteckte|Namensfilter|Herunterladen|Dateiliste|Nicht verbunden/.test(doc.body.textContent));
+ model.locale='de';await render();assert.ok(doc.body.textContent.includes('Profil verbinden'));assert.ok(doc.body.textContent.includes('Fehlgeschlagen'));assert.equal(doc.documentElement.lang,'de');assert.equal(messages[0].type,'ready');dom.window.close();
 });

@@ -112,3 +112,7 @@ Jede M0-Unsicherheit hat einen Nachweis oder einen konkreten begrenzten Ersatzwe
 `npm ci`, `npm run check`, `npm test`; bei laufenden eigenen Fixtures zusätzlich Host-Key-, Auth-, SFTP-, SCP-, Editor- und Packaging-Befehle aus den Nachweisen. Mindestversion und jeweils geprüftes neues Stable laufen künftig in M6-01/CI. Remote-SSH wird ausschließlich für den echten Fenster-Test benötigt, Docker/OpenSSH-CLI nur für Entwicklung/Abnahme.
 
 M0-09 prüft Manifest/Lockfile/Testbaseline, Dokumentationslinks und vollständige M0-Checkboxen. Es startet keine Tests gegen fremde Server und kein öffentliches Release. [Abschlussprotokoll](nachweise/M0-09.md).
+
+## M5: Editor und Bedienung
+
+Private VSIX 0.0.5 auf macOS arm64/VS Code 1.140.0: Produktions-SFTP-Provider und Auto Save lokal sowie in echtem Remote-SSH-Fenster geprüft; entfernte Workspace-Erweiterung liest den lokalen UI-Provider. SCP-only bearbeitet lokale Kopien und lädt nur auf ausdrücklichen Queue-Auftrag hoch. 10.000 reale Einträge sind bei Dark/High Contrast/High Contrast Light und Zoom 0/2/1 virtualisiert nachgewiesen. Deutsch/Englisch für Manifest/React/native Dialoge geprüft. Windows/Linux-Desktop und vollständige manuelle Screenreader-Abnahme bleiben M6 offen. [Abschluss/Grenzen](nachweise/M5-Abschluss.md).

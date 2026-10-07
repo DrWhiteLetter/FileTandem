@@ -1,4 +1,4 @@
-import * as vscode from 'vscode';
+import { vscode,t } from './localized-vscode.js';
 import { randomUUID } from 'node:crypto';
 import { validateProfile } from '../domain/profile.js';
 import { Profiles } from '../application/profiles.js';
@@ -10,10 +10,10 @@ export function registerProfiles(context) {
   const guard=() => requireDesktopAccess(executionLocation(context),vscode.workspace.isTrusted);
   const choose=async () => { const item=await vscode.window.showQuickPick(profiles.list().map(profile => ({label:profile.name,description:`${profile.username}@${profile.host}:${profile.port}`,profile})),{title:'xScp: Profil auswählen'}); return item?.profile; };
   const edit=async (existing,{quick=false}={}) => {
-    guard(); const raw={version:1,id:existing?.id ?? randomUUID(),...(quick ? {name:'Schnellverbindung',localPath:'',remotePath:'/'}:{}),...existing};
+    guard(); const raw={version:1,id:existing?.id ?? randomUUID(),...(quick ? {name:t('Schnellverbindung'),localPath:'',remotePath:'/'}:{}),...existing};
     for (const [key,title,fallback] of [['name','Profilname','Neuer Server'],['host','SSH-Host',''],['port','SSH-Port','22'],['username','Benutzer',''],['localPath','Lokaler Startordner (leer = Home)',''],['remotePath','Remote-Startordner','/']]) {
       if (quick && ['name','localPath','remotePath'].includes(key)) continue;
-      const value=await vscode.window.showInputBox({title:`xScp: ${title}`,value:String(raw[key] ?? fallback),ignoreFocusOut:true}); if (value === undefined) return;
+      const value=await vscode.window.showInputBox({title:`xScp: ${title}`,value:String(raw[key] ?? t(fallback)),ignoreFocusOut:true}); if (value === undefined) return;
       raw[key]=key === 'port' ? (/^\d+$/.test(value) ? Number(value) : NaN) : value;
     }
     const protocol=await vscode.window.showQuickPick(['sftp','scp'],{title:'Protokoll (SCP: GNU/Linux-Shell erforderlich)'}); if (!protocol) return; raw.protocol=protocol;

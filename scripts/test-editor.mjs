@@ -1,5 +1,5 @@
 import { runTests } from '@vscode/test-electron';
-import { mkdtemp, mkdir, writeFile, cp, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, cp, rm } from 'node:fs/promises';
 import { tmpdir, homedir, hostname } from 'node:os';
 import { randomBytes, createHash } from 'node:crypto';
 import { join } from 'node:path';
@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { runtime } from '../test/helpers/auth.mjs';
 import { spawnSync } from 'node:child_process';
 delete process.env.ELECTRON_RUN_AS_NODE;
-const remote = process.argv.includes('--remote');
+const remote = process.argv.includes('--remote');const installed=process.argv.includes('--installed');
 const directory = await mkdtemp(join(tmpdir(), 'xscp-editor-'));
 const user = join(directory, 'user'); const extensions = join(directory, 'extensions');
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -30,11 +30,12 @@ try {
     const install = spawnSync('ssh', ['-F', join(runtime, 'ssh_config'), 'xscp-fixture-remote', 'sh'], { input: script, encoding: 'utf8' });
     if (install.status !== 0) throw new Error(install.stderr);
   }
+  let development=root;if (installed) {development=join(directory,'harness');await mkdir(development);await writeFile(join(development,'package.json'),JSON.stringify({name:'installed-editor-harness',publisher:'xscp-test',version:'0.0.1',engines:{vscode:'^1.140.0'}}));const manifest=JSON.parse(await readFile(join(root,'package.json'),'utf8'));const executable=process.env.VSCODE_TEST_EXECUTABLE ?? '/Applications/Visual Studio Code.app/Contents/MacOS/Code';const cli=process.env.VSCODE_CLI ?? (process.platform==='darwin' ? join(executable,'../../Resources/app/bin/code'):'code');const env=Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('VSCODE_') && key!=='ELECTRON_RUN_AS_NODE'));const result=spawnSync(cli,['--user-data-dir',user,'--extensions-dir',extensions,'--install-extension',join(root,'out',`xscp-${manifest.version}.vsix`),'--force'],{env,encoding:'utf8',timeout:120000});if (result.status!==0) throw new Error(result.stderr || result.error?.message);}
   const setup = spawnSync('ssh', ['-F', join(runtime, 'ssh_config'), 'xscp-fixture-remote', 'printf editor-initial > /data/editor-proof.txt'], { encoding: 'utf8' });
   if (setup.status !== 0) throw new Error(setup.stderr);
   await runTests({ version: '1.140.0', vscodeExecutablePath: process.env.VSCODE_TEST_EXECUTABLE,
-    extensionDevelopmentPath: root, extensionTestsPath: join(root,process.argv.includes('--accessibility') ? 'test/extension/accessibility.cjs':'test/extension/editor.cjs'),
-    extensionTestsEnv: { XSCP_EDITOR_RUNTIME: runtime, XSCP_EDITOR_REMOTE: remote ? 'yes' : 'no', XSCP_EDITOR_ROOT: root, XSCP_EDITOR_MARKER: marker, XSCP_EDITOR_MARKER_HASH: createHash('sha256').update(markerBytes).digest('hex'), XSCP_EDITOR_HOST: hostname(), XSCP_SSH_PORT_BASE: process.env.XSCP_SSH_PORT_BASE ?? '22220' },
-    launchArgs: ['--user-data-dir', user, '--extensions-dir', extensions, '--skip-welcome', '--skip-release-notes', '--disable-workspace-trust', ...(remote ? ['--folder-uri', 'vscode-remote://ssh-remote+xscp-fixture-remote/data'] : [])],
+    extensionDevelopmentPath: development, extensionTestsPath: join(root,process.argv.includes('--accessibility') ? 'test/extension/accessibility.cjs':'test/extension/editor.cjs'),
+    extensionTestsEnv: { XSCP_INSTALLED_EDITOR_EXTENSIONS:installed ? extensions:'',XSCP_EDITOR_RUNTIME: runtime, XSCP_EDITOR_REMOTE: remote ? 'yes' : 'no', XSCP_EDITOR_ROOT: root, XSCP_EDITOR_MARKER: marker, XSCP_EDITOR_MARKER_HASH: createHash('sha256').update(markerBytes).digest('hex'), XSCP_EDITOR_HOST: hostname(), XSCP_SSH_PORT_BASE: process.env.XSCP_SSH_PORT_BASE ?? '22220' },
+    launchArgs: [...(process.argv.includes('--english') ? ['--locale','en']:[]),'--user-data-dir', user, '--extensions-dir', extensions, '--skip-welcome', '--skip-release-notes', '--disable-workspace-trust', ...(remote ? ['--folder-uri', 'vscode-remote://ssh-remote+xscp-fixture-remote/data'] : [])],
   });
 } finally { await rm(directory, { recursive: true, force: true }); }

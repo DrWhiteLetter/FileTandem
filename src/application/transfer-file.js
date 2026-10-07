@@ -6,6 +6,7 @@ export async function transferFile(session,job,{target,replace=false,signal,onPr
  let before=await targetSnapshot(target,job.target),part=target.partial(job.target,job.id),offset=0,sourceHash,attempt;
  if (job.resumeFrom) {const verified=await verifyResume(job,{target,source,identity,signal});({before,part,offset,sourceHash,attempt}=verified);replace=!!before;}
  if (before && (!replace || before.kind !== 'file' || !target.atomicReplace)) throw Object.assign(new Error('Zielkonflikt.'),{publicMessage:'Ziel existiert; sichere Ersetzung nicht freigegeben oder verfügbar.'});
+ if (job.reviewedReplacement && (!before || before.kind!=='file' || await target.hash(job.target,signal)!==job.reviewedReplacement)) throw Object.assign(new Error('Serverstand der Editorkopie wurde geändert.'),{code:'EDITOR_CONFLICT',publicMessage:'Serverstand der Editorkopie wurde geändert; Kopie neu herunterladen und Änderungen vergleichen.'});
  signal?.throwIfAborted();
  if (source && !attempt) {const sourceInfo=await source.stat(job.source);if (sourceInfo.kind!=='file') throw new Error('Quelle ist keine reguläre Datei.');sourceHash=await source.hash(job.source,signal);if (!snapshotEqual(sourceInfo,await source.stat(job.source))) throw new Error('Quelle während der Vorprüfung geändert.');attempt={id:job.id,part,target:job.target,source:job.source,protocol:job.protocol ?? 'sftp',identity,sourceInfo,sourceHash,before:before ?? null};}
  if (attempt) await onCheckpoint(attempt);
@@ -13,5 +14,6 @@ export async function transferFile(session,job,{target,replace=false,signal,onPr
  if ((sourceHash && result.sha256!==sourceHash) || (await target.stat(part)).size !== result.bytes || await target.hash(part,signal) !== result.sha256) throw Object.assign(new Error('Teil-Datei hat falsche Größe oder Prüfsumme; Quelle möglicherweise geändert.'),{code:'TRANSFER_INTEGRITY',publicMessage:'Quelle oder Teil-Datei hat sich verändert; Ziel bleibt erhalten.'});
  await target.prepare?.(part,job.metadata);signal?.throwIfAborted();
  if (!snapshotEqual(before,await targetSnapshot(target,job.target))) throw Object.assign(new Error('Ziel wurde zwischenzeitlich geändert.'),{publicMessage:'Ziel wurde während des Transfers geändert; Teil-Datei bleibt zur Prüfung erhalten.'});
+ if (job.reviewedReplacement && await target.hash(job.target,signal)!==job.reviewedReplacement) throw Object.assign(new Error('Serverstand wurde während des Uploads geändert.'),{code:'EDITOR_CONFLICT',publicMessage:'Serverstand wurde während des Uploads geändert; Ziel bleibt erhalten.'});
  await target.publish(part,job.target,!!before);return {...result,committed:true,partialPath:part};
 }

@@ -1,4 +1,4 @@
-import * as vscode from 'vscode';
+import { vscode } from './localized-vscode.js';
 import { createHash } from 'node:crypto';
 import { open } from 'node:fs/promises';
 import { hostname, homedir } from 'node:os';

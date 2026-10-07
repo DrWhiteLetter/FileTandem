@@ -6,7 +6,7 @@ const { spawnSync } = require('node:child_process');
 const delay = ms => new Promise(r => setTimeout(r, ms));
 const wait = async predicate => { const deadline = Date.now() + 10000; while (!await predicate()) { if (Date.now() > deadline) throw new Error('Editor state timeout'); await delay(100); } };
 exports.run = async () => {
-  const extension = vscode.extensions.getExtension('xscp-dev.xscp'); const api = await extension.activate();
+  const extension = vscode.extensions.getExtension('xscp-dev.xscp'); if (process.env.XSCP_INSTALLED_EDITOR_EXTENSIONS) assert.ok(extension.extensionPath.startsWith(process.env.XSCP_INSTALLED_EDITOR_EXTENSIONS));const api = await extension.activate();
   assert.equal(api.executionLocation().local, true);
   const remote = process.env.XSCP_EDITOR_REMOTE === 'yes';
   assert.equal(vscode.env.remoteName ?? 'local', remote ? 'ssh-remote' : 'local');
@@ -39,12 +39,17 @@ exports.run = async () => {
   assert.ok((await vscode.workspace.fs.readDirectory(production.with({path:'/data'}))).some(([name]) => name==='editor-proof.txt'));
   assert.equal(Buffer.from(await vscode.workspace.fs.readFile(production)).toString(),'editor-initial');
   await assert.rejects(vscode.workspace.fs.writeFile(production,Buffer.from('blocked')));
+  if (remote) {const result=await vscode.commands.executeCommand('xscp.test.remoteEditorRead',production.toString(),process.env.XSCP_EDITOR_MARKER);assert.equal(result.content,'editor-initial');assert.notEqual(result.host,process.env.XSCP_EDITOR_HOST);assert.equal(result.localMarkerExists,false);}
+  const autoDoc=await vscode.workspace.openTextDocument(production);let autoEditor=await vscode.window.showTextDocument(autoDoc);
+  await vscode.workspace.getConfiguration('files').update('autoSaveDelay',300,vscode.ConfigurationTarget.Global);await vscode.workspace.getConfiguration('files').update('autoSave','afterDelay',vscode.ConfigurationTarget.Global);
+  const accepted=await autoEditor.edit(b => b.insert(new vscode.Position(0,0),'blocked-'));await delay(800);assert.equal(server(),'editor-initial');await vscode.workspace.getConfiguration('files').update('autoSave','off',vscode.ConfigurationTarget.Global);if (accepted && autoDoc.isDirty) {assert.equal(await autoDoc.save(),false);await vscode.commands.executeCommand('workbench.action.files.revert');}else assert.equal(autoDoc.getText(),'editor-initial');
   const isolated=await api.editor.open(profile,'/data/editor-proof.txt');
   assert.equal(await api.editor.enable(production,async () => false),false);
-  await api.editor.enable(production,async () => true);
+  await api.editor.enable(production,async () => true);await wait(async () => (await vscode.workspace.fs.stat(production)).permissions===undefined);await delay(500);autoEditor=await vscode.window.showTextDocument(autoDoc);
   await assert.rejects(api.editor.write(production,Buffer.from('no-replace'),{create:true,overwrite:false}));
   await Promise.all([vscode.workspace.fs.writeFile(production,Buffer.from('first')),vscode.workspace.fs.writeFile(production,Buffer.from('editor-initial'))]);
   assert.equal(server(),'editor-initial');
+  await vscode.workspace.getConfiguration('files').update('autoSave','afterDelay',vscode.ConfigurationTarget.Global);await autoEditor.edit(b => b.replace(new vscode.Range(0,0,autoDoc.lineCount,0),'production-auto'));await wait(() => !autoDoc.isDirty && server()==='production-auto');await autoEditor.edit(b => b.replace(new vscode.Range(0,0,autoDoc.lineCount,0),'editor-initial'));await wait(() => !autoDoc.isDirty && server()==='editor-initial');await vscode.workspace.getConfiguration('files').update('autoSave','off',vscode.ConfigurationTarget.Global);
   await assert.rejects(vscode.workspace.fs.writeFile(isolated,Buffer.from('other')));
   const created=await api.editor.open(profile,'/data/m5-new-'+Date.now()+'.txt',{create:true});
   await api.editor.enable(created,async () => true);
@@ -54,12 +59,14 @@ exports.run = async () => {
   await assert.rejects(api.editor.write(created,Buffer.from('duplicate'),{create:true,overwrite:false}));
   const remove=spawnSync('ssh',['-F',join(runtime,'ssh_config'),'xscp-fixture-remote','rm -- '+created.path]);assert.equal(remove.status,0);
   const mutate=value => {const result=spawnSync('ssh',['-F',join(runtime,'ssh_config'),'xscp-fixture-remote','printf '+value+' > /data/editor-proof.txt']);assert.equal(result.status,0);};
+  await vscode.window.showTextDocument(await vscode.workspace.openTextDocument({content:'consumer-read safety check'}));
+  mutate('consumer-read');assert.equal(Buffer.from(await vscode.workspace.fs.readFile(production)).toString(),'consumer-read');assert.notEqual(autoDoc.getText(),'consumer-read');await assert.rejects(vscode.workspace.fs.writeFile(production,Buffer.from('stale-editor')));assert.equal(server(),'consumer-read');
   mutate('external');await assert.rejects(vscode.workspace.fs.writeFile(production,Buffer.from('lost-update')));assert.equal(server(),'external');
   const review=await api.editor.review(production);assert.equal((await vscode.workspace.openTextDocument(review)).getText(),'external');
   mutate('newer');await assert.rejects(api.editor.acceptReview(production,async () => true));assert.equal(server(),'newer');
   await api.editor.review(production);assert.equal(await api.editor.acceptReview(production,async () => false),false);
   await api.editor.acceptReview(production,async () => true);await vscode.workspace.fs.writeFile(production,Buffer.from('editor-initial'));assert.equal(server(),'editor-initial');
-  console.log('M5-03: external conflict, exact reviewed snapshot and later change rejection passed.');
+  console.log('M5-03: consumer reads preserve displayed baseline, external conflict, exact reviewed snapshot and later change rejection passed.');
   const productionDoc=await vscode.workspace.openTextDocument(production);const productionEditor=await vscode.window.showTextDocument(productionDoc);
   await productionEditor.edit(b => b.replace(new vscode.Range(0,0,productionDoc.lineCount,0),'local-draft'));mutate('remote-diff');
   const diff=await api.editor.diff(production);assert.equal((await vscode.workspace.openTextDocument(diff.local)).getText(),'local-draft');assert.equal((await vscode.workspace.openTextDocument(diff.remote)).getText(),'remote-diff');assert.equal((await vscode.workspace.openTextDocument(diff.baseline)).getText(),'editor-initial');
@@ -71,6 +78,7 @@ exports.run = async () => {
   await api.editor.close(created);await api.editor.close(isolated);await api.editor.close(production);
   assert.equal(api.editor.status().sessions,0);assert.equal(api.editor.status().snapshots,0);assert.equal(api.editor.status().polling,false);
   console.log('M5-01/02: production provider, opaque URI, directory read, grant isolation, serial saves, create/overwrite passed.');
+  await require('./editor-copy.cjs').run(api,runtime);
   const second = await api.editorProof.open(config, '/data/editor-proof.txt', { confirmUnknown: async () => true });
   try {
     assert.equal(uri.toString().includes('fixture'), false, 'No username/credentials in URI');

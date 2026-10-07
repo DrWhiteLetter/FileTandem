@@ -11,7 +11,8 @@ export class TransferEngine {
     this.queue=new TransferQueue({run:(j,s,p) => this.run(j,s,p),onChange});
   }
   key(job,path) {if (job.direction === 'upload') return 'remote:'+job.server+':'+posix.normalize(path);const local=resolve(path).replaceAll('\\','/');return 'local:'+(process.platform === 'win32' ? local.toLowerCase():local);}
-  async submit(profileId,direction,paths,destination) {
+  async submit(profileId,direction,paths,destination,{reviewedReplacement}={}) {
+    if (reviewedReplacement!==undefined && (direction!=='upload' || paths?.length!==1 || !/^[a-f0-9]{64}$/.test(reviewedReplacement))) throw new Error('Ungültige geprüfte Ersetzung.');
     await this.ready;this.guard();if (!['upload','download'].includes(direction) || !Array.isArray(paths) || !paths.length || paths.length > 1000) throw new Error('Ungültige Transferauswahl.');
     const profile=this.profiles.get(profileId);
     paths=paths.map(direction === 'upload' ? localPath:p => pathFor(p,profile.protocol));destination=direction === 'upload' ? pathFor(destination,profile.protocol):localPath(destination);
@@ -25,7 +26,7 @@ export class TransferEngine {
         const id=randomUUID(),target=node.relative ? targetJoin(root,...node.relative.split('/')):root;
         if (profile.protocol === 'scp') pathFor(direction === 'upload' ? target:node.source,profile.protocol);
         const parent=node.relative ? parents.get(posix.dirname(node.relative) === '.' ? '':posix.dirname(node.relative)):undefined;
-        const job={id,batchId,profileId,server,direction,source:node.source,target,kind:node.kind,metadata:node.metadata,profileKey:profileIdentity(profile),protocol:profile.protocol,parentId:parent,name:node.relative ? posix.basename(node.relative):sourceBase(path)};
+        const job={id,batchId,profileId,server,direction,source:node.source,target,kind:node.kind,metadata:node.metadata,profileKey:profileIdentity(profile),protocol:profile.protocol,...(reviewedReplacement && node.kind==='file' && !node.relative ? {reviewedReplacement}:{}),parentId:parent,name:node.relative ? posix.basename(node.relative):sourceBase(path)};
         job.lockKey=this.key(job,target);this.queue.add(job);ids.push(id);if (node.kind === 'directory') parents.set(node.relative,id);
       }} catch {const job={id:randomUUID(),batchId,profileId,server,direction,source:path,target:root,kind:'error'};job.lockKey=this.key(job,root);this.queue.add(job);ids.push(job.id);}
     }} finally {files.close();}return {batchId,ids};
@@ -42,7 +43,7 @@ export class TransferEngine {
       const initial=job.resumeFrom ? job.attempt.target:parent?.finalTarget ? (job.direction === 'upload' ? posix.join:join)(parent.finalTarget,job.name):job.target;
       let path=initial,replace=false;
       if (!job.resumeFrom && !(job.kind === 'directory' && (await targetSnapshot(target,path))?.kind === 'directory')) {
-        const decision=await this.conflicts.resolve({...job,target:path},target,signal);if (decision.skipped) return decision;path=decision.path;replace=decision.replace;
+        const decision=job.reviewedReplacement ? {path,replace:true}:await this.conflicts.resolve({...job,target:path},target,signal);if (decision.skipped) return decision;path=decision.path;replace=decision.replace;
       }
       return await this.queue.withLock(job.id,this.key(job,path),async () => {
         this.guard();signal.throwIfAborted();

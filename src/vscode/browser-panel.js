@@ -1,5 +1,5 @@
 import { browserSettings } from '../shared/browser-settings.js';
-import * as vscode from 'vscode';
+import { vscode,language,t } from './localized-vscode.js';
 import { randomUUID,randomBytes } from 'node:crypto';
 import { planRemoteDelete,executeRemoteDelete } from '../application/remote-delete.js';
 import { trashLocal } from './local-operations.js';
@@ -21,7 +21,7 @@ export function registerBrowser(context,profileUI) {
     panel ??= vscode.window.createWebviewPanel('xscp.browser','xScp',vscode.ViewColumn.One,{});
     panel.webview.options={enableScripts:true,localResourceRoots:[assets]};
     let alive=true;const recent=new Set();
-    const model=() => ({version:1,type:'browserModel',sessionId,diagnostics,profileId:profile?.ephemeral ? undefined:profile?.id,queue:profileUI.transfers.engine.queue.list(profile?.id),queuePaused:profileUI.transfers.engine.queue.paused,local:local.state,remote:remote.state,...browserSettings(key => vscode.workspace.getConfiguration('xscp').get(key)),connection:profile ? {...profileUI.sessions.snapshot(profile.id),name:profile.name} : {state:'disconnected',name:'Kein Server'}});
+    const model=() => ({version:1,type:'browserModel',sessionId,diagnostics,locale:language(),profileId:profile?.ephemeral ? undefined:profile?.id,queue:profileUI.transfers.engine.queue.list(profile?.id),queuePaused:profileUI.transfers.engine.queue.paused,local:local.state,remote:remote.state,...browserSettings(key => vscode.workspace.getConfiguration('xscp').get(key)),connection:profile ? {...profileUI.sessions.snapshot(profile.id),name:profile.name} : {state:'disconnected',name:'Kein Server'}});
     const publish=() => {if (alive) {panel.title=profile ? `xScp · ${profile.name}`:'xScp';void panel.webview.postMessage(model());}};
     let start;try {start=localStart(restored.paths?.local ?? profile?.localPath);} catch {start=localStart();}
     const local=new DirectoryBrowser({start,parent:localParent,list:path => files.list(vscode.Uri.file(localPath(path))),onChange:publish});
@@ -74,7 +74,7 @@ export function registerBrowser(context,profileUI) {
         if (browser.state.status !== 'ready') throw new Error('Bitte erst einen Ordner laden.');
         const selected=message.ids.map(id => browser.state.entries.find(entry => entry.id === id));
         if (selected.some(entry => !entry)) throw new Error('Auswahl ist veraltet; bitte aktualisieren.');
-        if (message.action==='open') {if (selected.length!==1 || selected[0].kind!=='file') throw new Error('Bitte eine reguläre Datei auswählen.');if (message.side==='local') await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(vscode.Uri.file(selected[0].path)));else await profileUI.editor.show(profile,selected[0].path,() => transfer({side:'remote',ids:message.ids,destination:'choose'}));return;}
+        if (['open','edit'].includes(message.action)) {if (selected.length!==1 || selected[0].kind!=='file') throw new Error('Bitte eine reguläre Datei auswählen.');if (message.side==='local') await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(vscode.Uri.file(selected[0].path)));else {const uri=await profileUI.editor.show(profile,selected[0].path,() => transfer({side:'remote',ids:message.ids,destination:'choose'}));if (message.action==='edit' && uri?.scheme==='xscp') await profileUI.editor.enable(uri);}return;}
         const parent=browser.state.path;const windows=message.side === 'local' && process.platform === 'win32';
         const options={windows,join:message.side === 'local' ? join:posix.join};
         const adapter=message.side === 'local' ? {
@@ -88,7 +88,7 @@ export function registerBrowser(context,profileUI) {
           const allowed=() => alive && browser.state.path === parent && hasDesktopAccess(executionLocation(context),vscode.workspace.isTrusted);
           if (message.action === 'properties') {
             const info=await adapter.stat(selected[0].path);
-            await vscode.window.showInformationMessage(`Eigenschaften: ${info.name}`,{modal:true,detail:`Pfad: ${info.path}\nTyp: ${info.kind}\nGröße: ${info.size} Bytes\nGeändert: ${new Date(info.modified).toLocaleString()}\nRechte: ${info.mode.toString(8).padStart(3,'0')}${info.kind === 'symlink' ? `\nLinkziel: ${info.linkTarget}`:''}`},'Schließen');return;
+            await vscode.window.showInformationMessage(`Eigenschaften: ${info.name}`,{modal:true,detail:`Pfad: ${info.path}\nTyp: ${t({file:'Datei',directory:'Ordner',symlink:'Symlink',other:'Andere'}[info.kind])}\nGröße: ${info.size} Bytes\nGeändert: ${new Date(info.modified).toLocaleString(language())}\nRechte: ${info.mode.toString(8).padStart(3,'0')}${info.kind === 'symlink' ? `\nLinkziel: ${info.linkTarget}`:''}`},'Schließen');return;
           }
           if (message.action === 'chmod') {
             if (selected[0].kind === 'symlink') throw new Error('Symlink-Rechte werden nicht geändert.');
@@ -148,7 +148,7 @@ export function registerBrowser(context,profileUI) {
     });
     panel.onDidDispose(() => {alive=false;views.delete(view);changes.dispose();configuration.dispose();transferChanges.dispose();receive.dispose();local.invalidate();remote.invalidate();remoteFiles?.close();});
     const script=panel.webview.asWebviewUri(vscode.Uri.joinPath(assets,'webview.js'));const style=panel.webview.asWebviewUri(vscode.Uri.joinPath(assets,'webview.css'));const nonce=randomBytes(24).toString('base64');
-    panel.webview.html=`<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="xscp-session" content="${sessionId}"><meta name="xscp-mode" content="browser"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${panel.webview.cspSource}; font-src ${panel.webview.cspSource}; script-src 'nonce-${nonce}';"><link rel="stylesheet" href="${style}"></head><body><div id="root"></div><script nonce="${nonce}" src="${script}"></script></body></html>`;
+    panel.webview.html=`<!DOCTYPE html><html lang="${language()}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="xscp-session" content="${sessionId}"><meta name="xscp-mode" content="browser"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${panel.webview.cspSource}; font-src ${panel.webview.cspSource}; script-src 'nonce-${nonce}';"><link rel="stylesheet" href="${style}"></head><body><div id="root"></div><script nonce="${nonce}" src="${script}"></script></body></html>`;
     context.subscriptions.push(panel);return panel;
   };
   profileUI.open=profile => open(profile);
