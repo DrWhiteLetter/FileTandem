@@ -33,7 +33,12 @@ export function activate(context) {
     });
   };
   profileUI.command('xscp.connectProfile',async id => {const p=typeof id === 'string' ? profileUI.profiles.get(id) : id?.profileId ? profileUI.profiles.get(id.profileId) : await profileUI.choose(); if (p) { await profileUI.connect(p); return profileUI.open(p); }});
-  profileUI.command('xscp.disconnectProfile',async id => {const p=typeof id === 'string' ? profileUI.profiles.get(id) : id?.profileId ? profileUI.profiles.get(id.profileId) : await profileUI.choose(); if (p) return profileUI.sessions.disconnect(p.id);});
+  profileUI.disconnect=async profile => {
+    const jobs=profileUI.transfers.engine.queue.list(profile.id).filter(j => ['queued','running'].includes(j.state));
+    if (jobs.length && await vscode.window.showWarningMessage(`${jobs.length} laufende oder wartende Transfers werden abgebrochen.`,{modal:true,detail:'Eigene Teil-Dateien bleiben für geprüfte Fortsetzung oder Bereinigung erhalten. Andere Profile bleiben verbunden.'},'Verbindung trennen')!=='Verbindung trennen') return false;
+    profileUI.guard();for (const job of jobs) profileUI.transfers.engine.queue.cancel(job.id);await profileUI.sessions.disconnect(profile.id);return true;
+  };
+  profileUI.command('xscp.disconnectProfile',async id => {const p=typeof id === 'string' ? profileUI.profiles.get(id) : id?.profileId ? profileUI.profiles.get(id.profileId) : await profileUI.choose(); if (p) return profileUI.disconnect(p);});
   const transfers=registerTransfers(context,profileUI);transferLifecycle=transfers;
   const editor=registerSessionEditor(context,profileUI);profileUI.editor=editor;
   const editorProof = registerEditorProvider(context, trust,editor);

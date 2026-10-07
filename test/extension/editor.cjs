@@ -25,6 +25,14 @@ exports.run = async () => {
   console.log('M5: profile connect');
   await vscode.commands.executeCommand('xscp.connectProfile',profile.id);
   console.log('M5: production open');
+  const tabA=api.manager.open(profile),tabB=api.manager.open(profile);await delay(500);
+  const views=api.manager.status().views.slice(-2);assert.equal(views.length,2);assert.notEqual(views[0].sessionId,views[1].sessionId);
+  await api.manager.navigate(views[0].sessionId,'remote','/');await api.manager.navigate(views[1].sessionId,'remote','/data');
+  assert.equal(api.manager.status().views.find(v => v.sessionId===views[0].sessionId).remote.path,'/');assert.equal(api.manager.status().views.find(v => v.sessionId===views[1].sessionId).remote.path,'/data');
+  await api.transfers.ready;api.transfers.pause(true);const batch=await api.transfers.submit(profile.id,'download',['/data/editor-proof.txt'],require('node:path').dirname(process.env.XSCP_EDITOR_MARKER));
+  tabA.dispose();tabB.dispose();assert.equal(api.transfers.list().find(j => j.id===batch.ids[0]).state,'queued');api.transfers.pause(false);
+  await wait(() => api.transfers.list().find(j => j.id===batch.ids[0]).state==='completed');assert.equal(await readFile(join(require('node:path').dirname(process.env.XSCP_EDITOR_MARKER),'editor-proof.txt'),'utf8'),'editor-initial');
+  console.log('M5-05: two independent same-profile paths; queued download completes after both tabs close.');assert.equal(api.manager.status().views.some(v => views.some(old => old.sessionId===v.sessionId)),false);
   const production=await api.editor.open(profile,'/data/editor-proof.txt');
   assert.equal(production.scheme,'xscp');
   assert.equal((await vscode.workspace.fs.stat(production)).permissions,vscode.FilePermission.Readonly);

@@ -126,6 +126,10 @@
       {
         "command": "xscp.diffRemoteFile",
         "title": "xScp: Server und Editor vergleichen"
+      },
+      {
+        "command": "xscp.newSession",
+        "title": "xScp: Neue Sitzung öffnen"
       }
     ],
     "viewsContainers": {
