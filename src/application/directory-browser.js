@@ -10,7 +10,7 @@ export class DirectoryBrowser {
       if (history && this.state.path !== result.path) {this.history=this.history.slice(0,this.index+1);this.history.push(result.path);this.index=this.history.length-1;}
       this.state={path:result.path,entries:result.entries,status:'ready',error:''}; this.onChange(this.state);
     } catch(error) {if (generation !== this.#generation) return;
-      const message=['EACCES','EPERM',3].includes(error.code) ? 'Keine Berechtigung für diesen Ordner.':['ENOENT',2].includes(error.code) ? 'Ordner nicht gefunden.':error.code === 'NOT_CONNECTED' ? 'Nicht verbunden.':'Ordner konnte nicht gelesen werden.';
+      const message=['EACCES','EPERM',3].includes(error.code) ? 'Keine Berechtigung für diesen Ordner.':['ENOENT',2].includes(error.code) ? 'Ordner nicht gefunden.':error.code === 'NOT_CONNECTED' ? 'Nicht verbunden.':error.code === 'ENOTDIR' ? 'Pfad ist kein Ordner.':error.code === 'UNSUPPORTED_PROTOCOL' ? 'SCP-Dateiverwaltung folgt in M4; SFTP ist bereits verfügbar.':'Ordner konnte nicht gelesen werden.';
       this.state={...this.state,status:'error',error:message}; this.onChange(this.state);
     }
   }

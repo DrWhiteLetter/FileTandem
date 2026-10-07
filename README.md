@@ -1,6 +1,6 @@
 # xScp
 
-Entwicklungsprototyp einer VS-Code-Desktop-Erweiterung für SFTP und SCP. M0 und die M1-Implementierung sind abgeschlossen: Start-Webview, SFTP-Streaming, echtes SCP, Authentifizierung und abgesicherter SFTP-Editor sind nachgewiesen. Die Dateimanager-Oberfläche bietet noch keine Transfers.
+Entwicklungsprototyp einer VS-Code-Desktop-Erweiterung für SFTP und SCP. M0 sowie die M1-/M2-Implementierung sind abgeschlossen: Start-Webview, SFTP-Streaming, echtes SCP, Authentifizierung und abgesicherter SFTP-Editor sind nachgewiesen. Die Commander-Ansicht bietet lokale und SFTP-Dateiverwaltung; Transfers folgen in M3.
 
 ## Entwicklung
 
@@ -33,7 +33,7 @@ Für Tests mit einer vorhandenen Installation kann `VSCODE_TEST_EXECUTABLE` auf 
 - `scripts/build.mjs`: esbuild erzeugt `dist/extension.cjs` für Node sowie `dist/webview.js` und `dist/webview.css` für die Webview. `vscode` bleibt extern; Source Maps unterstützen Debugging.
 - `jsconfig.json`: JavaScript/JSX-Projekt und Editor-Unterstützung mit VS-Code-Typen und JSDoc; kein TypeScript-Compiler.
 
-Die Webview nutzt nur lokale Assets mit CSP. Restricted Mode deaktiviert die Erweiterung. `extensionKind: ["ui"]` bindet die Erweiterung an den lokalen Desktop-Host; Private VSIX-Installation ist nachgewiesen. Die Commander-Demo und eine CI-Grundlage sind enthalten; echte Browser-Verbindungen folgen in M2, Transfers in M3.
+Die Webview nutzt nur lokale Assets mit CSP. Restricted Mode deaktiviert die Erweiterung. `extensionKind: ["ui"]` bindet die Erweiterung an den lokalen Desktop-Host; Private VSIX-Installation ist nachgewiesen. Die Commander-Demo und eine CI-Grundlage sind enthalten; echte SFTP-Verbindungen und Dateiverwaltung sind angebunden; Transfers folgen in M3.
 
 [M0-02-Nachweis und Remote-Prüfschritte](docs/nachweise/M0-02.md) · [Backlog](docs/meilensteine/README.md) · [Umsetzungsplan](UMSETZUNGSPLAN.md) · [M0-01-Nachweis](docs/nachweise/M0-01.md)
 
@@ -141,7 +141,7 @@ Der Remote-Test verwendet die separate Debian-Fixture auf Port `22224` und ein i
 
 `npm run quality` führt ESLint, automatische JavaScript-Syntaxprüfung, Unit-Tests, gerenderte React-DOM-Tests und beide Builds aus. Einzeln: `npm run lint`, `npm run check`, `npm run test:unit`, `npm run test:webview`, `npm run build`. Domain unter `src/domain` bleibt frei von Runtime-/UI-Bibliotheken; Application koordiniert injizierte Adapter, VS-Code-Integration liegt unter `src/vscode`. JSX bleibt JavaScript ohne TypeScript-Compiler.
 
-## Commander-Demo installieren (M1)
+## VSIX installieren
 
 Node 22.13.1 oder neuer verwenden (`nvm use`). Die SSH-Fixtures werden für diese Demo nicht benötigt.
 
@@ -151,8 +151,27 @@ npm run quality
 npm run package
 ```
 
-In VS Code Desktop ab 1.140.0: Erweiterungsansicht → Menü „…“ → „Aus VSIX installieren…“ → `out/xscp-0.0.1.vsix`. Dann die xScp-Activity-Bar öffnen oder **xScp: Dateimanager öffnen** über die Befehlspalette ausführen. Alternativ startet `npm start` den Entwicklungs-Host. Zwei Dateilisten, Ordner, Sortierung, Tastaturauswahl, fünf Demo-Zustände und Queue sind jetzt testbar. Die Daten sind Mock-Daten; Transferknöpfe sind noch deaktiviert.
+In VS Code Desktop ab 1.140.0: Erweiterungsansicht → Menü „…“ → „Aus VSIX installieren…“ → `out/xscp-0.0.2.vsix`. Dann die xScp-Activity-Bar öffnen oder **xScp: Dateimanager öffnen** über die Befehlspalette ausführen. Alternativ startet `npm start` den Entwicklungs-Host. Die aktuelle Commander-Ansicht liest das echte lokale Dateisystem und kann SFTP-Profile verbinden. Die ursprüngliche M1-Demo bleibt unter **xScp: Mock-Demo öffnen** verfügbar. Transferknöpfe sind noch deaktiviert.
 
 `npm run test:installed` installiert und testet die VSIX ausschließlich in einem temporären, anschließend entfernten Profil. Bei vorhandener VS-Code-Installation lässt sich `VSCODE_TEST_EXECUTABLE` auf die Programmdatei setzen; sonst wird die festgelegte Testversion geladen. Python 3 wird für die unabhängige ZIP-Prüfung benötigt.
 
 Die GitHub-Actions-Datei führt Lint, Syntaxprüfung, Unit-/React-DOM-Tests, Build und Packaging auf Linux, macOS und Windows aus; Linux ergänzt einen installierten Extension-Host-Test unter Xvfb. Actions sind auf konkrete Revisionen fixiert ([Checkout](https://github.com/actions/checkout/releases), [Setup Node](https://github.com/actions/setup-node/releases)). Ohne Remote-Repository ist der gehostete Lauf offen. Native Restricted-Mode-, Theme-/Zoom- und Fensterneustart-Bedienabnahmen bleiben ebenfalls offen; siehe [M1-Abnahme](docs/nachweise/M1-Abschluss.md).
+
+## Verbindungen und Dateiverwaltung (M2)
+
+1. **xScp: Profil anlegen** wählen: Host, Port, Benutzer, Startordner, SFTP und Passwort/Key/Agent angeben. Ein leerer lokaler Startordner verwendet Home, auch ohne geöffnetes Projekt.
+2. In der xScp-Activity-Bar ein Profil öffnen oder im Commander **Profil verbinden** wählen. Beim ersten Zugang den Host-Key unabhängig vergleichen und im nativen Dialog bestätigen. Passwort/Passphrase verlassen den Backend-/SecretStorage-Bereich nicht.
+3. Pfad eingeben, Ordner öffnen oder Vor/Zurück/Übergeordnet verwenden. Beide Bereiche haben eigene Filter, Sortierung, versteckte Dateien, Spalten und Pfadfavoriten. Ctrl/Cmd und Shift ermöglichen Mehrfachauswahl.
+4. **Neuer Ordner**, **Umbenennen**, **Löschen**, **Eigenschaften** und **Rechte** wirken auf den gewählten Bereich. Vorhandene Rename-Ziele werden abgewiesen. Lokales Löschen geht nach Bestätigung in den Papierkorb; Remote-Löschen ist bestätigt und endgültig. Symlink-Ziele werden bei rekursivem Löschen nicht traversiert.
+
+Über das Profil-Kontextmenü lassen sich Profile bearbeiten, favorisieren, trennen und erneut verbinden. **xScp: Schnellverbindung** baut einen nicht gespeicherten Zugang auf. **xScp: Gespeicherte Anmeldung vergessen** entfernt ein gespeichertes Passwort/eine Passphrase. **xScp: Profile ohne Geheimnisse exportieren** öffnet ein JSON-Dokument mit Profilmetadaten.
+
+SFTP-only benötigt weder Shell noch VS Code Server. SCP-Profile sind modelliert und authentifizierbar; SCP-Dateiverwaltung folgt ausdrücklich in M4. Windows-POSIX-chmod und lokale UNC-Authorities werden derzeit verständlich verweigert. Pro Ordner sind vorerst 10.000 Einträge vorgesehen; Remote-Löschpläne sind auf 10.000 Einträge und Tiefe 100 begrenzt. SFTP v3 erlaubt keine transaktionale Absicherung gegen gleichzeitige externe Pfadänderungen; Typ-/Elternprüfungen erkennen Änderungen zwischen Schritten.
+
+```sh
+# Nur eigene isolierte Fixtures:
+npm run test:browser
+VSCODE_TEST_EXECUTABLE="/Applications/Visual Studio Code.app/Contents/MacOS/Code" npm run test:browser:installed
+```
+
+Diese Tests benötigen laufende Fixtures (siehe oben). Der zweite Test installiert die gebaute VSIX in einem temporären Profil und startet zwei normale VS-Code-Fenster nacheinander, um echte Profil-/Host-Key-Persistenz zu prüfen. Eigene Testordner werden im nativen Papierkorb geprüft; alle temporären Profile werden entfernt. Es werden keine produktiven Server verwendet. [M2-Abschluss und Abnahmen](docs/nachweise/M2-Abschluss.md).

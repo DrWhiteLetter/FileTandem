@@ -5,6 +5,7 @@ import { planRemoteDelete,executeRemoteDelete } from '../../src/application/remo
 test('recursive deletion unlinks symlink without following target; refuses changed kinds',async () => {
   const nodes=new Map([['/root',{kind:'directory'}],['/root/link',{kind:'symlink'}],['/root/file',{kind:'file'}]]);const deleted=[];
   const service={stat:async p => nodes.get(p),listNoFollow:async p => ({entries:[{path:p+'/link'},{path:p+'/file'}]}),call:async (method,p) => {deleted.push([method,p]);nodes.delete(p);}};
+  await assert.rejects(planRemoteDelete(service,['///']),/Grenzen/);
   const plan=await planRemoteDelete(service,['/root']);assert.equal(plan.length,3);await executeRemoteDelete(service,plan,() => true);
   assert.deepEqual(deleted,[['unlink','/root/link'],['unlink','/root/file'],['rmdir','/root']]);
   nodes.set('/root',{kind:'symlink'});await assert.rejects(executeRemoteDelete(service,[{path:'/root',kind:'directory'}],() => true),/ersetzt/);

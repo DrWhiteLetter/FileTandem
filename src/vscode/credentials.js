@@ -22,6 +22,7 @@ export function credentialProvider(context,profileUI) {
         if (signal?.aborted) abort(); else box.show();
       }); } finally {box.hide(); box.dispose();}
       if (value === undefined) return undefined;
+      if (profile.ephemeral) return {value,remember:false};
       const choice=await vscode.window.showQuickPick(['Nur für diese Verbindung','Im sicheren VS-Code-Speicher merken'],{title:'Zugang speichern?'});
       if (!choice) return undefined;
       return {value,remember:choice === 'Im sicheren VS-Code-Speicher merken'};
@@ -29,6 +30,6 @@ export function credentialProvider(context,profileUI) {
   });
   profileUI.command('xscp.forgetCredentials',async () => {const p=await profileUI.choose(); if (p) await forgetCredentials(p.id,context.secrets);});
   const originalDelete=profileUI.profiles.delete.bind(profileUI.profiles);
-  profileUI.profiles.delete=async id => {await forgetCredentials(id,context.secrets); return originalDelete(id);};
+  profileUI.profiles.delete=async id => {await profileUI.sessions?.disconnect(id);await forgetCredentials(id,context.secrets); return originalDelete(id);};
   return provider;
 }

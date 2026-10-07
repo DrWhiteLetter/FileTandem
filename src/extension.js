@@ -18,7 +18,6 @@ export function activate(context) {
   const profileUI=registerProfiles(context);
   profileUI.credentials=credentialProvider(context,profileUI);
   registerLocalProof(context);
-  registerConnectionsView(context);
   const { trust } = registerHostKeyProof(context);
   profileUI.sessions=new SessionManager({connect:connectSsh,credentials:profileUI.credentials,policy:{trust,confirmUnknown:unknownHostKeyDialog(vscode.window)},onChange:() => profileUI.changed.fire()});
   context.subscriptions.push(profileUI.sessions);
@@ -30,14 +29,21 @@ export function activate(context) {
       try { return await profileUI.sessions.connect(profile,{signal:controller.signal}); } finally {cancellation.dispose();}
     });
   };
-  profileUI.command('xscp.connectProfile',async id => {const p=typeof id === 'string' ? profileUI.profiles.get(id) : await profileUI.choose(); if (p) return profileUI.connect(p);});
-  profileUI.command('xscp.disconnectProfile',async id => {const p=typeof id === 'string' ? profileUI.profiles.get(id) : await profileUI.choose(); if (p) return profileUI.sessions.disconnect(p.id);});
+  profileUI.command('xscp.connectProfile',async id => {const p=typeof id === 'string' ? profileUI.profiles.get(id) : id?.profileId ? profileUI.profiles.get(id.profileId) : await profileUI.choose(); if (p) { await profileUI.connect(p); return profileUI.open(p); }});
+  profileUI.command('xscp.disconnectProfile',async id => {const p=typeof id === 'string' ? profileUI.profiles.get(id) : id?.profileId ? profileUI.profiles.get(id.profileId) : await profileUI.choose(); if (p) return profileUI.sessions.disconnect(p.id);});
   const editorProof = registerEditorProvider(context, trust);
   registerManager(context);
   const manager = registerBrowser(context,profileUI);
+  registerConnectionsView(context,profileUI);
   return {
     manager,
-    profiles:profileUI.profiles,
+    profiles: {
+      list:() => {profileUI.guard();return profileUI.profiles.list();},
+      get:id => {profileUI.guard();return profileUI.profiles.get(id);},
+      save:async raw => {profileUI.guard();const result=await profileUI.profiles.save(raw);profileUI.changed.fire();return result;},
+      delete:async id => {profileUI.guard();await profileUI.profiles.delete(id);profileUI.changed.fire();},
+      export:() => {profileUI.guard();return profileUI.profiles.export();},
+    },
     editorProof,
     // Technical probe for authentication/installed-package acceptance; never
     // returns a reconnectable client, credentials or a transfer session.

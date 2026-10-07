@@ -12,8 +12,13 @@ export class RemoteFiles {
     channel.on('error',close);channel.once('close',close);session.closed.then(close);
   }
   static async open(session) {
-    const channel=await new Promise((resolve,reject) => {const timer=setTimeout(() => {void session.close();reject(new Error('SFTP-Zeitlimit überschritten.'));},15000);
-      session.sftp((error,value) => {clearTimeout(timer);if (error) reject(error);else resolve(value);});});
+    const channel=await new Promise((resolve,reject) => {
+      let settled=false;
+      const finish=(error,value) => {if (settled) {value?.end();return;}settled=true;clearTimeout(timer);error ? reject(error):resolve(value);};
+      const timer=setTimeout(() => {finish(Object.assign(new Error('SFTP-Zeitlimit überschritten.'),{code:'NOT_CONNECTED'}));void session.close();},15000);
+      session.closed.then(() => {if (!settled) finish(Object.assign(new Error('Nicht verbunden.'),{code:'NOT_CONNECTED'}));});
+      try {session.sftp(finish);} catch(error) {finish(error);}
+    });
     return new RemoteFiles(channel,session);
   }
   call(method,...args) {

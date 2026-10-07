@@ -11,5 +11,8 @@ test('profile persistence, edits, deletion, safe export and invalid input',async
   assert.throws(() => validateProfile({...profile,password:'secret'}),/Geheimnisse/);
   assert.throws(() => validateProfile({...profile,port:70000}),/Port/);
   assert.throws(() => validateProfile({...profile,version:2}),/Version/);
+  assert.throws(() => validateProfile({...profile,localPath:'relative/path'}),/absolut/);
+  assert.throws(() => validateProfile({...profile,host:'server?invalid'}),/Host/);
+  assert.equal(validateProfile({...profile,remotePath:'/Pfad mit Leerzeichen '}).remotePath,'/Pfad mit Leerzeichen ');
   assert.ok(!restarted.export().includes('secret')); await restarted.delete('p1'); assert.deepEqual(first.list(),[]);
 });

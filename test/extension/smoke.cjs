@@ -51,5 +51,6 @@ exports.run = async () => {
   const readyDeadline = Date.now() + 10000;
   while (api.manager.status().handshakes === 0 && Date.now() < readyDeadline) await new Promise(resolve => setTimeout(resolve,50));
   assert.ok(api.manager.status().handshakes > 0, 'Actual nonce-protected webview script sends a validated ready handshake');
+  if (process.env.XSCP_M2_PHASE) await require('./browser.cjs').run(api);
   console.log('M1-03: tatsächlicher Webview-Handshake und Hostaktivierung erfolgreich.');
 };

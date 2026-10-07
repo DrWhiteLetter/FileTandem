@@ -3,7 +3,7 @@ import { posix } from 'node:path';
 export async function planRemoteDelete(service,paths) {
   const plan=[];const visited=new Set();
   const visit=async (path,depth=0) => {
-    if (path === '/' || !path.startsWith('/') || depth > 100 || plan.length >= 10000 || visited.size >= 10000) throw new Error('Löschumfang überschreitet sichere Grenzen.');
+    if (typeof path !== 'string' || path !== posix.normalize(path) || path === '/' || !path.startsWith('/') || depth > 100 || plan.length >= 10000 || visited.size >= 10000) throw new Error('Löschumfang überschreitet sichere Grenzen.');
     if (visited.has(path)) return;visited.add(path);
     const info=await service.stat(path);
     if (info.kind === 'directory') {

@@ -57,3 +57,6 @@ body.vscode-high-contrast .selected, body.vscode-high-contrast-light .selected {
 .pane-options { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; padding: .5rem; border-bottom: 1px solid var(--vscode-panel-border); }
 .pane-options input:not([type='checkbox']), .pane-options select { max-width: 12rem; }
 .pane-options details label { display: block; }
+
+.pathbar { flex-wrap: wrap; }
+.pane-actions { display: flex; flex-wrap: wrap; gap: .4rem; padding: .4rem; }

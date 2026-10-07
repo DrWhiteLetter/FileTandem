@@ -2,7 +2,7 @@
   "name": "xscp",
   "displayName": "xScp",
   "description": "Entwicklungsprototyp eines SFTP-/SCP-Dateimanagers für VS Code Desktop.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "publisher": "xscp-dev",
   "type": "module",
@@ -52,7 +52,8 @@
       },
       {
         "command": "xscp.addProfile",
-        "title": "xScp: Profil anlegen"
+        "title": "xScp: Profil anlegen",
+        "icon": "$(add)"
       },
       {
         "command": "xscp.editProfile",
@@ -81,6 +82,26 @@
       {
         "command": "xscp.openDemo",
         "title": "xScp: Mock-Demo öffnen"
+      },
+      {
+        "command": "xscp.openProfile",
+        "title": "xScp: Profil öffnen",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "xscp.quickConnect",
+        "title": "xScp: Schnellverbindung",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "xscp.favoriteProfile",
+        "title": "xScp: Profilfavorit umschalten",
+        "icon": "$(star-empty)"
+      },
+      {
+        "command": "xscp.reconnectProfile",
+        "title": "xScp: Wiederverbinden",
+        "icon": "$(refresh)"
       }
     ],
     "viewsContainers": {
@@ -106,6 +127,48 @@
           "command": "xscp.refreshConnections",
           "when": "view == xscp.connections",
           "group": "navigation"
+        },
+        {
+          "command": "xscp.addProfile",
+          "when": "view == xscp.connections",
+          "group": "navigation"
+        },
+        {
+          "command": "xscp.quickConnect",
+          "when": "view == xscp.connections",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "xscp.openProfile",
+          "when": "view == xscp.connections && viewItem == xscpProfile",
+          "group": "xscp"
+        },
+        {
+          "command": "xscp.reconnectProfile",
+          "when": "view == xscp.connections && viewItem == xscpProfile",
+          "group": "xscp"
+        },
+        {
+          "command": "xscp.disconnectProfile",
+          "when": "view == xscp.connections && viewItem == xscpProfile",
+          "group": "xscp"
+        },
+        {
+          "command": "xscp.editProfile",
+          "when": "view == xscp.connections && viewItem == xscpProfile",
+          "group": "xscp"
+        },
+        {
+          "command": "xscp.favoriteProfile",
+          "when": "view == xscp.connections && viewItem == xscpProfile",
+          "group": "xscp"
+        },
+        {
+          "command": "xscp.deleteProfile",
+          "when": "view == xscp.connections && viewItem == xscpProfile",
+          "group": "xscp"
         }
       ]
     },
@@ -132,7 +195,13 @@
           "description": "Darstellungszustand der Mock-Dateilisten; baut keine SSH-Verbindung auf."
         }
       }
-    }
+    },
+    "viewsWelcome": [
+      {
+        "view": "xscp.connections",
+        "contents": "Noch keine Serverprofile.\n[Profil anlegen](command:xscp.addProfile)\n[Schnellverbindung](command:xscp.quickConnect)\n[Lokalen Dateimanager öffnen](command:xscp.openManager)"
+      }
+    ]
   },
   "scripts": {
     "build": "node scripts/build.mjs",
@@ -159,7 +228,9 @@
     "quality": "npm run lint && npm run check && npm run test:unit && npm run test:webview && npm run build",
     "test:webview": "node --test test/webview/*.test.js",
     "package": "node scripts/package.mjs",
-    "test:installed": "node scripts/test-installed.mjs"
+    "test:installed": "node scripts/test-installed.mjs",
+    "test:browser": "node --test --test-concurrency=1 test/integration/browser.test.js",
+    "test:browser:installed": "node scripts/test-browser-installed.mjs"
   },
   "dependencies": {
     "react": "19.3.0",
