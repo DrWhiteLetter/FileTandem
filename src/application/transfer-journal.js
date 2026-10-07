@@ -1,7 +1,7 @@
 import { localPath } from '../adapters/local/files.js';import { remotePath } from '../adapters/sftp/files.js';
 import { mkdir,readFile,open,rename,unlink } from 'node:fs/promises';
 import { dirname } from 'node:path';import { randomUUID } from 'node:crypto';
-const fields=['id','batchId','profileId','server','direction','source','target','lockKey','kind','protocol','metadata','parentId','name','state','bytes','error','started','rate','reason','sha256','committed','finalTarget','partialPath','retryOf'];
+const fields=['id','batchId','profileId','server','direction','source','target','lockKey','kind','protocol','metadata','parentId','name','state','bytes','error','started','rate','reason','sha256','committed','finalTarget','partialPath','retryOf','attempt','resumeFrom','resumedBytes'];
 const states=['queued','running','completed','failed','cancelled','skipped','interrupted'];
 export function journalJob(raw) {
   if (!raw || typeof raw !== 'object' || Object.keys(raw).some(k => !fields.includes(k)) || !['id','batchId','profileId','server','source','target','lockKey'].every(k => typeof raw[k] === 'string' && raw[k].length > 0 && raw[k].length <= 32768) || !['upload','download'].includes(raw.direction) || !states.includes(raw.state) || !['file','directory','symlink','other','error'].includes(raw.kind)) throw new Error('Ungültiger Journaleintrag.');
@@ -11,6 +11,12 @@ export function journalJob(raw) {
   for (const key of ['bytes','started','rate']) if (!Number.isFinite(raw[key]) || raw[key] < 0) throw new Error('Ungültiger Journalfortschritt.');
   for (const key of ['parentId','name','error','reason','sha256','finalTarget','partialPath','retryOf']) if (raw[key] !== undefined && (typeof raw[key] !== 'string' || raw[key].length > 32768)) throw new Error('Ungültige Journalmetadaten.');
   if (raw.metadata !== undefined && (!raw.metadata || Object.keys(raw.metadata).some(k => !['mode','modified'].includes(k)) || !Number.isInteger(raw.metadata.mode) || raw.metadata.mode < 0 || raw.metadata.mode > 511 || !Number.isFinite(raw.metadata.modified))) throw new Error('Ungültige Dateimetadaten.');
+  if (raw.resumeFrom !== undefined && (typeof raw.resumeFrom!=='string' || !/^[a-zA-Z0-9-]{1,64}$/.test(raw.resumeFrom))) throw new Error('Ungültiger Fortsetzungsauftrag.');
+  if (raw.resumedBytes !== undefined && (!Number.isSafeInteger(raw.resumedBytes) || raw.resumedBytes<0)) throw new Error('Ungültiger Fortsetzungsfortschritt.');
+  if (raw.attempt !== undefined) {
+    const a=raw.attempt;if (!a || Object.keys(a).some(k => !['id','part','target','source','protocol','identity','sourceInfo','sourceHash','before'].includes(k)) || !/^[a-zA-Z0-9-]{1,64}$/.test(a.id ?? '') || !['sftp','scp'].includes(a.protocol) || !/^[a-f0-9]{64}$/.test(a.identity ?? '') || !/^[a-f0-9]{64}$/.test(a.sourceHash ?? '') || !['part','target','source'].every(k => typeof a[k]==='string' && a[k].length<=4096 && !a[k].includes('\0'))) throw new Error('Ungültige Teil-Datei-Zuordnung.');
+    for (const info of [a.sourceInfo,a.before].filter(v => v!==null)) if (!info || typeof info!=='object' || Object.keys(info).some(k => !['id','path','name','kind','size','modified','mode','ino','dev','linkTarget','transferable'].includes(k)) || !['file','directory','symlink','other'].includes(info.kind) || !Number.isSafeInteger(info.size) || info.size<0 || !Number.isFinite(info.modified) || !Number.isInteger(info.mode)) throw new Error('Ungültiger Quellen-/Zielzustand.');
+  }
   return {...raw,state:['queued','running'].includes(raw.state) ? 'interrupted':raw.state};
 }
 export class TransferJournal {

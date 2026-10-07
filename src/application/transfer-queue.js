@@ -36,14 +36,17 @@ export class TransferQueue {
     if (job.state === 'queued') this.#jobs.set(id,transition(job,'cancelled'));
     this.#active.get(id)?.controller.abort();this.#notify();this.#schedule();
   }
-  retry(ids,idFactory) {
+  checkpoint(id,attempt,lockKey) {const job=this.#jobs.get(id);if (job?.state !== 'running') throw new Error('Kein aktiver Auftrag.');this.#jobs.set(id,{...job,attempt,target:attempt.target,lockKey:lockKey ?? job.lockKey});this.#notify();}
+  retry(ids,idFactory,{resume=false}={}) {
     if (!Array.isArray(ids) || !ids.length || ids.length > 1000 || new Set(ids).size !== ids.length) throw new Error('Ungültige Retry-Auswahl.');
     const retryable=ids.map(id => this.#jobs.get(id));
     if (retryable.some(j => !j || !['failed','cancelled','interrupted'].includes(j.state))) throw new Error('Nur fehlgeschlagene/abgebrochene/unterbrochene Aufträge können erneut gestartet werden.');
+    if (resume && retryable.some(j => (j.protocol ?? 'sftp')!=='sftp' || j.kind!=='file' || !j.attempt)) throw new Error('Für diesen Auftrag ist keine geprüfte SFTP-Fortsetzung verfügbar; vollständig neu starten.');
     const mapping=new Map(retryable.map(j => [j.id,idFactory()]));const batchId=idFactory();
     for (const job of retryable) {const parent=job.parentId && this.#jobs.get(job.parentId);if (job.parentId && !parent) throw new Error('Elternauftrag fehlt im Journal; neuen Ordnerauftrag anlegen.');if (parent && parent.state !== 'completed' && !mapping.has(parent.id)) throw new Error('Bitte zuerst auch den fehlgeschlagenen Elternordner auswählen.');}
     for (const job of retryable) {
-      const copy={...job};for (const key of ['bytes','error','started','rate','state','sha256','committed','finalTarget','partialPath']) delete copy[key];
+      const copy={...job};for (const key of ['bytes','error','started','rate','state','sha256','committed','finalTarget','partialPath','resumedBytes','resumeFrom']) delete copy[key];
+      if (!resume) delete copy.attempt;else copy.resumeFrom=job.id;
       this.add({...copy,id:mapping.get(job.id),batchId,parentId:mapping.get(job.parentId) ?? job.parentId,retryOf:job.id});
     }
     return batchId;

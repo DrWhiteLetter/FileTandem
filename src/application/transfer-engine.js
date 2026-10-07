@@ -1,3 +1,4 @@
+import { profileIdentity } from './transfer-resume.js';
 import { openRemoteFiles,targetFor,streamFor,pathFor } from './remote-files.js';
 import { randomUUID } from 'node:crypto';import { join,posix,resolve } from 'node:path';
 import { LocalFiles,localPath } from '../adapters/local/files.js';
@@ -36,17 +37,20 @@ export class TransferEngine {
     try {
       const target=job.direction === 'upload' ? targetFor(files):localTarget;
       const parent=job.parentId && this.queue.list().find(j => j.id === job.parentId);
-      const initial=parent?.finalTarget ? (job.direction === 'upload' ? posix.join:join)(parent.finalTarget,job.name):job.target;
+      const initial=job.resumeFrom ? job.attempt.target:parent?.finalTarget ? (job.direction === 'upload' ? posix.join:join)(parent.finalTarget,job.name):job.target;
       let path=initial,replace=false;
-      if (!(job.kind === 'directory' && (await targetSnapshot(target,path))?.kind === 'directory')) {
+      if (!job.resumeFrom && !(job.kind === 'directory' && (await targetSnapshot(target,path))?.kind === 'directory')) {
         const decision=await this.conflicts.resolve({...job,target:path},target,signal);if (decision.skipped) return decision;path=decision.path;replace=decision.replace;
       }
       return await this.queue.withLock(job.id,this.key(job,path),async () => {
         this.guard();signal.throwIfAborted();
         if (job.kind === 'directory') {const existing=await targetSnapshot(target,path);if (!existing) await (job.direction === 'upload' ? files.mkdir(path):this.local.mkdir(path));else if (existing.kind !== 'directory') throw new Error('Ordnerziel ist keine directory.');return {bytes:0,committed:true,finalTarget:path};}
-        const result=await transferFile(session,{...job,target:path},{target,replace,signal,onProgress,stream:streamFor(profile.protocol)});return {...result,finalTarget:path};
+        const source=job.direction==='upload' ? localTarget:targetFor(files);
+        const current=await source.stat(job.source);const metadata={mode:current.mode&0o777,modified:current.modified};
+        const result=await transferFile(session,{...job,target:path,metadata},{target,source,identity:profileIdentity(profile),replace,signal,onProgress,stream:streamFor(profile.protocol),onCheckpoint:attempt => this.queue.checkpoint(job.id,attempt,this.key(job,attempt.target))});return {...result,finalTarget:path};
       },signal);
     } finally {files.close();}
   }
+  resume(ids) {this.guard();return this.queue.retry(ids,randomUUID,{resume:true});}
   dispose() {this.queue.dispose();}
 }

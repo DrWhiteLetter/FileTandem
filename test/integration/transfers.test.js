@@ -1,15 +1,12 @@
+import { fixture } from '../helpers/transfer-fixture.mjs';
 import { transferFile } from '../../src/application/transfer-file.js';
 import { localTarget } from '../../src/adapters/local/transfer-target.js';
 import { remoteTarget } from '../../src/adapters/sftp/transfer-target.js';
 import test from 'node:test';import assert from 'node:assert/strict';
 import { mkdtemp,readFile,writeFile,rm } from 'node:fs/promises';
 import { join } from 'node:path';import { tmpdir } from 'node:os';import { randomUUID,createHash } from 'node:crypto';
-import { runtime } from '../helpers/auth.mjs';import { connectSsh } from '../../src/adapters/ssh/connect.js';import { HostKeyStore } from '../../src/adapters/ssh/host-keys.js';
+import { connectSsh } from '../../src/adapters/ssh/connect.js';import { HostKeyStore } from '../../src/adapters/ssh/host-keys.js';
 import { RemoteFiles } from '../../src/adapters/sftp/files.js';import { streamFile,BUFFER_BYTES } from '../../src/adapters/sftp/pipeline.js';
-export async function fixture() {
-  const expected=(await readFile(join(runtime,'servers/sftp-only/host_ed25519.pub'),'utf8')).split(' ')[1];const records=new Map();
-  return connectSsh({host:'127.0.0.1',port:Number(process.env.XSCP_SSH_PORT_BASE ?? 22220)+1,username:'fixture',privateKey:await readFile(join(runtime,'client_ed25519')),readyTimeout:5000},{trust:new HostKeyStore({read:async k => records.get(k),write:async (k,v) => records.set(k,v)}),confirmUnknown:async k => {assert.equal(k.key,expected);return true;}});
-}
 test('bounded SFTP pipeline is bidirectional, byte exact, cancellable and independent of browser', {timeout:30000},async () => {
   const session=await fixture(),files=await RemoteFiles.open(session),directory=await mkdtemp(join(tmpdir(),'xscp-stream-')),remote=`/data/m3-${randomUUID()}`;
   const content=Buffer.alloc(16*1024*1024+137,0x92);const expected=createHash('sha256').update(content).digest('hex');const local=join(directory,'source');await writeFile(local,content);
