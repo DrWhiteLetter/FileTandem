@@ -1,6 +1,6 @@
 # xScp
 
-Entwicklungsprototyp einer VS-Code-Desktop-Erweiterung für SFTP und SCP. M0-01 liefert den Startbefehl und ein minimales React-Webview; M0-05 weist SFTP-Streaming im Adapter nach. Die Dateimanager-Oberfläche bietet noch keine Transfers.
+Entwicklungsprototyp einer VS-Code-Desktop-Erweiterung für SFTP und SCP. M0-01 liefert den Startbefehl und ein minimales React-Webview; M0-05/M0-06 weisen SFTP-Streaming und echtes SCP in den Adaptern nach. Die Dateimanager-Oberfläche bietet noch keine Transfers.
 
 ## Entwicklung
 
@@ -59,7 +59,7 @@ Auf diesem Mac wurde dafür das separate Colima-Profil `xscp` eingerichtet; nach
 
 ## SSH-Host-Key-Prüfung (M0-04)
 
-**xScp: SSH-Host-Key prüfen** in der Befehlspalette startet einen minimalen SSH-Nachweis: Host, Port, Benutzer und eine lokale unverschlüsselte private Testschlüsseldatei auswählen. Für die Fixtures `127.0.0.1`, Port `22220`/`22221`/`22222`, Benutzer `fixture` und `test/fixtures/ssh/.runtime/client_ed25519` verwenden. Der Befehl authentifiziert sich und schließt die Verbindung anschließend wieder; SFTP-Streaming ist separat in M0-05 nachgewiesen; SCP folgt in M0-06.
+**xScp: SSH-Host-Key prüfen** in der Befehlspalette startet einen minimalen SSH-Nachweis: Host, Port, Benutzer und eine lokale unverschlüsselte private Testschlüsseldatei auswählen. Für die Fixtures `127.0.0.1`, Port `22220`/`22221`/`22222`, Benutzer `fixture` und `test/fixtures/ssh/.runtime/client_ed25519` verwenden. Der Befehl authentifiziert sich und schließt die Verbindung anschließend wieder; SFTP-Streaming und echtes SCP sind separat in M0-05/M0-06 nachgewiesen.
 
 Ein unbekannter Host-Key wird mit Algorithmus und OpenSSH-SHA-256-Fingerprint im nativen Dialog angezeigt. Den Fingerprint unabhängig vergleichen, dann ausdrücklich **Vertrauen und verbinden** wählen. **Ablehnen** oder Schließen des Dialogs beendet die Verbindung. Für die kontrollierten Fixtures zeigt `ssh-keygen -lf test/fixtures/ssh/.runtime/servers/<variante>/host_ed25519.pub` den erwarteten Fingerprint.
 
@@ -86,3 +86,18 @@ npm run test:sftp
 Die vier Integrationstests prüfen normale SFTP- und SFTP-only-Server: gut 32 MiB in beide Richtungen, unabhängiger OpenSSH-Hashvergleich, Leerdateien, Sonderzeichen im Dateinamen, Abbruch, vorhandene Ziele und fehlende Quellen. Der Server ohne SFTP wird ohne Shell-Fallback abgewiesen. Ein separater Bundle-Test prüft den Adapter außerhalb von `node_modules`.
 
 Ziele werden exklusiv neu angelegt (`wx`); vorhandene Dateien werden nicht überschrieben. Nach Abbruch/Fehler können Teil-Dateien zurückbleiben. Atomare Veröffentlichung, Wiederaufnahme, Konfliktentscheidungen, Queue und die Transfer-Oberfläche folgen in M3. Fortschritt zählt durchgereichte Bytes und bestätigt keine dauerhafte Speicherung auf dem Server. [Nachweis und Grenzen](docs/nachweise/M0-05.md).
+
+## Echtes SCP (M0-06)
+
+`src/adapters/scp/transfer.js` überträgt einzelne reguläre Dateien über SSH-Exec mit serverseitigem `scp -t`/`scp -f`. Es fordert kein SFTP an. `list.js` weist eine Verzeichnisauflistung mit NUL-getrennten GNU-find-Metadaten nach. Beide APIs übernehmen eine bereits host-key-geprüfte `connectSsh`-Sitzung und schließen sie nach genau einer Operation.
+
+```sh
+# Laufende M0-03-Fixtures vorausgesetzt:
+npm run test:scp
+```
+
+Geprüft sind Linux/OpenSSH mit POSIX-Shell, vorhandenem `scp`, GNU find/coreutils und `grep`. Kein VS Code Server wird benötigt. SFTP-only ohne Exec reicht für SCP nicht; es gibt keinen stillen Protokoll-Fallback. BSD/macOS-, BusyBox- und Windows-SCP-Server sind bislang nicht freigegeben.
+
+Absolute POSIX-Pfade werden als einzelne Shell-Argumente quotiert, mit `--` von Optionen getrennt. Leerzeichen, Quotes, Unicode und Shell-Sonderzeichen funktionieren wörtlich. Steuerzeichen, Zeilenumbrüche, Backslashes, `.`/`..`-Komponenten und nicht verlustfrei darstellbare UTF-8-Namen werden für diesen SCP-Weg abgewiesen; dafür SFTP verwenden. Die GNU-Liste kann Namen mit Zeilenumbrüchen anzeigen und kennzeichnet sie als nicht transferierbar. Symlink-/Verzeichniseinträge werden nur angezeigt, nicht rekursiv übertragen.
+
+Der Prototyp unterstützt höchstens 1 GiB pro Datei, 4096 Bytes pro SCP-Header und 1 MiB pro Verzeichnisliste. Lokale Ziele entstehen exklusiv; Upload-Ziele werden mit Shell-`noclobber` reserviert. Vorhandene Dateien werden in den geprüften Fällen erhalten. Das ist noch keine atomare Veröffentlichung und schützt nicht vor gleichzeitigen Änderungen durch andere Serverprozesse. Bei Fehler/Abbruch können eigene Teil-Dateien bleiben. Vollständige Parser-Härtung, Integration, Rekursion und Finalisierung folgen in M4. [Nachweis und Grenzen](docs/nachweise/M0-06.md).
