@@ -37,5 +37,7 @@ export class RemoteFiles {
       entries.push(entry(full,value.attrs,target));
     }}));return {path,entries};
   }
+  mkdir(path) {return this.call('mkdir',remotePath(path),{mode:0o755});}
+  rename(source,target) {return this.call('rename',remotePath(source),remotePath(target));}
   close() {this.channel.end();}
 }

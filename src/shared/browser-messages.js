@@ -7,6 +7,9 @@ export function browserRequest(value,sessionId) {
     keys.push('side');if (!['local','remote'].includes(value.side)) return false;
     if (value.type === 'navigate') {keys.push('path');if (typeof value.path !== 'string' || !value.path || value.path.length > 4096 || value.path.includes('\0')) return false;}
     if (value.type === 'history') {keys.push('direction');if (!['back','forward','up'].includes(value.direction)) return false;}
+  } else if (value.type === 'action') {
+    keys.push('side','action','ids');
+    if (!['local','remote'].includes(value.side) || !['mkdir','rename'].includes(value.action) || !Array.isArray(value.ids) || value.ids.length > 1000 || new Set(value.ids).size !== value.ids.length || value.ids.some(id => typeof id !== 'string' || id.length > 4096 || id.includes('\0'))) return false;
   } else if (value.type !== 'ready') return false;
   return Object.keys(value).length === keys.length && Object.keys(value).every(k => keys.includes(k));
 }
