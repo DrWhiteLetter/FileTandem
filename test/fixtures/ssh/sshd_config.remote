@@ -1,0 +1,24 @@
+# Only the Remote-SSH acceptance fixture permits loopback TCP forwarding.
+Port 22
+ListenAddress 0.0.0.0
+HostKey /etc/ssh/ssh_host_ed25519_key
+PidFile /run/sshd.pid
+AuthorizedKeysFile .ssh/authorized_keys
+AllowUsers fixture
+PermitRootLogin no
+PubkeyAuthentication yes
+AuthenticationMethods publickey
+PasswordAuthentication no
+PermitEmptyPasswords no
+KbdInteractiveAuthentication no
+UsePAM no
+StrictModes yes
+AllowTcpForwarding local
+PermitOpen localhost:* 127.0.0.1:*
+AllowAgentForwarding no
+PermitTTY no
+PermitTunnel no
+X11Forwarding no
+PrintMotd no
+LogLevel VERBOSE
+Subsystem sftp internal-sftp -d /data

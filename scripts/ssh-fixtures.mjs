@@ -8,9 +8,9 @@ const fixtureRoot = fileURLToPath(new URL('../test/fixtures/ssh/', import.meta.u
 const runtime = join(fixtureRoot, '.runtime');
 const owner = createHash('sha256').update(fixtureRoot).digest('hex').slice(0, 12);
 const prefix = `xscp-ssh-${owner}`;
-const modes = ['sftp', 'sftp-only', 'scp', 'auth'];
+const modes = ['sftp', 'sftp-only', 'scp', 'auth', 'remote'];
 const base = Number(process.env.XSCP_SSH_PORT_BASE ?? 22220);
-if (!Number.isInteger(base) || base < 1024 || base > 65532) throw new Error('XSCP_SSH_PORT_BASE must be 1024..65532.');
+if (!Number.isInteger(base) || base < 1024 || base > 65531) throw new Error('XSCP_SSH_PORT_BASE must be 1024..65531.');
 const context = process.env.XSCP_DOCKER_CONTEXT;
 const dockerPrefix = context ? ['--context', context] : [];
 const image = `${prefix}:m0`;
@@ -72,7 +72,7 @@ async function init() {
     }
     await writeFile(join(directory, 'authorized_keys'), authorized, { mode: 0o644 });
     knownHosts += `[127.0.0.1]:${base + index} ${await readFile(join(directory, 'host_ed25519.pub'), 'utf8')}`;
-    config += `Host xscp-fixture-${mode}\n  HostName 127.0.0.1\n  Port ${base + index}\n  User fixture\n  IdentityFile ${quoted(join(runtime, 'client_ed25519'))}\n  UserKnownHostsFile ${quoted(join(runtime, 'known_hosts'))}\n  StrictHostKeyChecking yes\n  IdentitiesOnly yes\n  BatchMode yes\n  PasswordAuthentication no\n  KbdInteractiveAuthentication no\n  RequestTTY no\n  LogLevel ERROR\n  ConnectTimeout 5\n\n`;
+    config += `Host xscp-fixture-${mode}\n  HostName 127.0.0.1\n  Port ${base + index}\n  User fixture\n  IdentityFile ${quoted(join(runtime, 'client_ed25519'))}\n  UserKnownHostsFile ${quoted(join(runtime, 'known_hosts'))}\n  StrictHostKeyChecking yes\n  IdentitiesOnly yes\n  IdentityAgent none\n  BatchMode yes\n  PasswordAuthentication no\n  KbdInteractiveAuthentication no\n  RequestTTY no\n  LogLevel ERROR\n  ConnectTimeout 5\n\n`;
   }
   await writeFile(join(runtime, 'known_hosts'), knownHosts, { mode: 0o600 });
   await writeFile(join(runtime, 'ssh_config'), config, { mode: 0o600 });
@@ -114,7 +114,8 @@ async function start() {
       docker(['run', '-d', '--name', name(mode), '--label', `${label}=${owner}`,
         '--network', network, '--publish', `127.0.0.1:${base + index}:22`,
         '--mount', `type=bind,src=${join(runtime, 'servers', mode)},dst=/fixtures,readonly`,
-        '--env', `FIXTURE_MODE=${mode}`, '--memory', '128m', '--cpus', '0.5', '--pids-limit', '64', image]);
+        '--env', `FIXTURE_MODE=${mode}`, '--memory', mode === 'remote' ? '1g' : '128m',
+        '--cpus', mode === 'remote' ? '1' : '0.5', '--pids-limit', mode === 'remote' ? '256' : '64', image]);
     }
     for (const mode of modes) {
       let ready = false;

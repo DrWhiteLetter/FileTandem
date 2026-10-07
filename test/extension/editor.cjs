@@ -1,0 +1,72 @@
+const assert = require('node:assert/strict');
+const vscode = require('vscode');
+const { readFile } = require('node:fs/promises');
+const { join } = require('node:path');
+const { spawnSync } = require('node:child_process');
+const delay = ms => new Promise(r => setTimeout(r, ms));
+const wait = async predicate => { const deadline = Date.now() + 10000; while (!await predicate()) { if (Date.now() > deadline) throw new Error('Editor state timeout'); await delay(100); } };
+exports.run = async () => {
+  const extension = vscode.extensions.getExtension('xscp-dev.xscp'); const api = await extension.activate();
+  assert.equal(api.executionLocation().local, true);
+  const remote = process.env.XSCP_EDITOR_REMOTE === 'yes';
+  assert.equal(vscode.env.remoteName ?? 'local', remote ? 'ssh-remote' : 'local');
+  if (remote) assert.ok((await vscode.workspace.fs.stat(vscode.workspace.workspaceFolders[0].uri)).type & vscode.FileType.Directory);
+  const proof = await api.verifyLocalFile(vscode.Uri.file(process.env.XSCP_EDITOR_MARKER));
+  assert.equal(proof.sha256, process.env.XSCP_EDITOR_MARKER_HASH);
+  assert.equal(proof.hostName, process.env.XSCP_EDITOR_HOST);
+  assert.equal(proof.windowRemoteName ?? 'local', remote ? 'ssh-remote' : 'local');
+  const runtime = process.env.XSCP_EDITOR_RUNTIME;
+  const server = () => { const p = spawnSync('ssh', ['-F', join(runtime, 'ssh_config'), 'xscp-fixture-remote', 'cat /data/editor-proof.txt'], { encoding: 'utf8' }); assert.equal(p.status, 0, p.stderr); return p.stdout; };
+  const config = { host: '127.0.0.1', port: Number(process.env.XSCP_SSH_PORT_BASE) + 4, username: 'fixture', privateKey: await readFile(join(runtime, 'client_ed25519')) };
+  const uri = await api.editorProof.open(config, '/data/editor-proof.txt', { confirmUnknown: async () => true });
+  const second = await api.editorProof.open(config, '/data/editor-proof.txt', { confirmUnknown: async () => true });
+  try {
+    assert.equal(uri.toString().includes('fixture'), false, 'No username/credentials in URI');
+    assert.equal((await vscode.workspace.fs.stat(uri)).permissions, vscode.FilePermission.Readonly);
+    await assert.rejects(vscode.workspace.fs.writeFile(uri, Buffer.from('blocked')));
+    assert.equal(server(), 'editor-initial');
+    if (remote) {
+      const result = await vscode.commands.executeCommand('xscp.test.remoteEditorRead', uri.toString(), process.env.XSCP_EDITOR_MARKER);
+      assert.notEqual(result.host, process.env.XSCP_EDITOR_HOST, 'Workspace extension runs on another host');
+      assert.equal(result.localMarkerExists, false, 'Desktop marker is absent on remote host');
+      assert.equal(result.content, 'editor-initial', 'Remote workspace extension can read the local UI provider');
+      console.log('M0-02 / M0-08: Desktop marker hash and actual remote-host provider access verified.');
+    }
+    const document = await vscode.workspace.openTextDocument(uri); let editor = await vscode.window.showTextDocument(document);
+    await vscode.workspace.getConfiguration('files').update('autoSaveDelay', 300, vscode.ConfigurationTarget.Global);
+    await vscode.workspace.getConfiguration('files').update('autoSave', 'afterDelay', vscode.ConfigurationTarget.Global);
+    // VS Code permits programmatic edits even for a read-only document; saving must still fail.
+    await editor.edit(b => b.insert(new vscode.Position(0, 0), 'blocked'));
+    await delay(1000);
+    assert.equal(server(), 'editor-initial', 'Auto Save cannot bypass read-only protection');
+    await vscode.workspace.getConfiguration('files').update('autoSave', 'off', vscode.ConfigurationTarget.Global);
+    assert.equal(await document.save(), false);
+    assert.equal(server(), 'editor-initial');
+    await vscode.commands.executeCommand('workbench.action.files.revert');
+    assert.equal(await api.editorProof.enable(uri, async warning => { assert.match(warning, /Auto Save/); assert.match(warning, /direkt auf den Server/); return false; }), false);
+    await api.editorProof.enable(uri, async () => true);
+    await wait(async () => (await vscode.workspace.fs.stat(uri)).permissions === undefined);
+    await delay(500);
+    editor = await vscode.window.showTextDocument(document);
+    assert.equal(await editor.edit(b => b.replace(new vscode.Range(0, 0, document.lineCount, 0), 'manual-save')), true);
+    assert.equal(await document.save(), true); assert.equal(server(), 'manual-save');
+    await assert.rejects(vscode.workspace.fs.writeFile(second, Buffer.from('other-session')));
+    await vscode.workspace.getConfiguration('files').update('autoSaveDelay', 300, vscode.ConfigurationTarget.Global);
+    await vscode.workspace.getConfiguration('files').update('autoSave', 'afterDelay', vscode.ConfigurationTarget.Global);
+    assert.equal(await editor.edit(b => b.replace(new vscode.Range(0, 0, document.lineCount, 0), 'automatic-save')), true);
+    await wait(() => !document.isDirty && server() === 'automatic-save');
+    await vscode.workspace.getConfiguration('files').update('autoSave', 'off', vscode.ConfigurationTarget.Global);
+    const mutation = spawnSync('ssh', ['-F', join(runtime, 'ssh_config'), 'xscp-fixture-remote', 'printf external-change > /data/editor-proof.txt']); assert.equal(mutation.status, 0);
+    await editor.edit(b => b.replace(new vscode.Range(0, 0, document.lineCount, 0), 'conflicting-save'));
+    assert.equal(await document.save(), false); assert.equal(document.isDirty, true); assert.equal(server(), 'external-change');
+    api.editorProof.lock(uri); await assert.rejects(vscode.workspace.fs.writeFile(uri, Buffer.from('locked')));
+    assert.equal((await vscode.workspace.fs.stat(uri)).permissions, vscode.FilePermission.Readonly);
+    await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor');
+    const reopened = await api.editorProof.open(config, '/data/editor-proof.txt', { confirmUnknown: async () => true });
+    assert.equal((await vscode.workspace.fs.stat(reopened)).permissions, vscode.FilePermission.Readonly); await api.editorProof.close(reopened);
+    console.log(`M0-08: read-only, explicit per-file grant, manual save, Auto Save, conflict/dirty preservation and session reset passed (${remote ? 'real Remote-SSH window' : 'local window'}).`);
+  } finally {
+    await api.editorProof.close(second);
+    await api.editorProof.close(uri).catch(() => {});
+  }
+};

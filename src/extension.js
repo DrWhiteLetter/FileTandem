@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { registerEditorProvider } from './vscode/editor-provider.js';
 import { randomBytes } from 'node:crypto';
 import { connectSsh } from './adapters/ssh/connect.js';
 import { unknownHostKeyDialog } from './vscode/host-key-dialog.js';
@@ -9,6 +10,7 @@ import { executionLocation, registerLocalProof, verifyLocalFile } from './vscode
 export function activate(context) {
   registerLocalProof(context);
   const { trust } = registerHostKeyProof(context);
+  const editorProof = registerEditorProvider(context, trust);
   context.subscriptions.push(vscode.commands.registerCommand('xscp.openManager', () => {
     const location = executionLocation(context);
     if (!location.local) {
@@ -36,6 +38,7 @@ export function activate(context) {
     context.subscriptions.push(panel);
   }));
   return {
+    editorProof,
     // Technical probe for authentication/installed-package acceptance; never
     // returns a reconnectable client, credentials or a transfer session.
     probeSshAuthentication: async (config, { signal, confirmUnknown = unknownHostKeyDialog(vscode.window) } = {}) => {

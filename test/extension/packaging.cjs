@@ -14,6 +14,8 @@ exports.run = async () => {
   const { authMaterial, authPort } = await import(pathToFileURL(path.join(process.env.XSCP_PACKAGE_ROOT, 'test/helpers/auth.mjs')).href);
   const material = await authMaterial();
   const base = { host: '127.0.0.1', port: authPort, username: 'fixture', readyTimeout: 5000 };
+  assert.equal(typeof extension.exports.editorProof.open, 'function', 'Installed bundle registers the editor API');
+  assert.ok((await vscode.commands.getCommands(true)).includes('xscp.enableEditorEditing'));
   const probe = extension.exports.probeSshAuthentication;
   assert.equal(typeof probe, 'function');
   let prompts = 0;

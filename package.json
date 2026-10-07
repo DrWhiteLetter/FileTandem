@@ -1,7 +1,7 @@
 {
   "name": "xscp",
   "displayName": "xScp",
-  "description": "Entwicklungsprototyp eines SFTP-/SCP-Dateimanagers für VS Code Desktop.",
+  "description": "Entwicklungsprototyp eines SFTP-/SCP-Dateimanagers f\u00fcr VS Code Desktop.",
   "version": "0.0.1",
   "private": true,
   "publisher": "xscp-dev",
@@ -23,7 +23,7 @@
     "commands": [
       {
         "command": "xscp.openManager",
-        "title": "xScp: Dateimanager öffnen"
+        "title": "xScp: Dateimanager \u00f6ffnen"
       },
       {
         "command": "xscp.verifyLocalFile",
@@ -31,7 +31,19 @@
       },
       {
         "command": "xscp.verifySshHostKey",
-        "title": "xScp: SSH-Host-Key prüfen"
+        "title": "xScp: SSH-Host-Key pr\u00fcfen"
+      },
+      {
+        "command": "xscp.openEditorProof",
+        "title": "xScp: SFTP-Datei im Editor \u00f6ffnen"
+      },
+      {
+        "command": "xscp.enableEditorEditing",
+        "title": "xScp: Remote-Bearbeitung freigeben"
+      },
+      {
+        "command": "xscp.lockEditorFile",
+        "title": "xScp: Remote-Datei sperren"
       }
     ]
   },
@@ -39,7 +51,7 @@
     "build": "node scripts/build.mjs",
     "watch": "node scripts/build.mjs --watch",
     "start": "npm run build && node scripts/start.mjs",
-    "check": "node --check src/extension.js && node --check scripts/build.mjs && node --check scripts/start.mjs && node --check scripts/test-extension.mjs && node --check src/vscode/local-proof.js && node --check test/extension/smoke.cjs && node --check scripts/ssh-fixtures.mjs && node --check src/adapters/ssh/host-keys.js && node --check src/adapters/ssh/connect.js && node --check src/adapters/storage/host-key-store.js && node --check src/vscode/host-key-proof.js && node --check src/vscode/host-key-dialog.js && node --check src/adapters/sftp/transfer.js && node --check src/adapters/scp/protocol.js && node --check src/adapters/scp/exec.js && node --check src/adapters/scp/transfer.js && node --check src/adapters/scp/list.js && node --check src/adapters/ssh/authentication.js && node --check scripts/test-packaging.mjs && node --check test/extension/packaging.cjs",
+    "check": "node --check src/extension.js && node --check scripts/build.mjs && node --check scripts/start.mjs && node --check scripts/test-extension.mjs && node --check src/vscode/local-proof.js && node --check test/extension/smoke.cjs && node --check scripts/ssh-fixtures.mjs && node --check src/adapters/ssh/host-keys.js && node --check src/adapters/ssh/connect.js && node --check src/adapters/storage/host-key-store.js && node --check src/vscode/host-key-proof.js && node --check src/vscode/host-key-dialog.js && node --check src/adapters/sftp/transfer.js && node --check src/adapters/scp/protocol.js && node --check src/adapters/scp/exec.js && node --check src/adapters/scp/transfer.js && node --check src/adapters/scp/list.js && node --check src/adapters/ssh/authentication.js && node --check scripts/test-packaging.mjs && node --check test/extension/packaging.cjs && node --check src/adapters/sftp/editor-file.js && node --check src/vscode/editor-provider.js && node --check scripts/test-editor.mjs && node --check test/extension/editor.cjs",
     "test": "npm run test:unit && npm run build && node scripts/test-extension.mjs",
     "vscode:prepublish": "npm run build",
     "fixtures:init": "node scripts/ssh-fixtures.mjs init",
@@ -53,7 +65,9 @@
     "test:sftp": "node --test --test-concurrency=1 test/integration/sftp-streaming.test.js",
     "test:scp": "node --test --test-concurrency=1 test/integration/scp.test.js",
     "test:auth": "node --test --test-concurrency=1 test/integration/authentication.test.js",
-    "test:packaging": "node scripts/test-packaging.mjs"
+    "test:packaging": "node scripts/test-packaging.mjs",
+    "test:editor": "node --test test/integration/editor.test.js && npm run build && node scripts/test-editor.mjs",
+    "test:editor:remote": "npm run build && node scripts/test-editor.mjs --remote"
   },
   "dependencies": {
     "react": "19.3.0",

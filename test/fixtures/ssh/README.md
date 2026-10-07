@@ -8,12 +8,13 @@ M0-03 stellt drei lokale OpenSSH-Protokoll-Container bereit; M0-07 ergänzt eine
 | `xscp-fixture-sftp-only` | 22221 | Ja | Durch `ForceCommand internal-sftp` blockiert | Blockiert |
 | `xscp-fixture-scp` | 22222 | Kein SFTP-Subsystem | Ja, GNU find/coreutils | Ja, `scp -O` |
 | `xscp-fixture-auth` (M0-07) | 22223 | Ja | Ja | Möglich |
+| `xscp-fixture-remote` (M0-08) | 22224 | Ja | Ja, begrenztes lokales TCP-Forwarding | Möglich |
 
 Benutzer: `fixture`. Die drei Protokoll-Fixtures erlauben ausschließlich den lokal generierten Ed25519-Testschlüssel. Nur die Auth-Fixture erlaubt zusätzlich Passwort, RSA/verschlüsselte Testkeys und Keyboard-Interactive über PAM. Datenbereich: `/data`; jeder Start erzeugt frische Container und verwirft zuvor dort geschriebene Testdaten. Der SFTP-Startordner ist `/data`. Der Shell-Login startet im Home-Verzeichnis; für Shell-/SCP-Tests absolute `/data/...`-Pfade benutzen.
 
 ## Voraussetzungen
 
-Node.js gemäß Projekt-README, Docker-CLI mit laufendem **lokalem Linux-Docker-Daemon**, OpenSSH-Clients `ssh`, `sftp`, `scp`, `ssh-keygen`, `ssh-agent`, `ssh-add` sowie OpenSSL mit `passwd -6 -stdin`. Host-Ports 22220–22223 müssen frei sein. Image-Build benötigt Netzwerkzugriff für Debian-Pakete; laufende Testcontainer verwenden ein eigenes Docker-Bridge-Netzwerk. Eingehende SSH-Zugriffe sind auf die veröffentlichten Loopback-Ports begrenzt; ausgehender Netzwerkzugriff ist durch Docker nicht gesperrt.
+Node.js gemäß Projekt-README, Docker-CLI mit laufendem **lokalem Linux-Docker-Daemon**, OpenSSH-Clients `ssh`, `sftp`, `scp`, `ssh-keygen`, `ssh-agent`, `ssh-add` sowie OpenSSL mit `passwd -6 -stdin`. Host-Ports 22220–22224 müssen frei sein. Image-Build benötigt Netzwerkzugriff für Debian-Pakete; laufende Testcontainer verwenden ein eigenes Docker-Bridge-Netzwerk. Eingehende SSH-Zugriffe sind auf die veröffentlichten Loopback-Ports begrenzt; ausgehender Netzwerkzugriff ist durch Docker nicht gesperrt.
 
 Auf macOS kann Colima den Docker-Daemon bereitstellen:
 
@@ -32,7 +33,7 @@ Der Standard-Docker-Kontext wird hierbei nicht gewechselt. Eine andere vorhanden
 Im Repository-Root:
 
 ```sh
-npm run fixtures:start   # erzeugt Keys, baut Image und wartet auf alle vier Zugänge
+npm run fixtures:start   # erzeugt Keys, baut Image und wartet auf alle fünf Zugänge
 npm run fixtures:verify  # prüft Protokollgrenzen, Transfers und falschen Client-Key
 npm run fixtures:status
 npm run fixtures:stop    # entfernt nur Container/Netzwerk dieses Checkouts
@@ -77,7 +78,7 @@ Die App-Host-Key-Prüfung ist in M0-04 implementiert; `npm run test:host-keys` n
 
 ## Was `fixtures:verify` nachweist
 
-1. Alle vier Container laufen und sind mit dem richtigen Testkey erreichbar.
+1. Alle fünf Container laufen und sind mit dem richtigen Testkey erreichbar.
 2. SFTP, SFTP-only und Auth (mit Public-Key): kleine Datei hoch-/herunterladen, bytegleich vergleichen, Remote-Probe entfernen.
 3. SFTP-only: Shell-Marker wird nicht ausgeführt und Legacy-SCP wird abgewiesen.
 4. SCP: SFTP-Subsystem ausdrücklich abgewiesen; Upload und Download mit `scp -O` bytegleich; GNU find/coreutils vorhanden.
@@ -106,3 +107,7 @@ VSCODE_TEST_EXECUTABLE="/Applications/Visual Studio Code.app/Contents/MacOS/Code
 `test:auth` erzeugt einen eigenen Vordergrund-`ssh-agent`, lädt ausschließlich die generierten verschlüsselten Testkeys über einen temporären Askpass-Helfer und beendet den Agent danach. Der persönliche Agent und `process.env` werden nicht verändert. Kein Agent Forwarding. Testpasswort/Passphrase werden ausschließlich im ignorierten `.runtime` gespeichert, nicht versioniert oder ausgegeben. Keyboard-Interactive wird über echtes OpenSSH/PAM geprüft, nicht nur über einen Server-Testdouble.
 
 `test:packaging` lädt bei Bedarf die exakt angegebene vsce-Version 4.0.0 in den npm-Cache, baut eine private VSIX, prüft sie mit Python-Standardbibliothek und installiert sie ausschließlich in ein temporäres VS-Code-Profil mit eigener Extensions-Directory. Danach prüft ein Extension-Host-Test den tatsächlich installierten Bundle-Code und entfernt Profil/Paket/Testagent. `VSCODE_CLI` kann die Installations-CLI explizit setzen. Keine Veröffentlichung oder Installation in das normale VS-Code-Profil. [M0-07-Nachweis](../../../docs/nachweise/M0-07.md).
+
+## Remote-SSH-Abnahme (M0-08)
+
+Nur die zusätzliche Remote-Fixture erlaubt lokales TCP-Forwarding zu `localhost`/`127.0.0.1`, damit VS Code Server erreichbar ist. Sie bekommt 1 GiB RAM, eine CPU und 256 PIDs; die vier Protokoll-/Auth-Fixtures behalten 128 MiB, 0,5 CPU und 64 PIDs ohne Forwarding. Kein Agent-/X11-Forwarding, kein Root-Login, kein Passwortzugang im Remote-Container. Der Remote-Test installiert VS Code Server und eine eigene Workspace-Testextension ausschließlich im disposable Container. `fixtures:stop` entfernt auch diese Daten. Generierte SSH-Konfiguration setzt für alle Ziele `IdentityAgent none`, damit keine persönlichen Agent-Identitäten angeboten werden.

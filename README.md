@@ -116,3 +116,19 @@ VSCODE_TEST_EXECUTABLE="/Applications/Visual Studio Code.app/Contents/MacOS/Code
 Packaging-Abnahme benötigt Python 3 für ZIP-Prüfung, npm (vsce 4.0.0 wird bei Bedarf in den Cache geladen), VS Code und die Fixture-Testzugänge. Paket/Profile/Agent werden nach dem Test entfernt. Die tatsächliche VSIX aktiviert und authentifiziert sich außerhalb des Entwicklungscheckouts ohne `node_modules`, optionale native SSH-Addons oder Testzugänge im Paket.
 
 macOS/Apple Silicon ist mit Passwort, unverschlüsselten und verschlüsselten Ed25519-/RSA-OpenSSH-Keys, Unix-Agent und OpenSSH/PAM-Keyboard-Interactive geprüft. Linux-Desktop und Windows-Agent sind mangels Testsystem offen. Windows-Named-Pipe-Syntax ist lediglich validiert, keine Windows-Abnahme. Pageant/Cygwin werden ausdrücklich abgewiesen, da ihre Helfer nicht paketiert werden. RSA funktioniert ohne Aktivierung von RSA/SHA-1. Grenzen und vollständige [Ergebnismatrix](docs/nachweise/M0-07.md).
+
+## SFTP-Editor-Prototyp (M0-08)
+
+**xScp: SFTP-Datei im Editor öffnen** öffnet eine bestehende reguläre Datei bis 10 MiB zunächst schreibgeschützt. Host, Port, Benutzer, absoluter Remote-Pfad und lokaler privater Testschlüssel werden abgefragt; für die SFTP-only-Fixture Port `22221` verwenden. Die Host-Key-Prüfung bleibt verpflichtend.
+
+**Remote-Bearbeitung freigeben** verlangt eine ausdrückliche Bestätigung: Speichern und Auto Save schreiben direkt auf den Server. Die Freigabe gilt nur für die ausgewählte Datei/Sitzung. Die Statusleiste zeigt den Zustand und ermöglicht Freigeben bzw. Sperren. Schließen/Neustart verwirft die Freigabe. Bei Konflikten bleiben Änderungen ungespeichert; Datei neu öffnen und Inhalte abgleichen.
+
+```sh
+# Laufende Fixtures und echte lokale VS-Code-Programmdatei vorausgesetzt:
+export VSCODE_TEST_EXECUTABLE="/Applications/Visual Studio Code.app/Contents/MacOS/Code"
+npm run test:editor
+# Zusätzlich lokal installierte Remote-SSH 0.128.0 / Remote-SSH-Edit 0.87.0:
+npm run test:editor:remote
+```
+
+Der Remote-Test verwendet die separate Debian-Fixture auf Port `22224` und ein isoliertes VS-Code-Profil. Lokales Fenster, echtes Remote-SSH-Fenster, Auto Save, Konflikte und Zugriff aus einer Remote-Workspace-Erweiterung sind geprüft. Der bislang offene technische M0-02-Remote-Nachweis ist damit ebenfalls abgeschlossen. Kein Push-Watching fremder Serveränderungen, keine großen Dateien, keine dauerhaften Editorsitzungen; vollständige Editorintegration folgt in M5. [Nachweis und Grenzen](docs/nachweise/M0-08.md).
