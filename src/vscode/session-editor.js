@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { randomUUID } from 'node:crypto';
+import { randomUUID,createHash } from 'node:crypto';
 import { posix } from 'node:path';
 import { serverIdentity } from '../adapters/ssh/host-keys.js';
 import { RemoteFiles } from '../adapters/sftp/files.js';
@@ -7,7 +7,7 @@ import { openEditorFile, EDITOR_LIMIT } from '../adapters/sftp/editor-file.js';
 
 /** Authorities are opaque capabilities bound to an existing desktop transport. */
 export function registerSessionEditor(context, ui) {
-  const reviews=new Map();const bindings=new Map();const changes=new vscode.EventEmitter();
+  const digest=data => createHash('sha256').update(data).digest('hex');let timer,polling=false,disposed=false;const reviews=new Map();const bindings=new Map();const changes=new vscode.EventEmitter();
   const resolve=uri => {
     ui.guard();const b=bindings.get(uri.authority);
     if (uri.scheme!=='xscp' || uri.query || uri.fragment || !b || !uri.path.startsWith('/') || uri.path.includes('\0') || posix.normalize(uri.path)!==uri.path) throw vscode.FileSystemError.Unavailable('Editor-Sitzung geschlossen. Datei erneut öffnen.');
@@ -23,22 +23,38 @@ export function registerSessionEditor(context, ui) {
   const provider={onDidChangeFile:changes.event,watch:() => new vscode.Disposable(() => {}),
     stat:uri => translated(async () => {const s=await resolve(uri).metadata.stat(uri.path);return {type:s.kind==='directory' ? vscode.FileType.Directory:s.kind==='symlink' ? vscode.FileType.SymbolicLink:vscode.FileType.File,ctime:0,mtime:s.modified,size:s.size,...(resolve(uri).grants.has(uri.path) ? {}:{permissions:vscode.FilePermission.Readonly})};}),
     readDirectory:uri => translated(async () => (await resolve(uri).metadata.list(uri.path)).entries.map(e => [e.name,e.kind==='directory' ? vscode.FileType.Directory:e.kind==='symlink' ? vscode.FileType.SymbolicLink:vscode.FileType.File])),
-    readFile:uri => translated(async () => (await resource(uri)).read()),
+    readFile:uri => translated(async () => {const file=await resource(uri);const data=await file.read();const doc=vscode.workspace.textDocuments.find(d => d.uri.toString()===uri.toString());if (!doc?.isDirty) await file.rebase(data);resolve(uri).observed=digest(data);return data;}),
     writeFile:(uri,data,options) => translated(async () => {
       const b=resolve(uri);if (!b.grants.has(uri.path)) throw vscode.FileSystemError.NoPermissions('Bearbeitung zuerst ausdrücklich freigeben.');
       const file=await resource(uri);const allowed=() => {try {return resolve(uri)===b && b.grants.has(uri.path);} catch {return false;}};
       const job={server:serverIdentity(b.profile.host,b.profile.port).id,direction:'upload'};
       await ui.transfers.engine.queue.maintain(ui.transfers.engine.key(job,uri.path),async () => {if (!allowed()) throw vscode.FileSystemError.NoPermissions();try {await file.write(Buffer.from(data),allowed,options);} catch(e) {
-        if (e.code==='EDITOR_CONFLICT' && !b.notice) {b.notice=true;void vscode.window.showWarningMessage('Remote-Datei geändert. Lokale Änderungen bleiben ungespeichert.','Serverstand ansehen').then(async choice => {if (choice==='Serverstand ansehen') await api.review(uri);}).catch(() => {}).finally(() => {b.notice=false;});}throw e;
+        if (e.code==='EDITOR_CONFLICT' && !b.notice) {b.notice=true;void vscode.window.showWarningMessage('Remote-Datei geändert. Lokale Änderungen bleiben ungespeichert.','Änderungen vergleichen').then(async choice => {if (choice==='Änderungen vergleichen') await api.diff(uri);}).catch(() => {}).finally(() => {b.notice=false;});}throw e;
       }});
-      changes.fire([{type:vscode.FileChangeType.Changed,uri}]);refresh();
+      b.observed=digest(data);changes.fire([{type:vscode.FileChangeType.Changed,uri}]);refresh();
     }),
     createDirectory:() => {throw vscode.FileSystemError.NoPermissions();},delete:() => {throw vscode.FileSystemError.NoPermissions();},rename:() => {throw vscode.FileSystemError.NoPermissions();},
   };
+  const snapshot=(source,data,kind) => {
+    const uri=vscode.Uri.from({scheme:'xscp-review',authority:randomUUID(),path:source.path});reviews.set(uri.authority,{source,data:Buffer.from(data),kind});
+    while (reviews.size>24 || [...reviews.values()].reduce((n,r) => n+r.data.length,0)>64*1024*1024) reviews.delete(reviews.keys().next().value);
+    return uri;
+  };
+  const poll=async () => {
+    const uri=vscode.window.activeTextEditor?.document.uri;if (polling || disposed || uri?.scheme!=='xscp' || !bindings.has(uri.authority)) return false;
+    polling=true;try {const b=resolve(uri);const data=await (await resource(uri)).read();const value=digest(data);if (b.observed && b.observed!==value) changes.fire([{type:vscode.FileChangeType.Changed,uri}]);b.observed=value;return true;} catch {return false;} finally {polling=false;}
+  };
+  const schedule=() => {clearTimeout(timer);timer=undefined;const uri=vscode.window.activeTextEditor?.document.uri;if (disposed || uri?.scheme!=='xscp' || !bindings.has(uri.authority)) return;const raw=vscode.workspace.getConfiguration('xscp').get('editorPollInterval',5);const interval=Number.isInteger(raw) && raw>=2 && raw<=60 ? raw:5;timer=setTimeout(async () => {await poll();schedule();},interval*1000);timer.unref?.();};
   const api={
+    poll,changes:changes.event,status:() => ({sessions:bindings.size,polling:!!timer || polling,snapshots:reviews.size,bytes:[...reviews.values()].reduce((n,r) => n+r.data.length,0)}),
+    async diff(uri) {
+      const b=resolve(uri);const file=await resource(uri);const data=await file.read();const original=file.baseline() ?? Buffer.alloc(0);
+      const doc=vscode.workspace.textDocuments.find(d => d.uri.toString()===uri.toString());
+      const remote=snapshot(uri,data,'remote'),local=snapshot(uri,doc ? Buffer.from(doc.getText()):original,'local'),baseline=snapshot(uri,original,'baseline');b.review=remote;
+      await vscode.commands.executeCommand('vscode.diff',remote,local,`${b.profile.name}: ${uri.path} · Server ↔ Editor`);return {remote,local,baseline};
+    },
     async review(uri) {
-      const b=resolve(uri);const file=await resource(uri);const data=await file.read();const review=vscode.Uri.from({scheme:'xscp-review',authority:randomUUID(),path:uri.path});
-      reviews.set(review.authority,{source:uri,data});b.review=review;
+      const b=resolve(uri);const file=await resource(uri);const data=await file.read();const review=snapshot(uri,data,'remote');b.review=review;
       await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(review),{preview:false});return review;
     },
     async acceptReview(uri,confirm=async detail => await vscode.window.showWarningMessage('Verglichenen Serverstand als neue Speicherbasis übernehmen?',{modal:true,detail},'Basis übernehmen')==='Basis übernehmen') {
@@ -59,14 +75,14 @@ export function registerSessionEditor(context, ui) {
       if (resolve(uri)!==b) return false;b.grants.add(uri.path);changes.fire([{type:vscode.FileChangeType.Changed,uri}]);refresh();return true;
     },
     lock(uri) {resolve(uri).grants.delete(uri.path);changes.fire([{type:vscode.FileChangeType.Changed,uri}]);refresh();},
-    async close(uri) {const b=bindings.get(uri.authority);if (!b) return;bindings.delete(uri.authority);for (const [id,r] of reviews) if (r.source.authority===uri.authority) reviews.delete(id);b.grants.clear();b.metadata.close();await Promise.allSettled([...b.files.values()].map(async f => (await f).close()));},
+    async close(uri) {const b=bindings.get(uri.authority);if (!b) return;bindings.delete(uri.authority);for (const [id,r] of reviews) if (r.source.authority===uri.authority) reviews.delete(id);b.grants.clear();b.metadata.close();await Promise.allSettled([...b.files.values()].map(async f => (await f).close()));schedule();refresh();},
   };
   const status=vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right,21);
   const refresh=() => {const uri=vscode.window.activeTextEditor?.document.uri;const b=uri?.scheme==='xscp' && bindings.get(uri.authority);if (!b) return status.hide();status.text=b.grants.has(uri.path) ? '$(edit) xScp: Bearbeitung freigegeben':'$(lock) xScp: Schreibgeschützt';status.tooltip=`${b.profile.name}: ${uri.path}\nAuto Save schreibt nur nach Freigabe.`;status.command=b.grants.has(uri.path) ? 'xscp.lockEditorFile':'xscp.enableEditorEditing';status.show();};
   const active=() => {const uri=vscode.window.activeTextEditor?.document.uri;if (uri?.scheme==='xscp-review') {const source=reviews.get(uri.authority)?.source;if (source) return source;}if (uri?.scheme==='xscp') return uri;throw new Error('Zuerst eine xScp-Datei öffnen.');};
-  ui.command('xscp.reviewRemoteFile',() => api.review(active()));ui.command('xscp.acceptEditorReview',() => api.acceptReview(active()));
+  ui.command('xscp.reviewRemoteFile',() => api.review(active()));ui.command('xscp.diffRemoteFile',() => api.diff(active()));ui.command('xscp.acceptEditorReview',() => api.acceptReview(active()));
   context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('xscp-review',{provideTextDocumentContent:uri => {const review=reviews.get(uri.authority);if (!review) throw vscode.FileSystemError.Unavailable();return review.data.toString('utf8');}}));
   ui.command('xscp.newRemoteFile',async () => {const p=await ui.choose();if (!p) return;const path=await vscode.window.showInputBox({title:'Neue SFTP-Datei: absoluter Pfad',value:p.remotePath+'/neu.txt'});if (!path) return;const uri=await api.open(p,path,{create:true});try {if (!await api.enable(uri)) {await api.close(uri);return;}await provider.writeFile(uri,Buffer.alloc(0),{create:true,overwrite:false});await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(uri));} catch(e) {await api.close(uri);throw e;}});
-  context.subscriptions.push(status,vscode.window.onDidChangeActiveTextEditor(refresh),changes,vscode.workspace.registerFileSystemProvider('xscp',provider,{isCaseSensitive:true}),vscode.workspace.onDidCloseTextDocument(doc => {if (doc.uri.scheme==='xscp') void api.close(doc.uri);}),ui.changed.event(() => {for (const [id,b] of bindings) {if (!ui.sessions.matches(b.profile) || ui.sessions.snapshot(b.profile.id).state!=='connected') void api.close(vscode.Uri.from({scheme:'xscp',authority:id,path:'/'}));}}),{dispose() {for (const id of bindings.keys()) void api.close(vscode.Uri.from({scheme:'xscp',authority:id,path:'/'}));}});
+  context.subscriptions.push(status,vscode.window.onDidChangeActiveTextEditor(() => {refresh();schedule();}),vscode.workspace.onDidChangeConfiguration(e => {if (e.affectsConfiguration('xscp.editorPollInterval')) schedule();}),changes,vscode.workspace.registerFileSystemProvider('xscp',provider,{isCaseSensitive:true}),vscode.workspace.onDidCloseTextDocument(doc => {if (doc.uri.scheme==='xscp') void api.close(doc.uri);else if (doc.uri.scheme==='xscp-review') reviews.delete(doc.uri.authority);}),ui.changed.event(() => {for (const [id,b] of bindings) {if (!ui.sessions.matches(b.profile) || ui.sessions.snapshot(b.profile.id).state!=='connected') void api.close(vscode.Uri.from({scheme:'xscp',authority:id,path:'/'}));}}),{dispose() {disposed=true;clearTimeout(timer);reviews.clear();for (const id of bindings.keys()) void api.close(vscode.Uri.from({scheme:'xscp',authority:id,path:'/'}));}});
   return api;
 }

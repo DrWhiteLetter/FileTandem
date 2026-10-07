@@ -52,8 +52,16 @@ exports.run = async () => {
   await api.editor.review(production);assert.equal(await api.editor.acceptReview(production,async () => false),false);
   await api.editor.acceptReview(production,async () => true);await vscode.workspace.fs.writeFile(production,Buffer.from('editor-initial'));assert.equal(server(),'editor-initial');
   console.log('M5-03: external conflict, exact reviewed snapshot and later change rejection passed.');
+  const productionDoc=await vscode.workspace.openTextDocument(production);const productionEditor=await vscode.window.showTextDocument(productionDoc);
+  await productionEditor.edit(b => b.replace(new vscode.Range(0,0,productionDoc.lineCount,0),'local-draft'));mutate('remote-diff');
+  const diff=await api.editor.diff(production);assert.equal((await vscode.workspace.openTextDocument(diff.local)).getText(),'local-draft');assert.equal((await vscode.workspace.openTextDocument(diff.remote)).getText(),'remote-diff');assert.equal((await vscode.workspace.openTextDocument(diff.baseline)).getText(),'editor-initial');
+  await vscode.window.showTextDocument(productionDoc);let events=0;const changed=api.editor.changes(() => events++);await api.editor.poll();mutate('remote-poll');await api.editor.poll();assert.ok(events>0);assert.equal(productionDoc.isDirty,true);
+  changed.dispose();await vscode.commands.executeCommand('workbench.action.files.revert');
+  mutate('editor-initial');await api.editor.review(production);await api.editor.acceptReview(production,async () => true);
+  console.log('M5-04: immutable Diff versions, active-file events and dirty preservation passed.');
   api.editor.lock(production);await assert.rejects(vscode.workspace.fs.writeFile(production,Buffer.from('locked')));
   await api.editor.close(created);await api.editor.close(isolated);await api.editor.close(production);
+  assert.equal(api.editor.status().sessions,0);assert.equal(api.editor.status().snapshots,0);assert.equal(api.editor.status().polling,false);
   console.log('M5-01/02: production provider, opaque URI, directory read, grant isolation, serial saves, create/overwrite passed.');
   const second = await api.editorProof.open(config, '/data/editor-proof.txt', { confirmUnknown: async () => true });
   try {

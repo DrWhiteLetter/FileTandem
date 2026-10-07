@@ -122,6 +122,10 @@
       {
         "command": "xscp.acceptEditorReview",
         "title": "xScp: Verglichenen Serverstand als Basis übernehmen"
+      },
+      {
+        "command": "xscp.diffRemoteFile",
+        "title": "xScp: Server und Editor vergleichen"
       }
     ],
     "viewsContainers": {
@@ -218,6 +222,11 @@
           "command": "xscp.acceptEditorReview",
           "when": "resourceScheme == xscp || resourceScheme == xscp-review",
           "group": "xscp"
+        },
+        {
+          "command": "xscp.diffRemoteFile",
+          "when": "resourceScheme == xscp || resourceScheme == xscp-review",
+          "group": "xscp"
         }
       ]
     },
@@ -242,6 +251,14 @@
           "default": "ready",
           "scope": "application",
           "description": "Darstellungszustand der Mock-Dateilisten; baut keine SSH-Verbindung auf."
+        },
+        "xscp.editorPollInterval": {
+          "type": "integer",
+          "default": 5,
+          "minimum": 2,
+          "maximum": 60,
+          "scope": "application",
+          "description": "Prüfintervall in Sekunden für die aktive SFTP-Editor-Datei (2–60). Keine Verzeichnisüberwachung."
         }
       }
     },
