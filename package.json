@@ -363,5 +363,6 @@
   "activationEvents": [
     "onWebviewPanel:xscp.demo",
     "onWebviewPanel:xscp.browser"
-  ]
+  ],
+  "license": "MIT"
 }

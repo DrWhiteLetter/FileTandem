@@ -9,6 +9,6 @@ const run = (command,args) => {
   if (result.error || result.status !== 0) throw result.error ?? new Error(`${command} failed: ${result.status}`);
 };
 run(process.execPath,['scripts/build.mjs']);
-run('npm',['exec','--yes','--package=@vscode/vsce@4.0.0','--','vsce','package','--no-dependencies','--skip-license','--allow-missing-repository','--no-rewrite-relative-links','--out',target]);
+run('npm',['exec','--yes','--package=@vscode/vsce@4.0.0','--','vsce','package','--no-dependencies','--allow-missing-repository','--no-rewrite-relative-links','--out',target]);
 run('python3',['scripts/inspect-vsix.py',target]);
 console.log(`Installierbare private Demo: ${target}`);

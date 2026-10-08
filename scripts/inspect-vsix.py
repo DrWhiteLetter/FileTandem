@@ -22,10 +22,12 @@ with zipfile.ZipFile(sys.argv[1]) as archive:
         assert not name.endswith(('.node','.exe','.map','.vsix')), 'Unexpected native/helper artifact'
         assert 'eslint.config.js' not in parts, 'Development configuration in VSIX'
         assert not any(secret in archive.read(name) for secret in secrets), 'Fixture secret in VSIX'
-    for required in ('package.json','package.nls.json','package.nls.de.json','dist/extension.cjs','dist/webview.js','dist/webview.css','THIRD_PARTY_NOTICES.md','media/CODICONS-LICENSE.txt'):
+    for required in ('LICENSE.txt','package.json','package.nls.json','package.nls.de.json','dist/extension.cjs','dist/webview.js','dist/webview.css','THIRD_PARTY_NOTICES.md','media/CODICONS-LICENSE.txt'):
         assert 'extension/'+required in names, 'Missing runtime artifact or notice'
     assert any(name.endswith('.ttf') for name in names), 'Missing local icon font'
     manifest = json.loads(archive.read('extension/package.json'))
+    assert manifest.get('license') == 'MIT', 'Missing MIT license metadata'
+    assert archive.read('extension/LICENSE.txt') == pathlib.Path('LICENSE').read_bytes(), 'Packaged license differs from source'
     en = json.loads(archive.read('extension/package.nls.json'))
     de = json.loads(archive.read('extension/package.nls.de.json'))
     assert set(en) == set(de), 'Incomplete manifest localization'

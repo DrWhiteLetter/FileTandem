@@ -28,7 +28,7 @@ let agent;
 try {
   await rm(join(runtime, 'packaging.json'), { force: true });
   run(process.execPath, ['scripts/build.mjs']);
-  run('npm', ['exec', '--yes', '--package=@vscode/vsce@4.0.0', '--', 'vsce', 'package', '--no-dependencies', '--skip-license', '--allow-missing-repository', '--no-rewrite-relative-links', '--out', vsix]);
+  run('npm', ['exec', '--yes', '--package=@vscode/vsce@4.0.0', '--', 'vsce', 'package', '--no-dependencies',  '--allow-missing-repository', '--no-rewrite-relative-links', '--out', vsix]);
   // Python's standard ZIP reader avoids a new runtime/npm/native dependency.
   const inspection = JSON.parse(run('python3', ['-c', `
 import json, pathlib, sys, zipfile
@@ -49,9 +49,11 @@ with zipfile.ZipFile(package) as archive:
         assert not any(part in ('test', 'scripts', 'node_modules', '.runtime', '.git', 'src', 'webview') for part in parts), 'Development material in VSIX'
         assert not name.endswith(('.node', '.exe', '.map')), 'Native/helper/source-map file in VSIX'
         assert not any(secret in archive.read(name) for secret in secrets), 'Fixture credential material in VSIX'
-    for required in ('extension/package.json', 'extension/dist/extension.cjs', 'extension/dist/webview.js', 'extension/dist/webview.css', 'extension/THIRD_PARTY_NOTICES.md'):
+    for required in ('extension/LICENSE.txt', 'extension/package.json', 'extension/dist/extension.cjs', 'extension/dist/webview.js', 'extension/dist/webview.css', 'extension/THIRD_PARTY_NOTICES.md'):
         assert required in names, 'Missing runtime artifact/license notice'
     manifest = json.loads(archive.read('extension/package.json'))
+    assert manifest.get('license') == 'MIT', 'Missing MIT license metadata'
+    assert archive.read('extension/LICENSE.txt') == pathlib.Path('LICENSE').read_bytes(), 'Packaged license differs from source'
     assert manifest['extensionKind'] == ['ui']
     assert manifest['engines']['vscode'] == '^1.140.0', 'Unverified VS Code baseline in package'
     assert manifest['dependencies']['ssh2'] == '1.17.0'

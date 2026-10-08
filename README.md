@@ -189,3 +189,7 @@ Mit laufenden eigenen Fixtures prüft `npm run test:protocols` die gemeinsame Se
 ## Editor und Komfort (M5)
 
 Serverdateien im Commander doppelklicken oder mit Enter öffnen. SFTP startet schreibgeschützt; nach ausdrücklicher dateiweiser Freigabe schreiben Speichern und Auto Save auf den Server. Diff und geprüfte Basisübernahme helfen bei externen Änderungen. SCP verwendet lokale Kopien mit ausschließlich ausdrücklichem Queue-Upload. Weitere Tabs, internes Drag-and-drop, Kontextmenüs, optionale Commander-Tasten, virtualisierte 10.000 Einträge und Deutsch/Englisch sind verfügbar. [Anleitung und Grenzen](docs/nachweise/M5-Anleitung.md) · [Abschluss und Prüfergebnisse](docs/nachweise/M5-Abschluss.md).
+
+## Produktname und Lizenz
+
+Eigener Projektcode steht unter der [MIT-Lizenz](LICENSE); enthaltene Drittanbieter haben ihre [eigenen Hinweise](THIRD_PARTY_NOTICES.md). xScp bleibt vorerst die Entwicklungsidentität. Die vorgezogene Namens-/Publisher-Klärung und vorbereiteten öffentlichen Texte stehen unter [Produktdaten](docs/produktdaten.md).
