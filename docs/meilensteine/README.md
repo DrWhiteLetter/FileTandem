@@ -1,6 +1,6 @@
 # Meilensteine zum Abarbeiten
 
-Dieser Backlog konkretisiert den [Umsetzungsplan](../../UMSETZUNGSPLAN.md). Er beschreibt geplante Arbeit und ihren Fortschritt; **M0 ist mit 9/9 Items technisch abgeschlossen; M1 ist mit 7/7 implementierten Items verfügbar; native Bedienabnahmen und gehostete CI bleiben offen. M2 ist mit 9/9 Items implementiert und lokal nachgewiesen. M3 ist mit 9/9 Items implementiert und lokal nachgewiesen. M4 ist mit 8/8 Items implementiert und lokal nachgewiesen. M5 ist mit 8/8 Items implementiert und lokal/Remote-SSH nachgewiesen. M6-01 ist die nächste Implementierungsaufgabe.** M0-08 ergänzt die echte Remote-SSH-Abnahme von M0-02. JavaScript/JSX, SFTP als Standard und echtes SCP bleiben die Grundlage.
+Dieser Backlog konkretisiert den [Umsetzungsplan](../../UMSETZUNGSPLAN.md). Er beschreibt geplante Arbeit und ihren Fortschritt; **M0 ist mit 9/9 Items technisch abgeschlossen; M1 ist mit 7/7 implementierten Items verfügbar; native Bedienabnahmen und gehostete CI bleiben offen. M2 ist mit 9/9 Items implementiert und lokal nachgewiesen. M3 ist mit 9/9 Items implementiert und lokal nachgewiesen. M4 ist mit 8/8 Items implementiert und lokal nachgewiesen. M5 ist mit 8/8 Items implementiert und lokal/Remote-SSH nachgewiesen. M6-01 und M6-04 sind abgeschlossen; die lokal möglichen M6-Prüfungen und Dokumente liegen vor. Externe Abnahmen und Publisher bleiben offen; [M6-Nachweis](../nachweise/M6-Lokal.md).** M0-08 ergänzt die echte Remote-SSH-Abnahme von M0-02. JavaScript/JSX, SFTP als Standard und echtes SCP bleiben die Grundlage.
 
 **59 einzeln abhakbare Items** mit stabilen IDs, Abhängigkeiten, Umsetzung und Fertig-Kriterium.
 
@@ -14,13 +14,13 @@ Dieser Backlog konkretisiert den [Umsetzungsplan](../../UMSETZUNGSPLAN.md). Er b
 | [M3: Transfer-Engine und SFTP-Alpha](M3.md) | Installierte SFTP-Alpha mit Queue und Journal | 9/9 erledigt | 0 Resttage |
 | [M4: SCP und sicherer Wiederanlauf](M4.md) | SCP und geprüfter SFTP-Wiederanlauf nachgewiesen | 8/8 erledigt | 0 Resttage |
 | [M5: Editorintegration und Bedienung](M5.md) | Editor, Bedienung und Deutsch/Englisch nachgewiesen | 8/8 erledigt | 0 Resttage |
-| [M6: Release-Härtung und Auslieferung](M6.md) | Geprüfte VSIX; optionale Veröffentlichung | 9 | 6–9 Tage |
+| [M6: Release-Härtung und Auslieferung](M6.md) | Private VSIX 0.0.8 lokal geprüft; externe Abnahmen offen | 2/9 vollständig, übrige teilweise | Externe Abnahme |
 
 Empfohlen: **M0 → M1 → M2 → M3 → M4 → M5 → M6**. Einzelne M5-Aufgaben können nach M3 beginnen; ihre vollständige Abnahme benötigt auch SCP aus M4. Bereits im Prototyp implementierte Teile werden später übernommen und gehärtet, nicht doppelt gebaut.
 
 ## So arbeitest du die Liste ab
 
-1. M0 ist abgeschlossen. Beginne mit **M6-01** und wähle anschließend ein Item, dessen Abhängigkeiten erledigt sind.
+1. M0 ist abgeschlossen. Setze die offenen Abnahmen aus **M6** fort; lokal verfügbare Prüfungen sind nachgewiesen.
 2. Implementiere nur den beschriebenen Umfang. Ein Item ist eine Arbeitseinheit, nicht zwingend ein einzelner Commit oder eine feste Zahl von Stunden. Größere Items bei Bedarf in Unteraufgaben aufteilen und die ID beibehalten.
 3. Prüfe das Fertig-Kriterium. Protokolliere Ergebnisse kurz unter `docs/nachweise/`; relevante Tests gehören zur jeweiligen Änderung und werden nicht auf M6 verschoben.
 4. Setze `[x]` erst nach erfolgreicher Prüfung. Ein dokumentierter Fehler allein erfüllt kein Erfolgskriterium.

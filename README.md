@@ -1,6 +1,6 @@
 # FileTandem
 
-Entwicklungsprototyp einer VS-Code-Desktop-Erweiterung für SFTP und SCP. M0 bis M5 sind implementiert: Start-Webview, SFTP-Streaming, echtes SCP, Authentifizierung und abgesicherter SFTP-Editor sind nachgewiesen. Die Commander-Ansicht bietet lokale und SFTP-Dateiverwaltung sowie Uploads, Downloads und Ordnertransfers mit Queue. [Version 0.0.5 installieren und testen](docs/nachweise/M5-Anleitung.md).
+Private Vorabversion **0.0.8** einer VS-Code-Desktop-Erweiterung für SFTP und SCP. Die Commander-Ansicht bietet lokale und entfernte Dateiverwaltung, rekursive Uploads/Downloads, Transferqueue, geprüfte SFTP-Fortsetzung und kontrollierte Remote-Bearbeitung. M0 bis M5 sind umgesetzt; M6 ergänzt die lokale Release-Härtung. Windows/Linux und vollständige 1.0-Freigabe bleiben offen. [Installation, Quickstart und Troubleshooting](docs/release-anleitung.md) · [Changelog](CHANGELOG.md) · [M6-Abnahme](docs/nachweise/M6-Lokal.md).
 
 ## Entwicklung
 
@@ -153,7 +153,7 @@ npm run quality
 npm run package
 ```
 
-In VS Code Desktop ab 1.140.0: Erweiterungsansicht → Menü „…“ → „Aus VSIX installieren…“ → `out/xscp-0.0.7.vsix`. Dann die FileTandem-Activity-Bar öffnen oder **FileTandem: Dateimanager öffnen** über die Befehlspalette ausführen. Alternativ startet `npm start` den Entwicklungs-Host. Die aktuelle Commander-Ansicht liest das echte lokale Dateisystem und kann SFTP-Profile verbinden. Die ursprüngliche M1-Demo bleibt unter **FileTandem: Mock-Demo öffnen** verfügbar. Die SFTP-Transferknöpfe sind angebunden; [Alpha-Anleitung](docs/nachweise/M3-Alpha.md).
+In VS Code Desktop ab 1.140.0: Erweiterungsansicht → Menü „…“ → „Aus VSIX installieren…“ → `out/xscp-0.0.8.vsix`. Dann die FileTandem-Activity-Bar öffnen oder **FileTandem: Dateimanager öffnen** über die Befehlspalette ausführen. Alternativ startet `npm start` den Entwicklungs-Host. Die aktuelle Commander-Ansicht liest das echte lokale Dateisystem und kann SFTP-Profile verbinden. Die ursprüngliche M1-Demo bleibt unter **FileTandem: Mock-Demo öffnen** verfügbar. Die SFTP-Transferknöpfe sind angebunden; [Alpha-Anleitung](docs/nachweise/M3-Alpha.md).
 
 `npm run test:installed` installiert und testet die VSIX ausschließlich in einem temporären, anschließend entfernten Profil. Bei vorhandener VS-Code-Installation lässt sich `VSCODE_TEST_EXECUTABLE` auf die Programmdatei setzen; sonst wird die festgelegte Testversion geladen. Python 3 wird für die unabhängige ZIP-Prüfung benötigt.
 
@@ -180,7 +180,7 @@ Diese Tests benötigen laufende Fixtures (siehe oben). Der zweite Test installie
 
 ## SFTP-Alpha (M3)
 
-Private VSIX: `out/xscp-0.0.7.vsix`. [Anleitung, Prüfergebnisse und Grenzen](docs/nachweise/M3-Alpha.md). Reproduzierbar: `npm run quality`, `npm run test:transfers` mit laufenden eigenen Fixtures, `npm run package`, `npm run test:browser:installed`. Der Installationstest verwendet zwei reguläre isolierte Fenster und prüft zusätzlich Upload nach Tab-Schließen, Ordner-Rundlauf sowie Journal und gezielten Retry nach Neustart.
+Private VSIX: `out/xscp-0.0.8.vsix`. [Anleitung, Prüfergebnisse und Grenzen](docs/nachweise/M3-Alpha.md). Reproduzierbar: `npm run quality`, `npm run test:transfers` mit laufenden eigenen Fixtures, `npm run package`, `npm run test:browser:installed`. Der Installationstest verwendet zwei reguläre isolierte Fenster und prüft zusätzlich Upload nach Tab-Schließen, Ordner-Rundlauf sowie Journal und gezielten Retry nach Neustart.
 
 ## SCP und Wiederanlauf (M4)
 
@@ -194,4 +194,4 @@ Serverdateien im Commander doppelklicken oder mit Enter öffnen. SFTP startet sc
 
 ## Produktname und Lizenz
 
-Eigener Projektcode steht unter der [MIT-Lizenz](LICENSE); enthaltene Drittanbieter haben ihre [eigenen Hinweise](THIRD_PARTY_NOTICES.md). Produktname: **FileTandem**. Marketplace-Titel: **FileTandem – SFTP & SCP File Manager**. Die juristische Prüfung ist vom Benutzer beauftragt und noch offen; Publisher `xscp-dev` bleibt ein Entwicklungsplatzhalter. Technische Kennungen `xscp.*` bleiben für bestehende Profile/Einstellungen erhalten. Die vorgezogene Namens-/Publisher-Klärung und vorbereiteten öffentlichen Texte stehen unter [Produktdaten](docs/produktdaten.md).
+Eigener Projektcode steht unter der [MIT-Lizenz](LICENSE); enthaltene Drittanbieter haben ihre [eigenen Hinweise](THIRD_PARTY_NOTICES.md). Produktname: **FileTandem**. Marketplace-Titel: **FileTandem – SFTP & SCP File Manager**. Die juristische Freigabe des Namens wurde am 08.10.2026 vom Benutzer bestätigt; Publisher `xscp-dev` bleibt ein Entwicklungsplatzhalter. Technische Kennungen `xscp.*` bleiben für bestehende Profile/Einstellungen erhalten. Die vorgezogene Namens-/Publisher-Klärung und vorbereiteten öffentlichen Texte stehen unter [Produktdaten](docs/produktdaten.md).

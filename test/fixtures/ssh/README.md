@@ -111,3 +111,9 @@ VSCODE_TEST_EXECUTABLE="/Applications/Visual Studio Code.app/Contents/MacOS/Code
 ## Remote-SSH-Abnahme (M0-08)
 
 Nur die zusätzliche Remote-Fixture erlaubt lokales TCP-Forwarding zu `localhost`/`127.0.0.1`, damit VS Code Server erreichbar ist. Sie bekommt 1 GiB RAM, eine CPU und 256 PIDs; die vier Protokoll-/Auth-Fixtures behalten 128 MiB, 0,5 CPU und 64 PIDs ohne Forwarding. Kein Agent-/X11-Forwarding, kein Root-Login, kein Passwortzugang im Remote-Container. Der Remote-Test installiert VS Code Server und eine eigene Workspace-Testextension ausschließlich im disposable Container. `fixtures:stop` entfernt auch diese Daten. Generierte SSH-Konfiguration setzt für alle Ziele `IdentityAgent none`, damit keine persönlichen Agent-Identitäten angeboten werden.
+
+## M6-Fehler- und Lasttests
+
+Jeder eigene Container enthält zusätzlich `/limited` als 1-MiB-tmpfs mit Modus 1777. Die M6-Tests legen dort ausschließlich eigene UUID-Verzeichnisse an und prüfen einen echten Schreibfehler bei vollem Dateisystem, ohne den Container- oder Desktop-Datenträger zu füllen. Der lokale macOS-Test verwendet separat ein 16-MiB-Testvolume, das anschließend ausgehängt und entfernt wird.
+
+`npm run test:release` verbindet die gesamte Regression inklusive installierter VSIX, Restricted Mode, echtem Reload und zwei gleichzeitig laufenden VS-Code-Fenstern. Für die Remote-SSH-Abnahme werden die lokalen Testkopien von Remote-SSH 0.128.0 und Remote-SSH-Edit 0.87.0 benötigt; persönliche SSH-Konfigurationen werden nicht verwendet. `npm run benchmark:release` überträgt 4 GiB plus 1 MiB bidirektional über beide Protokolle und misst den Produktions-Queuepfad. Benchmark und Host-Key-Rotationstests müssen nacheinander laufen. Temporäre Profile, Volumes, TCP-Proxys und Testagenten werden beendet; Container abschließend mit `fixtures:stop` entfernen.

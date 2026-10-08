@@ -1,0 +1,336 @@
+{
+  "regression": {
+    "started": "2026-10-08T13:07:50.836Z",
+    "platform": "darwin",
+    "architecture": "arm64",
+    "os": "25.6.0",
+    "node": "v22.13.1",
+    "steps": [
+      {
+        "name": "quality",
+        "exitCode": 0,
+        "seconds": 9.577,
+        "log": "quality.log"
+      },
+      {
+        "name": "fixtures-verify",
+        "exitCode": 0,
+        "seconds": 2.544,
+        "log": "fixtures-verify.log"
+      },
+      {
+        "name": "protocols",
+        "exitCode": 0,
+        "seconds": 25.061,
+        "log": "protocols.log"
+      },
+      {
+        "name": "editor-service",
+        "exitCode": 0,
+        "seconds": 0.447,
+        "log": "editor-service.log"
+      },
+      {
+        "name": "integrity",
+        "exitCode": 0,
+        "seconds": 2.321,
+        "log": "integrity.log"
+      },
+      {
+        "name": "local-disk-full",
+        "exitCode": 0,
+        "seconds": 2.52,
+        "log": "local-disk-full.log"
+      },
+      {
+        "name": "package",
+        "exitCode": 0,
+        "seconds": 2.647,
+        "log": "package.log"
+      },
+      {
+        "name": "minimum-installed",
+        "exitCode": 0,
+        "seconds": 3.663,
+        "log": "minimum-installed.log"
+      },
+      {
+        "name": "minimum-browser-restart",
+        "exitCode": 0,
+        "seconds": 10.613,
+        "log": "minimum-browser-restart.log"
+      },
+      {
+        "name": "minimum-editor",
+        "exitCode": 0,
+        "seconds": 13.792,
+        "log": "minimum-editor.log"
+      },
+      {
+        "name": "minimum-remote-editor",
+        "exitCode": 0,
+        "seconds": 62.355,
+        "log": "minimum-remote-editor.log"
+      },
+      {
+        "name": "minimum-accessibility",
+        "exitCode": 0,
+        "seconds": 5.379,
+        "log": "minimum-accessibility.log"
+      },
+      {
+        "name": "minimum-restricted",
+        "exitCode": 0,
+        "seconds": 3.945,
+        "log": "minimum-restricted.log"
+      },
+      {
+        "name": "minimum-reload",
+        "exitCode": 0,
+        "seconds": 5.407,
+        "log": "minimum-reload.log"
+      },
+      {
+        "name": "stable-installed",
+        "exitCode": 0,
+        "seconds": 4.19,
+        "log": "stable-installed.log"
+      },
+      {
+        "name": "stable-browser-restart",
+        "exitCode": 0,
+        "seconds": 11.308,
+        "log": "stable-browser-restart.log"
+      },
+      {
+        "name": "stable-editor",
+        "exitCode": 0,
+        "seconds": 13.8,
+        "log": "stable-editor.log"
+      },
+      {
+        "name": "stable-remote-editor",
+        "exitCode": 0,
+        "seconds": 64.129,
+        "log": "stable-remote-editor.log"
+      },
+      {
+        "name": "stable-accessibility",
+        "exitCode": 0,
+        "seconds": 4.977,
+        "log": "stable-accessibility.log"
+      },
+      {
+        "name": "stable-restricted",
+        "exitCode": 0,
+        "seconds": 3.307,
+        "log": "stable-restricted.log"
+      },
+      {
+        "name": "stable-reload",
+        "exitCode": 0,
+        "seconds": 5.312,
+        "log": "stable-reload.log"
+      },
+      {
+        "name": "minimum-two-windows",
+        "exitCode": 0,
+        "seconds": 15.324,
+        "log": "minimum-two-windows.log"
+      },
+      {
+        "name": "stable-two-windows",
+        "exitCode": 0,
+        "seconds": 16.579,
+        "log": "stable-two-windows.log"
+      }
+    ],
+    "version": "0.0.8",
+    "resumed": "2026-10-08T13:15:08.256Z",
+    "attempts": [
+      {
+        "name": "minimum-reload",
+        "exitCode": 1,
+        "seconds": 4.421,
+        "log": "minimum-reload.log"
+      }
+    ],
+    "completed": "2026-10-08T13:15:40.175Z",
+    "ok": true
+  },
+  "performance": {
+    "started": "2026-10-08T12:55:37.133Z",
+    "hardware": {
+      "platform": "darwin",
+      "arch": "arm64",
+      "os": "25.6.0",
+      "cpu": "Apple M1",
+      "cores": 8,
+      "memory": 17179869184,
+      "node": "v22.13.1"
+    },
+    "fileBytes": 4296015872,
+    "smallFiles": {
+      "count": 1000,
+      "bytesEach": 4096
+    },
+    "listingEntries": 10000,
+    "measurements": [
+      {
+        "label": "sftp-metadata-roundtrip",
+        "minimumMs": 0.4001659999998992,
+        "medianMs": 0.5160830000004353,
+        "samples": 20
+      },
+      {
+        "label": "sftp-warmup",
+        "seconds": 1.7585228750000002,
+        "baselineRss": 103333888,
+        "peakRss": 122732544,
+        "additionalRss": 19398656,
+        "bytes": 67108864,
+        "mibPerSecond": 36.39418111066653
+      },
+      {
+        "label": "sftp-large-upload",
+        "seconds": 114.28632866699999,
+        "baselineRss": 122912768,
+        "peakRss": 127057920,
+        "additionalRss": 4145152,
+        "bytes": 4296015872,
+        "sha256": "5e069629cdcf91b75240a496a87413fa9084c86f344835ce15e2cad32433b199",
+        "committed": true,
+        "mibPerSecond": 35.84855728402624
+      },
+      {
+        "label": "sftp-large-download",
+        "seconds": 121.794272666,
+        "baselineRss": 100515840,
+        "peakRss": 105840640,
+        "additionalRss": 5324800,
+        "bytes": 4296015872,
+        "sha256": "5e069629cdcf91b75240a496a87413fa9084c86f344835ce15e2cad32433b199",
+        "committed": true,
+        "mibPerSecond": 33.63869179000989
+      },
+      {
+        "label": "sftp-memory-target",
+        "limitBytes": 134217728,
+        "met": true
+      },
+      {
+        "label": "sftp-small-upload",
+        "seconds": 8.560877708000014,
+        "baselineRss": 106233856,
+        "peakRss": 139411456,
+        "additionalRss": 33177600,
+        "files": 1000,
+        "bytes": 4096000,
+        "mibPerSecond": 0.45629083059435216
+      },
+      {
+        "label": "sftp-list-10000",
+        "seconds": 0.12599920900000142,
+        "baselineRss": 152436736,
+        "peakRss": 154796032,
+        "additionalRss": 2359296,
+        "entries": 10000
+      },
+      {
+        "label": "scp-metadata-roundtrip",
+        "minimumMs": 2.0757079999893904,
+        "medianMs": 2.4856670000008307,
+        "samples": 20
+      },
+      {
+        "label": "scp-warmup",
+        "seconds": 0.9021224999999977,
+        "baselineRss": 158302208,
+        "peakRss": 164626432,
+        "additionalRss": 6324224,
+        "bytes": 67108864,
+        "mibPerSecond": 70.9438019781129
+      },
+      {
+        "label": "scp-large-upload",
+        "seconds": 63.845702708000026,
+        "baselineRss": 164626432,
+        "peakRss": 169656320,
+        "additionalRss": 5029888,
+        "bytes": 4296015872,
+        "sha256": "5e069629cdcf91b75240a496a87413fa9084c86f344835ce15e2cad32433b199",
+        "committed": true,
+        "mibPerSecond": 64.17033294688189
+      },
+      {
+        "label": "scp-large-download",
+        "seconds": 59.551773125000004,
+        "baselineRss": 52641792,
+        "peakRss": 132890624,
+        "additionalRss": 80248832,
+        "bytes": 4296015872,
+        "sha256": "5e069629cdcf91b75240a496a87413fa9084c86f344835ce15e2cad32433b199",
+        "committed": true,
+        "mibPerSecond": 68.797279829105
+      },
+      {
+        "label": "scp-memory-target",
+        "limitBytes": 134217728,
+        "met": true
+      },
+      {
+        "label": "scp-small-upload",
+        "seconds": 30.931968458000046,
+        "baselineRss": 137248768,
+        "peakRss": 241647616,
+        "additionalRss": 104398848,
+        "files": 1000,
+        "bytes": 4096000,
+        "mibPerSecond": 0.12628520571860705
+      },
+      {
+        "label": "scp-list-10000",
+        "seconds": 0.13107399999999997,
+        "baselineRss": 67076096,
+        "peakRss": 82116608,
+        "additionalRss": 15040512,
+        "entries": 10000
+      },
+      {
+        "label": "local-list-10000",
+        "seconds": 0.0557334170000031,
+        "baselineRss": 181469184,
+        "peakRss": 182386688,
+        "additionalRss": 917504,
+        "entries": 10000
+      }
+    ],
+    "listingsResumed": "2026-10-08T13:04:59.640Z",
+    "completed": "2026-10-08T13:05:28.198Z",
+    "ok": true,
+    "productSourceCommit": "070b3cc",
+    "measuredPrivateVersion": "0.0.7",
+    "sameRuntimeSourceInCandidate": "0.0.8"
+  },
+  "dependencyAudit": {
+    "date": "2026-10-08",
+    "metadata": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "dependencies": {
+        "prod": 9,
+        "dev": 182,
+        "optional": 29,
+        "peer": 0,
+        "peerOptional": 0,
+        "total": 193
+      }
+    }
+  }
+}

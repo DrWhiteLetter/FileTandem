@@ -2,7 +2,7 @@
   "name": "xscp",
   "displayName": "FileTandem – SFTP & SCP File Manager",
   "description": "%description%",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "private": true,
   "publisher": "xscp-dev",
   "type": "module",
@@ -320,6 +320,11 @@
     ]
   },
   "scripts": {
+    "test:release": "node scripts/test-release.mjs",
+    "benchmark:release": "node --expose-gc scripts/benchmark-release.mjs",
+    "test:restricted": "node scripts/test-restricted.mjs",
+    "test:editor:service": "node --test test/integration/editor.test.js",
+    "test:integrity": "node --test --test-concurrency=1 test/integration/release-integrity.test.js",
     "build": "node scripts/build.mjs",
     "watch": "node scripts/build.mjs --watch",
     "start": "npm run build && node scripts/start.mjs",

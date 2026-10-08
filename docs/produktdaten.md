@@ -1,14 +1,14 @@
 # Öffentliche Produktdaten – M6-08 vorgezogen
 
-Stand: 8. Oktober 2026. **Name übernommen; rechtliche Prüfung und Publisher noch offen.** Auf Benutzerwunsch vor M6-01 bis M6-07 bearbeitet. Technische Release-Abnahmen bleiben davon unberührt. Keine Veröffentlichung beauftragt.
+Stand: 8. Oktober 2026. **Name übernommen und juristisches Okay durch den Benutzer bestätigt; Publisher noch offen.** Technische Release-Abnahmen bleiben davon unberührt. Keine Veröffentlichung beauftragt.
 
 ## Name
 
-Am 08.10.2026 hat der Benutzer **FileTandem** und **FileTandem – SFTP & SCP File Manager** als Marketplace-Titel gewählt und die Übernahme ausdrücklich beauftragt. Manifest, Befehle, Activity Bar, Fenster, Dialoge, Webview und aktuelle Bedienungsanleitung verwenden den Namen. Private Version: **0.0.7** mit eigenem Logo und Öffnen-Button in der Verbindungen-Ansicht.
+Am 08.10.2026 hat der Benutzer **FileTandem** und **FileTandem – SFTP & SCP File Manager** als Marketplace-Titel gewählt und die Übernahme ausdrücklich beauftragt. Manifest, Befehle, Activity Bar, Fenster, Dialoge, Webview und aktuelle Bedienungsanleitung verwenden den Namen. Private Version: **0.0.8** mit eigenem Logo, Öffnen-Button und lokaler M6-Abnahme.
 
 Die kurze Web-/Marketplace-Recherche zu „FileTandem“ und „File Tandem“ ergab keinen eindeutig gleichnamigen Software-/Marketplace-Eintrag. Das ist kein Verfügbarkeits- oder Rechtsnachweis. Die direkte DPMA-/EUIPO-Vorrecherche ist inzwischen dokumentiert: [Registerrecherche vom 08.10.2026](nachweise/M6-08-Markenrecherche.md). FileTandem ergab in beiden Registern keine Treffer; Tandem umfasst aber auch softwarebezogene Marken und tatsächlich laufende Widersprüche. Eine vollständige Register-/Ähnlichkeitsprüfung einschließlich WIPO wurde hier nicht abgeschlossen; „Tandem“ wird bereits von [Softwareanbietern](https://usetandem.ai/) verwendet. [DPMA-Recherchehinweise](https://www.dpma.de/marken/markenrecherche/index.html) erläutern die Bedeutung ähnlicher Marken.
 
-**Juristische Prüfung:** Vom Benutzer bei einem Juristen beauftragt; Ergebnis noch ausstehend. Name ist als Produktentscheidung übernommen, keine rechtliche Freigabe dokumentiert. Keine Domain/Marke registriert und keine öffentliche Veröffentlichung ausgeführt.
+**Juristische Prüfung:** Der Benutzer bestätigt am 08.10.2026: „juristisch habe ich das Ok für File Tandem bekommen“. Diese Rückmeldung schließt die beauftragte Namensprüfung im Projekt ab; das bestehende Branding **FileTandem** bleibt erhalten. Das juristische Dokument selbst liegt im Repository nicht vor. Keine Domain/Marke registriert und keine öffentliche Veröffentlichung ausgeführt.
 
 Interne Kennungen `xscp.*`, URI-Schemes, Paketname `xscp` und vorläufige Extension-ID `xscp-dev.xscp` bleiben erhalten. Damit verändert diese sichtbare Umbenennung die Identität und gespeicherte Profile/Secrets nicht. Historische Nachweise behalten ihren damaligen Namen und ihre geprüfte Version.
 
@@ -43,7 +43,7 @@ Paketierung verwendet keine `--skip-license`-Ausnahme mehr. VSCE normalisiert di
 - [x] Lizenzdatei und Metadaten umgesetzt; Paketierung geprüft.
 - [x] Namensvorschläge recherchiert und Texte vorbereitet.
 - [x] Produktname durch Benutzer ausgewählt und sichtbares Branding umgesetzt.
-- [ ] Beauftragte juristische Prüfung abgeschlossen.
+- [x] Beauftragte juristische Prüfung laut Benutzer-Rückmeldung abgeschlossen.
 - [ ] Tatsächlich verfügbarer Publisher und Herausgebername nachgewiesen; Identität/Übergang umgesetzt.
 
-M6-08 bleibt bis zu diesen Entscheidungen offen. Die fehlenden externen Angaben blockieren weder Entwicklung noch private VSIX-Nutzung. M6-09 bleibt ein eigener Schritt mit ausdrücklichem Veröffentlichungsauftrag.
+M6-08 bleibt bis zum Publisher-Nachweis offen. Die fehlenden externen Angaben blockieren weder Entwicklung noch private VSIX-Nutzung. M6-09 bleibt ein eigener Schritt mit ausdrücklichem Veröffentlichungsauftrag.

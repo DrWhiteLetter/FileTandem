@@ -115,6 +115,7 @@ async function start() {
         '--network', network, '--publish', `127.0.0.1:${base + index}:22`,
         '--mount', `type=bind,src=${join(runtime, 'servers', mode)},dst=/fixtures,readonly`,
         '--env', `FIXTURE_MODE=${mode}`, '--memory', mode === 'remote' ? '1g' : '128m',
+        '--tmpfs', '/limited:rw,size=1048576,mode=1777',
         '--cpus', mode === 'remote' ? '1' : '0.5', '--pids-limit', mode === 'remote' ? '256' : '64', image]);
     }
     for (const mode of modes) {

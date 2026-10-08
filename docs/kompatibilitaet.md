@@ -1,5 +1,13 @@
 # Kompatibilität und technische Freigaben
 
+## Aktueller Stand: private Version 0.0.8, 8. Oktober 2026
+
+macOS 26.6.2 auf Apple M1 (arm64) ist mit VS Code **1.140.0 und 1.141.0** geprüft: installierte VSIX, SFTP/SCP, Neustart, lokaler und echter Remote-SSH-Editor, Webview-Bediengeometrie, Restricted Mode, Reload und zwei gleichzeitige Fenster. Die vollständige lokale Regression umfasst 23 erfolgreiche Schritte. Große Transfers über 4 GiB, 1.000 kleine Dateien und 10.000 Verzeichniseinträge sind gemessen; das Ziel unter 128 MiB zusätzlichem Node-RSS wurde für beide Protokolle eingehalten. [M6-Nachweis mit Messbedingungen und Grenzen](nachweise/M6-Lokal.md).
+
+Windows/Linux sind laut Benutzer derzeit nicht testbar und bleiben ohne Desktop-Freigabe. macOS Intel, WSL/Dev Containers/Desktop-Codespaces, echter Systemruhezustand und manuelle Screenreader-Abnahme bleiben offen. Automatisierte Webview-Prüfungen ersetzen diese Bedienabnahme nicht. Der Linux-Testserver ist kein Linux-Desktop-Nachweis. Die private VSIX ist noch keine vollständige 1.0-Freigabe.
+
+## Historischer M0-Stand
+
 Stand: 7. Oktober 2026, Abschluss M0. Diese Matrix beschreibt **Prototypnachweise**, keine fertige Version 1.0. [Entscheidungen](entscheidungen.md) legen den weiteren Ausbau fest; [M0-Nachweise](meilensteine/M0.md) enthalten die einzelnen Prüfungen.
 
 ## Versionen und Laufzeiten

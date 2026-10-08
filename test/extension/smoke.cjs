@@ -7,6 +7,7 @@ exports.run = async () => {
   if (process.env.XSCP_INSTALLED_EXTENSIONS) assert.ok(extension.extensionPath.startsWith(process.env.XSCP_INSTALLED_EXTENSIONS), 'Test loads installed VSIX, not checkout');
   await extension.activate();
   assert.ok(extension.isActive, 'Host-Bundle aktiviert');
+  console.log('M6 host: '+JSON.stringify({vscode:vscode.version,extension:extension.packageJSON.version,platform:process.platform,arch:process.arch,node:process.version}));
   assert.deepEqual(extension.packageJSON.extensionKind, ['ui']);
   assert.equal(extension.extensionKind, vscode.ExtensionKind.UI);
   const api = extension.exports;

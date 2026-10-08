@@ -33,4 +33,17 @@ with zipfile.ZipFile(sys.argv[1]) as archive:
     assert set(en) == set(de), 'Incomplete manifest localization'
     assert manifest['extensionKind'] == ['ui']
     assert manifest['engines']['vscode'] == '^1.140.0'
+    assets = [manifest['icon']]
+    for command in manifest['contributes']['commands']:
+        icon = command.get('icon')
+        if isinstance(icon, str) and not icon.startswith('$('):
+            assets.append(icon)
+        elif isinstance(icon, dict):
+            assets.extend(icon.values())
+    for container in manifest['contributes']['viewsContainers']['activitybar']:
+        assets.append(container['icon'])
+    for asset in assets:
+        assert isinstance(asset, str) and not asset.startswith('/') and '..' not in pathlib.PurePosixPath(asset).parts, 'Unsafe manifest asset path'
+        assert 'extension/' + asset in names, 'Missing manifest icon'
+        assert archive.read('extension/' + asset) == pathlib.Path(asset).read_bytes(), 'Packaged icon differs from source'
     print(f'VSIX geprüft: {len(names)} Dateien; keine Entwicklungsdateien, nativen Addons oder Fixture-Geheimnisse.')
