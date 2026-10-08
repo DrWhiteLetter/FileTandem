@@ -34,7 +34,7 @@ try {
       await fs.writeFile(process.env.XSCP_TEST_RESULT,JSON.stringify({ok:true,vscode:v.version,trusted:v.workspace.isTrusted,active:extension?.isActive ?? false,installed:installed.version}));
     } catch(error) {await fs.writeFile(process.env.XSCP_TEST_RESULT,JSON.stringify({ok:false,error:error.stack}));}
   };`);
-  const installed=spawnSync(cli,['--user-data-dir',user,'--extensions-dir',extensions,'--install-extension',join(process.cwd(),'out',`${manifest.name}-${manifest.version}.vsix`),'--force'],{env,encoding:'utf8',timeout:120000,shell:process.platform==='win32'});
+  const installed=spawnSync(cli,['--user-data-dir',user,'--extensions-dir',extensions,'--install-extension',join(process.cwd(),'out',`FileTandem-${manifest.version}.vsix`),'--force'],{env,encoding:'utf8',timeout:120000,shell:process.platform==='win32'});
   if (installed.error || installed.status!==0) throw installed.error ?? new Error(installed.stderr);
   child=spawn(executable,['--user-data-dir',user,'--extensions-dir',extensions,'--new-window','--skip-welcome','--skip-release-notes'],{env:{...env,XSCP_TEST_RESULT:resultPath,XSCP_RESTRICTED_PACKAGE:join(extensions,`${manifest.publisher}.${manifest.name}-${manifest.version}`,'package.json')},stdio:'ignore'});
   closed=new Promise(resolve => child.once('exit',resolve));let spawnError;child.once('error',error => {spawnError=error;});

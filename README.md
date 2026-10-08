@@ -2,6 +2,8 @@
 
 Private Vorabversion **0.0.8** einer VS-Code-Desktop-Erweiterung für SFTP und SCP. Die Commander-Ansicht bietet lokale und entfernte Dateiverwaltung, rekursive Uploads/Downloads, Transferqueue, geprüfte SFTP-Fortsetzung und kontrollierte Remote-Bearbeitung. M0 bis M5 sind umgesetzt; M6 ergänzt die lokale Release-Härtung. Windows/Linux und vollständige 1.0-Freigabe bleiben offen. [Installation, Quickstart und Troubleshooting](docs/release-anleitung.md) · [Changelog](CHANGELOG.md) · [M6-Abnahme](docs/nachweise/M6-Lokal.md).
 
+Der Projektordner heißt `FileTandem`; Paketierung erzeugt `out/FileTandem-<Version>.vsix` mit passender `.sha256`-Datei. Ältere lokale VSIX-Dateien wurden entsprechend umbenannt; historische Nachweise behalten ihre damaligen Dateinamen. Die technische Extension-ID bleibt bis zur Publisher-Festlegung erhalten.
+
 ## Entwicklung
 
 Voraussetzungen: Node.js ab 22.13.1 mit npm sowie **VS Code Desktop ab 1.140.0**. macOS/Apple Silicon ist geprüft; Windows/Linux sind noch nicht abgenommen. Anwender der späteren VSIX benötigen kein separat installiertes Node/npm. [Technische Entscheidungen](docs/entscheidungen.md) · [Kompatibilität](docs/kompatibilitaet.md).
@@ -153,7 +155,7 @@ npm run quality
 npm run package
 ```
 
-In VS Code Desktop ab 1.140.0: Erweiterungsansicht → Menü „…“ → „Aus VSIX installieren…“ → `out/xscp-0.0.8.vsix`. Dann die FileTandem-Activity-Bar öffnen oder **FileTandem: Dateimanager öffnen** über die Befehlspalette ausführen. Alternativ startet `npm start` den Entwicklungs-Host. Die aktuelle Commander-Ansicht liest das echte lokale Dateisystem und kann SFTP-Profile verbinden. Die ursprüngliche M1-Demo bleibt unter **FileTandem: Mock-Demo öffnen** verfügbar. Die SFTP-Transferknöpfe sind angebunden; [Alpha-Anleitung](docs/nachweise/M3-Alpha.md).
+In VS Code Desktop ab 1.140.0: Erweiterungsansicht → Menü „…“ → „Aus VSIX installieren…“ → `out/FileTandem-0.0.8.vsix`. Dann die FileTandem-Activity-Bar öffnen oder **FileTandem: Dateimanager öffnen** über die Befehlspalette ausführen. Alternativ startet `npm start` den Entwicklungs-Host. Die aktuelle Commander-Ansicht liest das echte lokale Dateisystem und kann SFTP-Profile verbinden. Die ursprüngliche M1-Demo bleibt unter **FileTandem: Mock-Demo öffnen** verfügbar. Die SFTP-Transferknöpfe sind angebunden; [Alpha-Anleitung](docs/nachweise/M3-Alpha.md).
 
 `npm run test:installed` installiert und testet die VSIX ausschließlich in einem temporären, anschließend entfernten Profil. Bei vorhandener VS-Code-Installation lässt sich `VSCODE_TEST_EXECUTABLE` auf die Programmdatei setzen; sonst wird die festgelegte Testversion geladen. Python 3 wird für die unabhängige ZIP-Prüfung benötigt.
 
@@ -180,7 +182,7 @@ Diese Tests benötigen laufende Fixtures (siehe oben). Der zweite Test installie
 
 ## SFTP-Alpha (M3)
 
-Private VSIX: `out/xscp-0.0.8.vsix`. [Anleitung, Prüfergebnisse und Grenzen](docs/nachweise/M3-Alpha.md). Reproduzierbar: `npm run quality`, `npm run test:transfers` mit laufenden eigenen Fixtures, `npm run package`, `npm run test:browser:installed`. Der Installationstest verwendet zwei reguläre isolierte Fenster und prüft zusätzlich Upload nach Tab-Schließen, Ordner-Rundlauf sowie Journal und gezielten Retry nach Neustart.
+Private VSIX: `out/FileTandem-0.0.8.vsix`. [Anleitung, Prüfergebnisse und Grenzen](docs/nachweise/M3-Alpha.md). Reproduzierbar: `npm run quality`, `npm run test:transfers` mit laufenden eigenen Fixtures, `npm run package`, `npm run test:browser:installed`. Der Installationstest verwendet zwei reguläre isolierte Fenster und prüft zusätzlich Upload nach Tab-Schließen, Ordner-Rundlauf sowie Journal und gezielten Retry nach Neustart.
 
 ## SCP und Wiederanlauf (M4)
 

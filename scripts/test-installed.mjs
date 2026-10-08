@@ -8,7 +8,7 @@ import { runTests,downloadAndUnzipVSCode,resolveCliArgsFromVSCodeExecutablePath 
 delete process.env.ELECTRON_RUN_AS_NODE;
 const executable = process.env.VSCODE_TEST_EXECUTABLE ?? await downloadAndUnzipVSCode('1.140.0');
 const manifest=JSON.parse(await readFile(fileURLToPath(new URL('../package.json',import.meta.url)),'utf8'));
-const vsix=join('out',`${manifest.name}-${manifest.version}.vsix`);
+const vsix=join('out',`FileTandem-${manifest.version}.vsix`);
 const directory = await mkdtemp(join(tmpdir(),'xscp-installed-'));
 const user=join(directory,'user'), extensions=join(directory,'extensions'), harness=join(directory,'harness');
 const marker=join(directory,'desktop-marker.txt'); const content=randomBytes(128);

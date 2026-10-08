@@ -5,7 +5,7 @@ Stand: 08.10.2026, private Vorabversion 0.0.8. macOS Apple Silicon ist das lokal
 ## Installation und erster Transfer
 
 1. VS Code Desktop ab 1.140.0 öffnen. Für die lokale M6-Abnahme wird zusätzlich Stable 1.141.0 geprüft. Anwender benötigen kein separat installiertes Node/npm, Docker oder lokales SCP-Programm.
-2. Erweiterungen → Menü „…“ → **Aus VSIX installieren…** → `out/xscp-0.0.8.vsix` wählen; einen angebotenen Fenster-Reload durchführen.
+2. Erweiterungen → Menü „…“ → **Aus VSIX installieren…** → `out/FileTandem-0.0.8.vsix` wählen; einen angebotenen Fenster-Reload durchführen.
 3. FileTandem in der Activity Bar öffnen. Der Logo-Button oben in **Verbindungen** öffnet den Dateimanager; alternativ **FileTandem: Dateimanager öffnen** in der Befehlspalette.
 4. **Profil anlegen** wählen: Host, Port, Benutzer, lokalen und entfernten Startordner sowie Anmeldung eintragen. **SFTP** ist voreingestellt. Ein leerer lokaler Startordner verwendet dein Home-Verzeichnis.
 5. **Profil verbinden** wählen. Den SHA-256-Fingerprint des Host-Keys mit einer unabhängig beschafften Angabe vergleichen und ausdrücklich bestätigen. Ein geänderter bekannter Host-Key blockiert die Verbindung.

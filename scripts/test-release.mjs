@@ -46,7 +46,7 @@ try {
     await run(label+'-reload',['scripts/test-reload.mjs'],settings);
     await run(label+'-two-windows',['scripts/test-two-windows.mjs'],settings);
   }
-  const manifest=JSON.parse(await readFile('package.json','utf8')),artifact=join('out',`${manifest.name}-${manifest.version}.vsix`);
+  const manifest=JSON.parse(await readFile('package.json','utf8')),artifact=join('out',`FileTandem-${manifest.version}.vsix`);
   report.artifact={path:artifact,sha256:createHash('sha256').update(await readFile(artifact)).digest('hex'),version:manifest.version};
   report.completed=new Date().toISOString();report.ok=true;
 } finally {await writeFile(join(reportDirectory,'regression.json'),JSON.stringify(report,null,2)+'\n');}

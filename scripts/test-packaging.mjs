@@ -14,7 +14,7 @@ const cli = process.env.VSCODE_CLI ?? (process.platform === 'darwin'
   ? join(dirname(executable), '../Resources/app/bin/code') : 'code');
 const root = fileURLToPath(new URL('../', import.meta.url));
 const directory = await mkdtemp(join(tmpdir(), 'xscp-package-'));
-const vsix = join(directory, 'xscp.vsix');
+const vsix = join(directory, 'FileTandem.vsix');
 const extensions = join(directory, 'extensions');
 const user = join(directory, 'user');
 const harness = join(directory, 'harness');

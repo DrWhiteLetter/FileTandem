@@ -9,7 +9,7 @@ import { downloadAndUnzipVSCode } from '@vscode/test-electron';
 const executable=process.env.VSCODE_TEST_EXECUTABLE ?? await downloadAndUnzipVSCode('1.140.0');
 const cli=process.env.VSCODE_CLI ?? (process.platform === 'darwin' ? join(dirname(executable),'../Resources/app/bin/code') : 'code');
 const manifest=JSON.parse(await readFile(fileURLToPath(new URL('../package.json',import.meta.url)),'utf8'));
-const vsix=join('out',`${manifest.name}-${manifest.version}.vsix`);
+const vsix=join('out',`FileTandem-${manifest.version}.vsix`);
 const directory=await mkdtemp(join(tmpdir(),'xscp-browser-installed-'));
 const user=join(directory,'user'),extensions=join(directory,'extensions'),harness=join(extensions,'xscp-test.browser-harness-0.0.1');
 const source=fileURLToPath(new URL('../test/extension/',import.meta.url));

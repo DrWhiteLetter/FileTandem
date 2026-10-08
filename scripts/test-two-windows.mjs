@@ -41,7 +41,7 @@ try {
         await fs.writeFile(process.env.XSCP_TEST_RESULT,JSON.stringify({ok:true,vscode:v.version,index,result}));
       } catch(error) {await fs.writeFile(process.env.XSCP_TEST_RESULT,JSON.stringify({ok:false,error:error.stack}));}
     };`);
-    const installed=spawnSync(cli,['--user-data-dir',user,'--extensions-dir',extensions,'--install-extension',join(process.cwd(),'out',`${manifest.name}-${manifest.version}.vsix`),'--force'],{env,encoding:'utf8',timeout:120000,shell:process.platform==='win32'});
+    const installed=spawnSync(cli,['--user-data-dir',user,'--extensions-dir',extensions,'--install-extension',join(process.cwd(),'out',`FileTandem-${manifest.version}.vsix`),'--force'],{env,encoding:'utf8',timeout:120000,shell:process.platform==='win32'});
     if (installed.error || installed.status!==0) throw installed.error ?? new Error(installed.stderr);
     const child=spawn(executable,['--user-data-dir',user,'--extensions-dir',extensions,'--new-window','--skip-welcome','--skip-release-notes'],{env:{...env,XSCP_TEST_RESULT:join(root,'result.json'),XSCP_WINDOWS_ROOT:root,XSCP_WINDOWS_INDEX:String(index),XSCP_WINDOWS_NAME:name,XSCP_WINDOWS_PORT:process.env.XSCP_SSH_PORT_BASE ?? '22220',XSCP_WINDOWS_KEY:join(runtime,'client_ed25519'),XSCP_WINDOWS_KEYS:JSON.stringify(keys)},stdio:'ignore'});
     children.push(child);closures.push(new Promise(resolve => {child.once('exit',resolve);child.once('error',resolve);}));
