@@ -27,7 +27,7 @@ export function activate(context) {
   context.subscriptions.push(profileUI.sessions);
   profileUI.connect=async profile => {
     profileUI.guard();
-    return vscode.window.withProgress({location:vscode.ProgressLocation.Notification,title:`xScp: Verbinde ${profile.name}`,cancellable:true},async (_,token) => {
+    return vscode.window.withProgress({location:vscode.ProgressLocation.Notification,title:`FileTandem: Verbinde ${profile.name}`,cancellable:true},async (_,token) => {
       const controller=new AbortController(); const cancellation=token.onCancellationRequested(() => controller.abort());
       if (token.isCancellationRequested) controller.abort();
       try { return await profileUI.sessions.connect(profile,{signal:controller.signal}); } finally {cancellation.dispose();}

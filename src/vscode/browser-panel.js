@@ -18,11 +18,11 @@ export function registerBrowser(context,profileUI) {
   const open=(profile,restored={},panel) => {
     profileUI.guard();if (profile) profileUI.transfers.remember(profile);restored=browserViewState(restored);
     const sessionId=randomUUID();const assets=vscode.Uri.joinPath(context.extensionUri,'dist');
-    panel ??= vscode.window.createWebviewPanel('xscp.browser','xScp',vscode.ViewColumn.One,{});
+    panel ??= vscode.window.createWebviewPanel('xscp.browser','FileTandem',vscode.ViewColumn.One,{});
     panel.webview.options={enableScripts:true,localResourceRoots:[assets]};
     let alive=true;const recent=new Set();
     const model=() => ({version:1,type:'browserModel',sessionId,diagnostics,locale:language(),profileId:profile?.ephemeral ? undefined:profile?.id,queue:profileUI.transfers.engine.queue.list(profile?.id),queuePaused:profileUI.transfers.engine.queue.paused,local:local.state,remote:remote.state,...browserSettings(key => vscode.workspace.getConfiguration('xscp').get(key)),connection:profile ? {...profileUI.sessions.snapshot(profile.id),name:profile.name} : {state:'disconnected',name:'Kein Server'}});
-    const publish=() => {if (alive) {panel.title=profile ? `xScp · ${profile.name}`:'xScp';void panel.webview.postMessage(model());}};
+    const publish=() => {if (alive) {panel.title=profile ? `FileTandem · ${profile.name}`:'FileTandem';void panel.webview.postMessage(model());}};
     let start;try {start=localStart(restored.paths?.local ?? profile?.localPath);} catch {start=localStart();}
     const local=new DirectoryBrowser({start,parent:localParent,list:path => files.list(vscode.Uri.file(localPath(path))),onChange:publish});
     let remoteFiles,remoteTransport,opening;
@@ -92,7 +92,7 @@ export function registerBrowser(context,profileUI) {
           }
           if (message.action === 'chmod') {
             if (selected[0].kind === 'symlink') throw new Error('Symlink-Rechte werden nicht geändert.');
-            const mode=await vscode.window.showInputBox({title:`xScp: Rechte für ${selected[0].name} (oktal, z. B. 644)`,value:selected[0].mode.toString(8).padStart(3,'0'),validateInput:value => /^[0-7]{3}$/.test(value) ? undefined:'Drei Oktalziffern 000–777 eingeben.'});
+            const mode=await vscode.window.showInputBox({title:`FileTandem: Rechte für ${selected[0].name} (oktal, z. B. 644)`,value:selected[0].mode.toString(8).padStart(3,'0'),validateInput:value => /^[0-7]{3}$/.test(value) ? undefined:'Drei Oktalziffern 000–777 eingeben.'});
             if (mode === undefined) return;if (!allowed()) throw new Error('Freigabe ungültig.');if (!/^[0-7]{3}$/.test(mode)) throw new Error('Ungültige Rechte.');await adapter.chmod(selected[0].path,parseInt(mode,8));
           } else {
             const plan=message.side === 'remote' ? await planRemoteDelete(adapter,selected.map(e => e.path)) : undefined;
@@ -106,7 +106,7 @@ export function registerBrowser(context,profileUI) {
           await browser.refresh();return;
         }
         if (message.action === 'rename'  && selected.length !== 1) throw new Error('Bitte genau einen Eintrag zum Umbenennen auswählen.');
-        const name=await vscode.window.showInputBox({title:message.action === 'mkdir' ? 'xScp: Neuen Ordner anlegen':'xScp: Eintrag umbenennen',value:message.action === 'rename' ? selected[0].name:'',ignoreFocusOut:true,validateInput:value => {try {fileName(value,windows);return undefined;} catch(error) {return error.message;}}});
+        const name=await vscode.window.showInputBox({title:message.action === 'mkdir' ? 'FileTandem: Neuen Ordner anlegen':'FileTandem: Eintrag umbenennen',value:message.action === 'rename' ? selected[0].name:'',ignoreFocusOut:true,validateInput:value => {try {fileName(value,windows);return undefined;} catch(error) {return error.message;}}});
         if (name === undefined) return;
         profileUI.guard();if (!alive || browser.state.path !== parent) throw new Error('Ordner wurde während des Dialogs gewechselt.');
         if (message.action === 'mkdir') await createFolder(adapter,parent,name,options);
@@ -144,7 +144,7 @@ export function registerBrowser(context,profileUI) {
         else if (message.type === 'navigate') await browser.navigate(message.path);
         else if (message.type === 'refresh') await browser.refresh();
         else if (message.type === 'history') await browser[message.direction]();
-      } catch(error) {if (alive) void vscode.window.showErrorMessage(error.code === 'EEXIST' || error.code === 'FileExists' ? 'xScp: Ziel existiert bereits; nichts überschrieben.':`xScp: ${error.message}`);}
+      } catch(error) {if (alive) void vscode.window.showErrorMessage(error.code === 'EEXIST' || error.code === 'FileExists' ? 'FileTandem: Ziel existiert bereits; nichts überschrieben.':`FileTandem: ${error.message}`);}
     });
     panel.onDidDispose(() => {alive=false;views.delete(view);changes.dispose();configuration.dispose();transferChanges.dispose();receive.dispose();local.invalidate();remote.invalidate();remoteFiles?.close();});
     const script=panel.webview.asWebviewUri(vscode.Uri.joinPath(assets,'webview.js'));const style=panel.webview.asWebviewUri(vscode.Uri.joinPath(assets,'webview.css'));const nonce=randomBytes(24).toString('base64');

@@ -29,13 +29,13 @@ export function registerManager(context) {
     const script = panel.webview.asWebviewUri(vscode.Uri.joinPath(assets,'webview.js'));
     const style = panel.webview.asWebviewUri(vscode.Uri.joinPath(assets,'webview.css'));
     const nonce = randomBytes(24).toString('base64');
-    panel.webview.html = `<!DOCTYPE html><html lang="${language()}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="xscp-session" content="${sessionId}"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${panel.webview.cspSource}; font-src ${panel.webview.cspSource}; script-src 'nonce-${nonce}';"><link rel="stylesheet" href="${style}"><title>xScp</title></head><body><div id="root"></div><script id="xscp-state" type="application/json" nonce="${nonce}">${JSON.stringify(restoreViewState(state ?? {version:1,hidden:vscode.workspace.getConfiguration('xscp').get('showHiddenFiles')})).replaceAll('<','\\u003c')}</script><script nonce="${nonce}" src="${script}"></script></body></html>`;
+    panel.webview.html = `<!DOCTYPE html><html lang="${language()}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="xscp-session" content="${sessionId}"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${panel.webview.cspSource}; font-src ${panel.webview.cspSource}; script-src 'nonce-${nonce}';"><link rel="stylesheet" href="${style}"><title>FileTandem</title></head><body><div id="root"></div><script id="xscp-state" type="application/json" nonce="${nonce}">${JSON.stringify(restoreViewState(state ?? {version:1,hidden:vscode.workspace.getConfiguration('xscp').get('showHiddenFiles')})).replaceAll('<','\\u003c')}</script><script nonce="${nonce}" src="${script}"></script></body></html>`;
     context.subscriptions.push(panel);
     return panel;
   };
   const open = () => {
     requireDesktopAccess(executionLocation(context),vscode.workspace.isTrusted);
-    return attach(vscode.window.createWebviewPanel('xscp.demo','xScp',vscode.ViewColumn.One,{}));
+    return attach(vscode.window.createWebviewPanel('xscp.demo','FileTandem',vscode.ViewColumn.One,{}));
   };
   context.subscriptions.push(vscode.window.registerWebviewPanelSerializer('xscp.demo',{
     async deserializeWebviewPanel(panel,state) {

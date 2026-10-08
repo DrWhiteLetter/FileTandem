@@ -1,6 +1,6 @@
-# xScp – VS-Code-Erweiterung: Recherche und Umsetzungsplan
+# FileTandem – VS-Code-Erweiterung: Recherche und Umsetzungsplan
 
-Stand: 7. Oktober 2026, nach Abschluss von M5. Verbindliche Produktrichtung: VS-Code-Desktop-Erweiterung, SFTP als Standard und echtes SCP als zusätzliche Übertragungsart. Native macOS-Gestaltung und Swift/AppKit entfallen. M0 belegt die Adapter, Authentifizierung, Packaging sowie lokalen und echten Remote-Editor; die SFTP-Alpha bietet jetzt Dateiverwaltung, rekursive Transfers, Konfliktentscheidungen, Queue und Journal. Echtes SCP ist an die Oberfläche angebunden; SFTP-Teil-Dateien werden vor ausdrücklich gestarteter Fortsetzung geprüft. SFTP-Editor mit Freigabe/Diff, lokale SCP-Editorkopien, mehrere Sitzungen, interne Drag-and-drop-Aktionen, Virtualisierung und Deutsch/Englisch sind seit M5 implementiert und lokal/Remote-SSH nachgewiesen. Verbindliche technische Festlegungen stehen in [Entscheidungen](docs/entscheidungen.md), geprüfte Systeme und Release-Grenzen in [Kompatibilität](docs/kompatibilitaet.md). Der frühere native Plan unter `docs/archiv/UMSETZUNGSPLAN-native-macos.md` ist abgelöst. xScp bleibt die Entwicklungsidentität bis zur öffentlichen Produktprüfung.
+Stand: 8. Oktober 2026, nach Abschluss von M5 und vorgezogener Namensübernahme in M6-08. Verbindliche Produktrichtung: VS-Code-Desktop-Erweiterung, SFTP als Standard und echtes SCP als zusätzliche Übertragungsart. Native macOS-Gestaltung und Swift/AppKit entfallen. M0 belegt die Adapter, Authentifizierung, Packaging sowie lokalen und echten Remote-Editor; die SFTP-Alpha bietet jetzt Dateiverwaltung, rekursive Transfers, Konfliktentscheidungen, Queue und Journal. Echtes SCP ist an die Oberfläche angebunden; SFTP-Teil-Dateien werden vor ausdrücklich gestarteter Fortsetzung geprüft. SFTP-Editor mit Freigabe/Diff, lokale SCP-Editorkopien, mehrere Sitzungen, interne Drag-and-drop-Aktionen, Virtualisierung und Deutsch/Englisch sind seit M5 implementiert und lokal/Remote-SSH nachgewiesen. Verbindliche technische Festlegungen stehen in [Entscheidungen](docs/entscheidungen.md), geprüfte Systeme und Release-Grenzen in [Kompatibilität](docs/kompatibilitaet.md). Der frühere native Plan unter `docs/archiv/UMSETZUNGSPLAN-native-macos.md` ist abgelöst. Produktname und Marketplace-Titel „FileTandem – SFTP & SCP File Manager“ sind gewählt; juristische Prüfung läuft, Publisher-Nachweis offen. Interne xscp-Kennungen bleiben vorerst erhalten.
 
 Die konkrete Arbeitsliste mit einzelnen abhakbaren Aufgaben steht unter [Meilensteine zum Abarbeiten](docs/meilensteine/README.md).
 
@@ -52,9 +52,9 @@ SCP benötigt zusätzliche Shell-Operationen zum Browsen. Das OpenSSH-Programm `
 
 ```text
 VS Code
-├─ Activity Bar: xScp
+├─ Activity Bar: FileTandem
 │  └─ Verbindungen: Favoriten, gespeicherte Server, aktive Sitzungen
-└─ Editor-Tab: xScp – server.example
+└─ Editor-Tab: FileTandem – server.example
    ┌──────────────────────────────────────────────────────────┐
    │ Verbinden  Hochladen →  ← Herunterladen  Neuer Ordner  ⋯  │
    ├───────────────────────────┬──────────────────────────────┤

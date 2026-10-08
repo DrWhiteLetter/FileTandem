@@ -1,19 +1,16 @@
 # Öffentliche Produktdaten – M6-08 vorgezogen
 
-Stand: 8. Oktober 2026. **Vorbereitung, noch keine abschließende Produktidentität.** Auf Benutzerwunsch vor M6-01 bis M6-07 bearbeitet. Technische Release-Abnahmen bleiben davon unberührt. Keine Veröffentlichung beauftragt.
+Stand: 8. Oktober 2026. **Name übernommen; rechtliche Prüfung und Publisher noch offen.** Auf Benutzerwunsch vor M6-01 bis M6-07 bearbeitet. Technische Release-Abnahmen bleiben davon unberührt. Keine Veröffentlichung beauftragt.
 
 ## Name
 
-Der Benutzer möchte neue Namen statt xScp vorgeschlagen bekommen. Empfehlung: **PortTandem**, Alternative: **PaneJet**. Auswahl steht aus; aktuelle UI und Extension-ID bleiben bis dahin konsistent bei xScp / `xscp-dev.xscp`.
+Am 08.10.2026 hat der Benutzer **FileTandem** und **FileTandem – SFTP & SCP File Manager** als Marketplace-Titel gewählt und die Übernahme ausdrücklich beauftragt. Manifest, Befehle, Activity Bar, Fenster, Dialoge, Webview und aktuelle Bedienungsanleitung verwenden den Namen. Private Version: **0.0.6**.
 
-| Vorschlag | Vorteil | Nachteil / Recherche |
-| --- | --- | --- |
-| PortTandem | Verbindung und zwei Fenster; für SFTP/SCP passend, gut aussprechbar | Länger, Bedeutung braucht beschreibenden Untertitel; in der Web-/Marketplace-Suche kein eindeutiger gleichnamiger Client gefunden |
-| PaneJet | Kurz, betont Fenster und Übertragung | Englisches „Pane“ weniger verständlich; Wort auch außerhalb Software verwendet; kein eindeutiger gleichnamiger Client gefunden |
+Die kurze Web-/Marketplace-Recherche zu „FileTandem“ und „File Tandem“ ergab keinen eindeutig gleichnamigen Software-/Marketplace-Eintrag. Das ist kein Verfügbarkeits- oder Rechtsnachweis. Eine belastbare Register-/Ähnlichkeitsprüfung bei DPMA, EUIPO und WIPO wurde hier nicht abgeschlossen; „Tandem“ wird bereits von [Softwareanbietern](https://usetandem.ai/) verwendet. [DPMA-Recherchehinweise](https://www.dpma.de/marken/markenrecherche/index.html) erläutern die Bedeutung ähnlicher Marken.
 
-Nicht empfohlen: xScp kollidiert sprachlich mit dem [XSCP-Kommunikationsprotokoll](https://xscp.ivanamon.dev/intro.html); [PortPane](https://shackdesk.com/portpane/) ist bereits Software; [Docklane](https://docklane.dev/) ist bereits ein SSH-Client. Suchergebnisse sind eine erste Kollisionsprüfung, keine Namensreservierung oder rechtliche Freigabe. Marketplace-Suche ohne Treffer beweist keine Verfügbarkeit; endgültige Annahme ist bei der Produktregistrierung zu prüfen.
+**Juristische Prüfung:** Vom Benutzer bei einem Juristen beauftragt; Ergebnis noch ausstehend. Name ist als Produktentscheidung übernommen, keine rechtliche Freigabe dokumentiert. Keine Domain/Marke registriert und keine öffentliche Veröffentlichung ausgeführt.
 
-Recherche am 08.10.2026: exakte Namen und Kombinationen mit Software/App/SFTP sowie `site:marketplace.visualstudio.com`. Keine Domain oder Marke registriert.
+Interne Kennungen `xscp.*`, URI-Schemes, Paketname `xscp` und vorläufige Extension-ID `xscp-dev.xscp` bleiben erhalten. Damit verändert diese sichtbare Umbenennung die Identität und gespeicherte Profile/Secrets nicht. Historische Nachweise behalten ihren damaligen Namen und ihre geprüfte Version.
 
 ## Publisher und Identität
 
@@ -23,7 +20,7 @@ Nach [offizieller Publishing-Anleitung](https://code.visualstudio.com/api/workin
 
 ## Vorbereitete Marketplace-Texte
 
-Titel nach Auswahl: **PortTandem – SFTP & SCP File Manager** beziehungsweise **PaneJet – SFTP & SCP File Manager**. Im Plugin kann der kurze Produktname verwendet werden.
+Festgelegter Marketplace-/Manifest-Titel: **FileTandem – SFTP & SCP File Manager**. In der Bedienoberfläche: **FileTandem**.
 
 **Deutsch, Kurzbeschreibung:** Zwei-Fenster-Dateimanager für SFTP und SCP in VS Code Desktop, mit Transferwarteschlange und kontrollierter Remote-Bearbeitung.
 
@@ -45,7 +42,8 @@ Paketierung verwendet keine `--skip-license`-Ausnahme mehr. VSCE normalisiert di
 
 - [x] Lizenzdatei und Metadaten umgesetzt; Paketierung geprüft.
 - [x] Namensvorschläge recherchiert und Texte vorbereitet.
-- [ ] Produktname durch Benutzer ausgewählt und sichtbares Branding umgesetzt.
+- [x] Produktname durch Benutzer ausgewählt und sichtbares Branding umgesetzt.
+- [ ] Beauftragte juristische Prüfung abgeschlossen.
 - [ ] Tatsächlich verfügbarer Publisher und Herausgebername nachgewiesen; Identität/Übergang umgesetzt.
 
 M6-08 bleibt bis zu diesen Entscheidungen offen. Die fehlenden externen Angaben blockieren weder Entwicklung noch private VSIX-Nutzung. M6-09 bleibt ein eigener Schritt mit ausdrücklichem Veröffentlichungsauftrag.

@@ -1,6 +1,6 @@
 # Third-party notices
 
-Licenses for libraries bundled into xScp. This file does not select a license for xScp itself. Optional native ssh2 accelerators are not distributed.
+Licenses for libraries bundled into FileTandem. FileTandem itself is licensed under MIT; see LICENSE. Optional native ssh2 accelerators are not distributed.
 
 ## ssh2 1.17.0
 

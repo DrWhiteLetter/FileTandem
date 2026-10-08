@@ -11,14 +11,14 @@ import { serverIdentity } from '../adapters/ssh/host-keys.js';
 /** @param {import('vscode').ExtensionContext} context */
 export function registerHostKeyProof(context) {
   const trust = createHostKeyStore(context.globalState);
-  const output = vscode.window.createOutputChannel('xScp: SSH-Host-Key');
+  const output = vscode.window.createOutputChannel('FileTandem: SSH-Host-Key');
   const active = new Set();
   context.subscriptions.push(output, { dispose: () => { for (const controller of active) controller.abort(); } });
   context.subscriptions.push(vscode.commands.registerCommand('xscp.verifySshHostKey', async () => {
     let session;
     const controller = new AbortController();
     try {
-      if (!hasDesktopAccess(executionLocation(context), vscode.workspace.isTrusted)) throw new Error('xScp benötigt einen vertrauenswürdigen Workspace und den lokalen UI Extension Host.');
+      if (!hasDesktopAccess(executionLocation(context), vscode.workspace.isTrusted)) throw new Error('FileTandem benötigt einen vertrauenswürdigen Workspace und den lokalen UI Extension Host.');
       const host = await vscode.window.showInputBox({ title: 'SSH-Host-Key prüfen: Host', value: '127.0.0.1', ignoreFocusOut: true });
       if (host === undefined) return;
       const portText = await vscode.window.showInputBox({ title: 'SSH-Port', value: '22220', ignoreFocusOut: true });
@@ -37,7 +37,7 @@ export function registerHostKeyProof(context) {
       const privateKey = await readFile(uri.fsPath);
       active.add(controller);
       await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification,
-        title: `xScp: SSH-Host-Key für ${endpoint.label} prüfen`, cancellable: true }, async (_, token) => {
+        title: `FileTandem: SSH-Host-Key für ${endpoint.label} prüfen`, cancellable: true }, async (_, token) => {
         const cancellation = token.onCancellationRequested(() => controller.abort());
         if (token.isCancellationRequested) controller.abort();
         try {
@@ -52,7 +52,7 @@ export function registerHostKeyProof(context) {
         await vscode.window.showErrorMessage(error.message, { modal: true,
           detail: `Gespeichert: ${error.details.expected.fingerprint}\nEmpfangen: ${error.details.received.fingerprint}\n\nEs wurde keine Authentifizierung freigegeben. Den Schlüsselwechsel unabhängig klären; keine automatische Vertrauensänderung.` });
       } else if (error.code !== 'CONNECTION_ABORTED' && error.code !== 'HOST_KEY_REJECTED') {
-        await vscode.window.showErrorMessage(`xScp: ${error.message}`);
+        await vscode.window.showErrorMessage(`FileTandem: ${error.message}`);
       }
     } finally {
       if (session) await session.close();

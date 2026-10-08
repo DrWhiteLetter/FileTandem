@@ -1,4 +1,4 @@
-# xScp
+# FileTandem
 
 Entwicklungsprototyp einer VS-Code-Desktop-Erweiterung für SFTP und SCP. M0 bis M5 sind implementiert: Start-Webview, SFTP-Streaming, echtes SCP, Authentifizierung und abgesicherter SFTP-Editor sind nachgewiesen. Die Commander-Ansicht bietet lokale und SFTP-Dateiverwaltung sowie Uploads, Downloads und Ordnertransfers mit Queue. [Version 0.0.5 installieren und testen](docs/nachweise/M5-Anleitung.md).
 
@@ -14,7 +14,7 @@ npm run build
 npm start
 ```
 
-Im Extension Development Host die Befehlspalette öffnen und **xScp: Dateimanager öffnen** ausführen. Dies funktioniert auch ohne Projektordner. Alternativ dieses Repository in VS Code öffnen und mit **F5** die Konfiguration **xScp: Extension Development Host** starten; der Build läuft zuvor automatisch.
+Im Extension Development Host die Befehlspalette öffnen und **FileTandem: Dateimanager öffnen** ausführen. Dies funktioniert auch ohne Projektordner. Alternativ dieses Repository in VS Code öffnen und mit **F5** die Konfiguration **FileTandem: Extension Development Host** starten; der Build läuft zuvor automatisch.
 
 `npm start` findet auf macOS die Standardinstallation unter `/Applications/Visual Studio Code.app`. Auf Linux/Windows muss die Code-CLI im PATH liegen. Für andere Installationen `VSCODE_EXECUTABLE` auf den vollständigen Code-CLI-Pfad setzen (unter Windows `code.cmd`). Nur macOS ist bislang geprüft.
 
@@ -41,9 +41,9 @@ Build-Konzept nach der [offiziellen VS-Code-Anleitung](https://code.visualstudio
 
 ## Lokaler Ausführungsort (M0-02)
 
-Die Dateiquelle „Lokal · Mein Rechner“ ist das Desktop-Dateisystem, auch bei einem Remote-Workspace. Der Befehl **xScp: Lokalen Dateizugriff nachweisen** öffnet eine Dateiauswahl mit lokalem `file:`-Startpfad im Home-Verzeichnis. Eine bewusst erstellte, kleine Testdatei auswählen; der Ausgabekanal **xScp: Ausführungsort** zeigt Ausführungsart, Remote-Fenster-Kontext, Betriebssystem, Hostnamen, lokale Datei, Bytezahl und SHA-256. Dateiinhalt wird nicht ausgegeben. Der Dateipfad und Hostname dienen dem lokalen technischen Nachweis; vor Weitergabe des Protokolls gegebenenfalls kürzen.
+Die Dateiquelle „Lokal · Mein Rechner“ ist das Desktop-Dateisystem, auch bei einem Remote-Workspace. Der Befehl **FileTandem: Lokalen Dateizugriff nachweisen** öffnet eine Dateiauswahl mit lokalem `file:`-Startpfad im Home-Verzeichnis. Eine bewusst erstellte, kleine Testdatei auswählen; der Ausgabekanal **FileTandem: Ausführungsort** zeigt Ausführungsart, Remote-Fenster-Kontext, Betriebssystem, Hostnamen, lokale Datei, Bytezahl und SHA-256. Dateiinhalt wird nicht ausgegeben. Der Dateipfad und Hostname dienen dem lokalen technischen Nachweis; vor Weitergabe des Protokolls gegebenenfalls kürzen.
 
-`npm test` prüft den lokalen Zugriff gegen einen vom Desktop-Teststarter erzeugten Zufallsmarker. Der Marker wird anschließend entfernt. Der tatsächliche Remote-SSH-Nachweis ist mit der kompatiblen isolierten Debian-Fixture aus M0-08 bestanden. Der zuvor angebotene externe Server war nur für VS Code Server inkompatibel; eine solche Serverinstallation ist keine Voraussetzung für xScp-SFTP/SCP. Vorgehen und automatischer Remote-Test stehen im [Nachweis](docs/nachweise/M0-02.md). Eine `remote.extensionKind`-Übersteuerung auf `workspace` wird nicht unterstützt. Remote-Workspace-URIs werden nie als lokale Pfade gelesen. Der Prototyp-Nachweis akzeptiert keine `file:`-Authority/UNC-Pfade; Windows-/UNC-Unterstützung bleibt separat zu testen.
+`npm test` prüft den lokalen Zugriff gegen einen vom Desktop-Teststarter erzeugten Zufallsmarker. Der Marker wird anschließend entfernt. Der tatsächliche Remote-SSH-Nachweis ist mit der kompatiblen isolierten Debian-Fixture aus M0-08 bestanden. Der zuvor angebotene externe Server war nur für VS Code Server inkompatibel; eine solche Serverinstallation ist keine Voraussetzung für FileTandem-SFTP/SCP. Vorgehen und automatischer Remote-Test stehen im [Nachweis](docs/nachweise/M0-02.md). Eine `remote.extensionKind`-Übersteuerung auf `workspace` wird nicht unterstützt. Remote-Workspace-URIs werden nie als lokale Pfade gelesen. Der Prototyp-Nachweis akzeptiert keine `file:`-Authority/UNC-Pfade; Windows-/UNC-Unterstützung bleibt separat zu testen.
 
 ## SSH-Testumgebungen (M0-03)
 
@@ -59,7 +59,7 @@ Auf diesem Mac wurde dafür das separate Colima-Profil `xscp` eingerichtet; nach
 
 ## SSH-Host-Key-Prüfung (M0-04)
 
-**xScp: SSH-Host-Key prüfen** in der Befehlspalette startet einen minimalen SSH-Nachweis: Host, Port, Benutzer und eine lokale unverschlüsselte private Testschlüsseldatei auswählen. Für die Fixtures `127.0.0.1`, Port `22220`/`22221`/`22222`, Benutzer `fixture` und `test/fixtures/ssh/.runtime/client_ed25519` verwenden. Der Befehl authentifiziert sich und schließt die Verbindung anschließend wieder; SFTP-Streaming und echtes SCP sind separat in M0-05/M0-06 nachgewiesen.
+**FileTandem: SSH-Host-Key prüfen** in der Befehlspalette startet einen minimalen SSH-Nachweis: Host, Port, Benutzer und eine lokale unverschlüsselte private Testschlüsseldatei auswählen. Für die Fixtures `127.0.0.1`, Port `22220`/`22221`/`22222`, Benutzer `fixture` und `test/fixtures/ssh/.runtime/client_ed25519` verwenden. Der Befehl authentifiziert sich und schließt die Verbindung anschließend wieder; SFTP-Streaming und echtes SCP sind separat in M0-05/M0-06 nachgewiesen.
 
 Ein unbekannter Host-Key wird mit Algorithmus und OpenSSH-SHA-256-Fingerprint im nativen Dialog angezeigt. Den Fingerprint unabhängig vergleichen, dann ausdrücklich **Vertrauen und verbinden** wählen. **Ablehnen** oder Schließen des Dialogs beendet die Verbindung. Für die kontrollierten Fixtures zeigt `ssh-keygen -lf test/fixtures/ssh/.runtime/servers/<variante>/host_ed25519.pub` den erwarteten Fingerprint.
 
@@ -119,7 +119,7 @@ macOS/Apple Silicon ist mit Passwort, unverschlüsselten und verschlüsselten Ed
 
 ## SFTP-Editor-Prototyp (M0-08)
 
-**xScp: SFTP-Datei im Editor öffnen** (technischer M0-Einzeldateitest) öffnet eine bestehende reguläre Datei bis 10 MiB zunächst schreibgeschützt. Host, Port, Benutzer, absoluter Remote-Pfad und lokaler privater Testschlüssel werden abgefragt; für die SFTP-only-Fixture Port `22221` verwenden. Die Host-Key-Prüfung bleibt verpflichtend.
+**FileTandem: SFTP-Datei im Editor öffnen** (technischer M0-Einzeldateitest) öffnet eine bestehende reguläre Datei bis 10 MiB zunächst schreibgeschützt. Host, Port, Benutzer, absoluter Remote-Pfad und lokaler privater Testschlüssel werden abgefragt; für die SFTP-only-Fixture Port `22221` verwenden. Die Host-Key-Prüfung bleibt verpflichtend.
 
 **Remote-Bearbeitung freigeben** verlangt eine ausdrückliche Bestätigung: Speichern und Auto Save schreiben direkt auf den Server. Die Freigabe gilt nur für die ausgewählte Datei/Sitzung. Die Statusleiste zeigt den Zustand und ermöglicht Freigeben bzw. Sperren. Schließen/Neustart verwirft die Freigabe. Bei Konflikten bleiben Änderungen ungespeichert; Datei neu öffnen und Inhalte abgleichen.
 
@@ -151,7 +151,7 @@ npm run quality
 npm run package
 ```
 
-In VS Code Desktop ab 1.140.0: Erweiterungsansicht → Menü „…“ → „Aus VSIX installieren…“ → `out/xscp-0.0.5.vsix`. Dann die xScp-Activity-Bar öffnen oder **xScp: Dateimanager öffnen** über die Befehlspalette ausführen. Alternativ startet `npm start` den Entwicklungs-Host. Die aktuelle Commander-Ansicht liest das echte lokale Dateisystem und kann SFTP-Profile verbinden. Die ursprüngliche M1-Demo bleibt unter **xScp: Mock-Demo öffnen** verfügbar. Die SFTP-Transferknöpfe sind angebunden; [Alpha-Anleitung](docs/nachweise/M3-Alpha.md).
+In VS Code Desktop ab 1.140.0: Erweiterungsansicht → Menü „…“ → „Aus VSIX installieren…“ → `out/xscp-0.0.6.vsix`. Dann die FileTandem-Activity-Bar öffnen oder **FileTandem: Dateimanager öffnen** über die Befehlspalette ausführen. Alternativ startet `npm start` den Entwicklungs-Host. Die aktuelle Commander-Ansicht liest das echte lokale Dateisystem und kann SFTP-Profile verbinden. Die ursprüngliche M1-Demo bleibt unter **FileTandem: Mock-Demo öffnen** verfügbar. Die SFTP-Transferknöpfe sind angebunden; [Alpha-Anleitung](docs/nachweise/M3-Alpha.md).
 
 `npm run test:installed` installiert und testet die VSIX ausschließlich in einem temporären, anschließend entfernten Profil. Bei vorhandener VS-Code-Installation lässt sich `VSCODE_TEST_EXECUTABLE` auf die Programmdatei setzen; sonst wird die festgelegte Testversion geladen. Python 3 wird für die unabhängige ZIP-Prüfung benötigt.
 
@@ -159,12 +159,12 @@ Die GitHub-Actions-Datei führt Lint, Syntaxprüfung, Unit-/React-DOM-Tests, Bui
 
 ## Verbindungen und Dateiverwaltung (M2)
 
-1. **xScp: Profil anlegen** wählen: Host, Port, Benutzer, Startordner, SFTP und Passwort/Key/Agent angeben. Ein leerer lokaler Startordner verwendet Home, auch ohne geöffnetes Projekt.
-2. In der xScp-Activity-Bar ein Profil öffnen oder im Commander **Profil verbinden** wählen. Beim ersten Zugang den Host-Key unabhängig vergleichen und im nativen Dialog bestätigen. Passwort/Passphrase verlassen den Backend-/SecretStorage-Bereich nicht.
+1. **FileTandem: Profil anlegen** wählen: Host, Port, Benutzer, Startordner, SFTP und Passwort/Key/Agent angeben. Ein leerer lokaler Startordner verwendet Home, auch ohne geöffnetes Projekt.
+2. In der FileTandem-Activity-Bar ein Profil öffnen oder im Commander **Profil verbinden** wählen. Beim ersten Zugang den Host-Key unabhängig vergleichen und im nativen Dialog bestätigen. Passwort/Passphrase verlassen den Backend-/SecretStorage-Bereich nicht.
 3. Pfad eingeben, Ordner öffnen oder Vor/Zurück/Übergeordnet verwenden. Beide Bereiche haben eigene Filter, Sortierung, versteckte Dateien, Spalten und Pfadfavoriten. Ctrl/Cmd und Shift ermöglichen Mehrfachauswahl.
 4. **Neuer Ordner**, **Umbenennen**, **Löschen**, **Eigenschaften** und **Rechte** wirken auf den gewählten Bereich. Vorhandene Rename-Ziele werden abgewiesen. Lokales Löschen geht nach Bestätigung in den Papierkorb; Remote-Löschen ist bestätigt und endgültig. Symlink-Ziele werden bei rekursivem Löschen nicht traversiert.
 
-Über das Profil-Kontextmenü lassen sich Profile bearbeiten, favorisieren, trennen und erneut verbinden. **xScp: Schnellverbindung** baut einen nicht gespeicherten Zugang auf. **xScp: Gespeicherte Anmeldung vergessen** entfernt ein gespeichertes Passwort/eine Passphrase. **xScp: Profile ohne Geheimnisse exportieren** öffnet ein JSON-Dokument mit Profilmetadaten.
+Über das Profil-Kontextmenü lassen sich Profile bearbeiten, favorisieren, trennen und erneut verbinden. **FileTandem: Schnellverbindung** baut einen nicht gespeicherten Zugang auf. **FileTandem: Gespeicherte Anmeldung vergessen** entfernt ein gespeichertes Passwort/eine Passphrase. **FileTandem: Profile ohne Geheimnisse exportieren** öffnet ein JSON-Dokument mit Profilmetadaten.
 
 SFTP-only benötigt weder Shell noch VS Code Server. Seit M4 bieten SCP-Profile ebenfalls Dateioperationen und Transfers über die explizite GNU/Linux-Shell-Anbindung. Windows-POSIX-chmod und lokale UNC-Authorities werden derzeit verständlich verweigert. Pro Ordner sind vorerst 10.000 Einträge vorgesehen; Remote-Löschpläne sind auf 10.000 Einträge und Tiefe 100 begrenzt. SFTP v3 erlaubt keine transaktionale Absicherung gegen gleichzeitige externe Pfadänderungen; Typ-/Elternprüfungen erkennen Änderungen zwischen Schritten.
 
@@ -178,7 +178,7 @@ Diese Tests benötigen laufende Fixtures (siehe oben). Der zweite Test installie
 
 ## SFTP-Alpha (M3)
 
-Private VSIX: `out/xscp-0.0.5.vsix`. [Anleitung, Prüfergebnisse und Grenzen](docs/nachweise/M3-Alpha.md). Reproduzierbar: `npm run quality`, `npm run test:transfers` mit laufenden eigenen Fixtures, `npm run package`, `npm run test:browser:installed`. Der Installationstest verwendet zwei reguläre isolierte Fenster und prüft zusätzlich Upload nach Tab-Schließen, Ordner-Rundlauf sowie Journal und gezielten Retry nach Neustart.
+Private VSIX: `out/xscp-0.0.6.vsix`. [Anleitung, Prüfergebnisse und Grenzen](docs/nachweise/M3-Alpha.md). Reproduzierbar: `npm run quality`, `npm run test:transfers` mit laufenden eigenen Fixtures, `npm run package`, `npm run test:browser:installed`. Der Installationstest verwendet zwei reguläre isolierte Fenster und prüft zusätzlich Upload nach Tab-Schließen, Ordner-Rundlauf sowie Journal und gezielten Retry nach Neustart.
 
 ## SCP und Wiederanlauf (M4)
 
@@ -192,4 +192,4 @@ Serverdateien im Commander doppelklicken oder mit Enter öffnen. SFTP startet sc
 
 ## Produktname und Lizenz
 
-Eigener Projektcode steht unter der [MIT-Lizenz](LICENSE); enthaltene Drittanbieter haben ihre [eigenen Hinweise](THIRD_PARTY_NOTICES.md). xScp bleibt vorerst die Entwicklungsidentität. Die vorgezogene Namens-/Publisher-Klärung und vorbereiteten öffentlichen Texte stehen unter [Produktdaten](docs/produktdaten.md).
+Eigener Projektcode steht unter der [MIT-Lizenz](LICENSE); enthaltene Drittanbieter haben ihre [eigenen Hinweise](THIRD_PARTY_NOTICES.md). Produktname: **FileTandem**. Marketplace-Titel: **FileTandem – SFTP & SCP File Manager**. Die juristische Prüfung ist vom Benutzer beauftragt und noch offen; Publisher `xscp-dev` bleibt ein Entwicklungsplatzhalter. Technische Kennungen `xscp.*` bleiben für bestehende Profile/Einstellungen erhalten. Die vorgezogene Namens-/Publisher-Klärung und vorbereiteten öffentlichen Texte stehen unter [Produktdaten](docs/produktdaten.md).

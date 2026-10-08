@@ -10,7 +10,7 @@ export function translate(value,locale=current) {
   if (typeof value!=='string' || !String(locale).toLowerCase().startsWith('en')) return value;
   if (Object.hasOwn(english,value)) return english[value];
   for (const {regex,target,indices} of templates) {const match=regex.exec(value);if (match) {const parts=new Map(indices.map((index,i) => [index,match[i+1]]));return target.replace(/\{(\d+)\}/g,(_,index) => parts.get(Number(index)) ?? '');}}
-  const prefix=/^(\$\([a-z-]+\)\s*|xScp:\s*)([\s\S]*)$/.exec(value);if (prefix) return prefix[1]+translate(prefix[2],locale);
+  const prefix=/^(\$\([a-z-]+\)\s*|FileTandem:\s*)([\s\S]*)$/.exec(value);if (prefix) return prefix[1]+translate(prefix[2],locale);
   if (value.includes('\n')) return value.split('\n').map(line => translate(line,locale)).join('\n');
   return value;
 }

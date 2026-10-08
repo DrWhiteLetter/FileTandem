@@ -26,7 +26,7 @@ export function executionLocation(context) {
 export async function verifyLocalFile(context, uri) {
   const location = executionLocation(context);
   if (!location.local) {
-    throw new Error('xScp muss auf dem Desktop im lokalen UI Extension Host laufen. Eine remote.extensionKind-Übersteuerung entfernen und xScp lokal installieren.');
+    throw new Error('FileTandem muss auf dem Desktop im lokalen UI Extension Host laufen. Eine remote.extensionKind-Übersteuerung entfernen und FileTandem lokal installieren.');
   }
   if (!(uri instanceof vscode.Uri) || uri.scheme !== 'file' || uri.authority
     || uri.query || uri.fragment) {
@@ -59,16 +59,16 @@ export async function verifyLocalFile(context, uri) {
 
 /** @param {import('vscode').ExtensionContext} context */
 export function registerLocalProof(context) {
-  const output = vscode.window.createOutputChannel('xScp: Ausführungsort');
+  const output = vscode.window.createOutputChannel('FileTandem: Ausführungsort');
   context.subscriptions.push(output, vscode.commands.registerCommand('xscp.verifyLocalFile', async () => {
     try {
       if (!executionLocation(context).local) {
-        throw new Error('xScp läuft nicht im lokalen UI Extension Host. Bitte lokal installieren und remote.extensionKind prüfen.');
+        throw new Error('FileTandem läuft nicht im lokalen UI Extension Host. Bitte lokal installieren und remote.extensionKind prüfen.');
       }
       const selected = await vscode.window.showOpenDialog({
         defaultUri: vscode.Uri.file(homedir()),
         canSelectFiles: true, canSelectFolders: false, canSelectMany: false,
-        openLabel: 'Lokale Testdatei prüfen', title: 'xScp: Testdatei vom Desktop-Rechner',
+        openLabel: 'Lokale Testdatei prüfen', title: 'FileTandem: Testdatei vom Desktop-Rechner',
       });
       if (!selected?.length) return;
       const proof = await verifyLocalFile(context, selected[0]);
@@ -76,7 +76,7 @@ export function registerLocalProof(context) {
       output.show(true);
       return proof;
     } catch (error) {
-      await vscode.window.showErrorMessage(`xScp: ${error.message}`);
+      await vscode.window.showErrorMessage(`FileTandem: ${error.message}`);
     }
   }));
 }

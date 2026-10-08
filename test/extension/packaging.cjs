@@ -42,7 +42,7 @@ exports.run = async () => {
   assert.ok((await vscode.commands.getCommands(true)).includes('xscp.openManager'));
   await vscode.commands.executeCommand('xscp.openManager');
   const deadline = Date.now() + 5000;
-  const visible = () => vscode.window.tabGroups.all.flatMap(group => group.tabs).some(tab => tab.label === 'xScp' && tab.input instanceof vscode.TabInputWebview);
+  const visible = () => vscode.window.tabGroups.all.flatMap(group => group.tabs).some(tab => tab.label === 'FileTandem' && tab.input instanceof vscode.TabInputWebview);
   while (!visible() && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 50));
   assert.ok(visible(), 'Installed webview assets load');
   await fs.writeFile(process.env.XSCP_PACKAGE_RESULT, JSON.stringify({ vscode: vscode.version, extensionHostNode: process.version, electron: process.versions.electron }));

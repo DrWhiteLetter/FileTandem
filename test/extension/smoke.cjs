@@ -41,7 +41,7 @@ exports.run = async () => {
   assert.ok((await vscode.commands.getCommands(true)).includes('xscp.openManager'));
   await vscode.commands.executeCommand('xscp.openManager');
   const hasTab = () => vscode.window.tabGroups.all.flatMap(group => group.tabs)
-    .some(tab => tab.label === 'xScp' && tab.input instanceof vscode.TabInputWebview);
+    .some(tab => tab.label === 'FileTandem' && tab.input instanceof vscode.TabInputWebview);
   const deadline = Date.now() + 5000;
   while (!hasTab() && Date.now() < deadline) {
     await new Promise(resolve => setTimeout(resolve, 50));

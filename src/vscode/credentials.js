@@ -7,7 +7,7 @@ import { credentialsFor,forgetCredentials } from '../application/credentials.js'
 async function keyboardPrompt(profile,request) {
   const answers=[];
   for (const item of request.prompts) {
-    request.signal.throwIfAborted();const box=vscode.window.createInputBox();box.title=`xScp: Anmeldung ${profile.name} (${request.endpoint.host}:${request.endpoint.port})`;box.prompt=[request.name,request.instructions,item.prompt].filter(Boolean).join(' · ');box.password=!item.echo;box.ignoreFocusOut=true;
+    request.signal.throwIfAborted();const box=vscode.window.createInputBox();box.title=`FileTandem: Anmeldung ${profile.name} (${request.endpoint.host}:${request.endpoint.port})`;box.prompt=[request.name,request.instructions,item.prompt].filter(Boolean).join(' · ');box.password=!item.echo;box.ignoreFocusOut=true;
     let value;try {value=await new Promise(resolve => {
       const accept=box.onDidAccept(() => resolve(box.value)),hide=box.onDidHide(() => resolve(undefined));const abort=() => {box.hide();resolve(undefined);};request.signal.addEventListener('abort',abort,{once:true});
       box.onDidHide(() => {accept.dispose();hide.dispose();request.signal.removeEventListener('abort',abort);});if (request.signal.aborted) abort();else box.show();
@@ -25,7 +25,7 @@ export function credentialProvider(context,profileUI) {
     },
     encrypted:key => { const parsed=ssh2.utils.parseKey(key); if (parsed instanceof Error) { if (/encrypted|passphrase/i.test(parsed.message)) return true; throw new Error('Schlüsseldatei hat ein nicht unterstütztes Format.'); } return false; },
     prompt:async (kind,profile,signal) => {
-      const box=vscode.window.createInputBox(); box.title=`xScp: ${kind === 'password' ? t('Passwort'):t('Schlüssel-Passphrase')} für ${profile.name}`; box.password=true; box.ignoreFocusOut=true;
+      const box=vscode.window.createInputBox(); box.title=`FileTandem: ${kind === 'password' ? t('Passwort'):t('Schlüssel-Passphrase')} für ${profile.name}`; box.password=true; box.ignoreFocusOut=true;
       let value;
       try { value=await new Promise(resolve => {
         const accepted=box.onDidAccept(() => resolve(box.value)); const hidden=box.onDidHide(() => resolve(undefined));

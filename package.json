@@ -1,8 +1,8 @@
 {
   "name": "xscp",
-  "displayName": "xScp",
+  "displayName": "FileTandem – SFTP & SCP File Manager",
   "description": "%description%",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "private": true,
   "publisher": "xscp-dev",
   "type": "module",
@@ -148,7 +148,7 @@
       "activitybar": [
         {
           "id": "xscp",
-          "title": "xScp",
+          "title": "FileTandem",
           "icon": "media/activity.svg"
         }
       ]
@@ -257,7 +257,7 @@
       ]
     },
     "configuration": {
-      "title": "xScp",
+      "title": "FileTandem",
       "properties": {
         "xscp.showHiddenFiles": {
           "type": "boolean",
@@ -364,5 +364,12 @@
     "onWebviewPanel:xscp.demo",
     "onWebviewPanel:xscp.browser"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "keywords": [
+    "sftp",
+    "scp",
+    "ssh",
+    "file transfer",
+    "dual pane"
+  ]
 }

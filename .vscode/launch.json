@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "xScp: Extension Development Host",
+      "name": "FileTandem: Extension Development Host",
       "type": "extensionHost",
       "request": "launch",
       "args": [
@@ -15,7 +15,7 @@
       "preLaunchTask": "npm: build"
     },
     {
-      "name": "xScp: Remote-SSH-Ausführungsort prüfen",
+      "name": "FileTandem: Remote-SSH-Ausführungsort prüfen",
       "type": "extensionHost",
       "request": "launch",
       "args": [

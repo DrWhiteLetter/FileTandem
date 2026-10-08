@@ -13,7 +13,7 @@ export function registerLocalEditorCopies(context,ui) {
     return new Promise((resolve,reject) => {let listener;const done=() => {const jobs=check();if (jobs.length!==batch.ids.length || jobs.some(j => ['queued','running'].includes(j.state))) return;listener?.dispose();if (jobs.some(j => j.state!=='completed')) reject(new Error('Editor-Kopie konnte nicht vollständig übertragen werden. Queue prüfen.'));else resolve(jobs[0]);};listener=ui.transfers.changed.event(done);done();});
   };
   const status=vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right,22);
-  const refresh=() => {const r=records.get(vscode.window.activeTextEditor?.document.uri.toString());void vscode.commands.executeCommand('setContext','xscp.editorCopyActive',!!r);if (!r) return status.hide();status.text='$(cloud-upload) xScp: Lokale SCP-Kopie';status.tooltip=`${r.remote}\nAuto Save speichert nur lokal. Upload ausschließlich über diesen Befehl.`;status.command='xscp.uploadEditorCopy';status.show();};
+  const refresh=() => {const r=records.get(vscode.window.activeTextEditor?.document.uri.toString());void vscode.commands.executeCommand('setContext','xscp.editorCopyActive',!!r);if (!r) return status.hide();status.text='$(cloud-upload) FileTandem: Lokale SCP-Kopie';status.tooltip=`${r.remote}\nAuto Save speichert nur lokal. Upload ausschließlich über diesen Befehl.`;status.command='xscp.uploadEditorCopy';status.show();};
   const api={
     async open(profile,path,download) {
       ui.guard();if (profile.protocol!=='scp' || records.size>=64) throw new Error('SCP-Editorkopie nicht verfügbar; gespeicherte Kopien bereinigen.');

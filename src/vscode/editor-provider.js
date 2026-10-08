@@ -40,7 +40,7 @@ export function registerEditorProvider(context, trust, currentEditor) {
     const uri = vscode.window.activeTextEditor?.document.uri;
     const e = uri?.scheme === 'xscp-remote' && entries.get(uri.authority);
     if (!e) return status.hide();
-    status.text = e.allowed ? '$(edit) xScp: Bearbeitung freigegeben' : '$(lock) xScp: Schreibgeschützt';
+    status.text = e.allowed ? '$(edit) FileTandem: Bearbeitung freigegeben' : '$(lock) FileTandem: Schreibgeschützt';
     status.tooltip = `${e.endpoint}: ${uri.path}\nSpeichern und Auto Save schreiben nach Freigabe direkt auf den Server.`;
     status.command = e.allowed ? 'xscp.lockEditorFile' : 'xscp.enableEditorEditing'; status.show();
   };
@@ -66,7 +66,7 @@ export function registerEditorProvider(context, trust, currentEditor) {
     async close(uri) { const e = entries.get(uri.authority); if (!e) return; e.allowed = false; entries.delete(uri.authority); await e.file.close(); refresh(); },
   };
   const command = (name, action) => context.subscriptions.push(vscode.commands.registerCommand(name, async () => {
-    try { await action(); } catch (e) { await vscode.window.showErrorMessage(`xScp: ${e.message}`); }
+    try { await action(); } catch (e) { await vscode.window.showErrorMessage(`FileTandem: ${e.message}`); }
   }));
   command('xscp.openEditorProof', async () => {
     guard();
@@ -81,7 +81,7 @@ export function registerEditorProvider(context, trust, currentEditor) {
     const uri = await api.open({ host, port: Number(port), username, privateKey: await readFile(key.fsPath) }, path);
     try { await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(uri)); } catch (e) { await api.close(uri); throw e; }
   });
-  const active = () => { const uri = vscode.window.activeTextEditor?.document.uri; if (!uri || uri.scheme !== 'xscp-remote') throw new Error('Zuerst eine xScp-Remote-Datei öffnen.'); return uri; };
+  const active = () => { const uri = vscode.window.activeTextEditor?.document.uri; if (!uri || uri.scheme !== 'xscp-remote') throw new Error('Zuerst eine FileTandem-Remote-Datei öffnen.'); return uri; };
   command('xscp.enableEditorEditing', () => vscode.window.activeTextEditor?.document.uri.scheme==='xscp' ? currentEditor.enable(vscode.window.activeTextEditor.document.uri):api.enable(active()));
   command('xscp.lockEditorFile', () => vscode.window.activeTextEditor?.document.uri.scheme==='xscp' ? currentEditor.lock(vscode.window.activeTextEditor.document.uri):api.lock(active()));
   context.subscriptions.push(changes, status, vscode.workspace.registerFileSystemProvider('xscp-remote', provider, { isCaseSensitive: true }), vscode.window.onDidChangeActiveTextEditor(refresh), vscode.workspace.onDidCloseTextDocument(document => {
