@@ -1,0 +1,49 @@
+{
+  "item": "M6-03",
+  "date": "2026-10-08",
+  "version": "0.0.8",
+  "vscode": "1.140.0",
+  "platform": "macOS arm64 Apple M1",
+  "sleepSeconds": 35,
+  "systemEvents": [
+    "2026-10-08 18:08:54 +0200 Sleep               \tEntering Sleep state due to 'Software Sleep pid=635':TCPKeepAlive=active Using AC (Charge:100%) 35 secs",
+    "2026-10-08 18:09:29 +0200 Wake                \tWake from Deep Idle [CDNVA] : due to smc.sysState.Wake(0x70070000) wifibt SMC.OutboxNotEmpty bluetooth-pcie/HID Activity Using AC (Charge:100%)"
+  ],
+  "source": {
+    "size": 268435456,
+    "sha256": "8b9fe8048a8558097d5f17227727aaf80fcd8446269c263bd866146bebf1c87c"
+  },
+  "initialStates": [
+    {
+      "protocol": "sftp",
+      "state": "failed",
+      "bytes": 6356992,
+      "errorCode": "NOT_CONNECTED"
+    },
+    {
+      "protocol": "scp",
+      "state": "completed",
+      "bytes": 268435456,
+      "errorCode": null
+    }
+  ],
+  "sftpFailedTargetAbsentBeforeRetry": true,
+  "noAutomaticRetry": true,
+  "explicitSftpRetry": true,
+  "verification": [
+    {
+      "protocol": "sftp",
+      "targetExists": true,
+      "size": 268435456,
+      "sha256": "8b9fe8048a8558097d5f17227727aaf80fcd8446269c263bd866146bebf1c87c"
+    },
+    {
+      "protocol": "scp",
+      "targetExists": true,
+      "size": 268435456,
+      "sha256": "8b9fe8048a8558097d5f17227727aaf80fcd8446269c263bd866146bebf1c87c"
+    }
+  ],
+  "ok": true,
+  "conditions": "Installed VSIX, isolated profile; local Colima server slept with Mac; loopback SSH proxy throttled before sleep, throttle removed after wake. New targets. Existing-target preservation verified in earlier M6-03 fault tests."
+}

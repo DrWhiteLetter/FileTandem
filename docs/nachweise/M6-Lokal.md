@@ -8,7 +8,7 @@ Stand: **08.10.2026**, private Kandidatenversion **0.0.8**. Benutzerauftrag: all
 | --- | --- | --- |
 | M6-01 | Reproduzierbarer Runner; 23 Schritte bestanden, beide VS-Code-Versionen, echter Restricted Mode | Gehosteter CI-Lauf benötigt Remote-Repository; aktuell kein Git-Remote konfiguriert |
 | M6-02 | macOS Apple Silicon und echtes Remote-SSH-Fenster bestanden | Windows/Linux, macOS Intel, WSL/Dev Containers/Codespaces und plattformspezifische Namen/UNC |
-| M6-03 | TCP-Abbruch, tatsächliches Remote-/Local-ENOSPC, Finalisierungsabbruch, Symlinks, Restart, echter Reload und zwei gleichzeitige Fenster bestanden | Tatsächlicher System-Ruhezustand/Resume auf dem Desktop; eine pausierte TCP-Verbindung ersetzt diese Prüfung nicht |
+| M6-03 | TCP-Abbruch, tatsächliches Remote-/Local-ENOSPC, Finalisierungsabbruch, Symlinks, Restart, echter Reload und zwei gleichzeitige Fenster bestanden | Nachgeprüft: 35 Sekunden echter Ruhezustand, beide Ziele mit korrektem Hash. [Nachweis](M6-03.md) |
 | M6-04 | >4-GiB-Datei in beide Richtungen über SFTP/SCP, Speicherziel, kleine Dateien und 10.000 Einträge gemessen | Keine offene lokale Messung; Messwerte sind keine Zusage für beliebige Server/RTT |
 | M6-05 | Lokaler Code-/Host-Key-/CSP-/Secrets-/Parserreview, Abhängigkeiten und Paketinhalt geprüft | M6-05 abgeschlossen, siehe [Einzelnachweis](M6-05.md); 1.0-Gesamtfreigabe weiterhin an M6-02/M6-03 gebunden |
 | M6-06 | Installation, Quickstart, SCP-Voraussetzungen, Grenzen, Diagnose/Wartung, CHANGELOG und Lizenzhinweise fertig | M6-06 abgeschlossen, siehe [Nachweis](M6-06.md); öffentliche Adressen erst nach Einrichtung |
@@ -16,7 +16,7 @@ Stand: **08.10.2026**, private Kandidatenversion **0.0.8**. Benutzerauftrag: all
 | M6-08 | MIT, Name/Logo/Texte vorhanden; juristisches Okay laut Benutzer abgeschlossen | Tatsächliches Publisher-Konto und Übergang der Extension-Identität |
 | M6-09 | Kein öffentlicher Upload | Technische Gesamtfreigabe, Publisher und ausdrücklicher Veröffentlichungsauftrag |
 
-Vollständige manuelle Screenreader-/Tastaturabnahme bleibt offen. Native Theme-/Zoom-/Virtualisierungsprüfungen und React-/API-Tests sind erfolgt, aber kein Ersatz für menschliche Screenreader-Bedienung. Der einzige Desktop wurde während der aktiven Arbeit nicht in den Ruhezustand versetzt. Das Produkt bleibt eine private Vorabversion, nicht pauschal Version 1.0.
+Vollständige manuelle Screenreader-/Tastaturabnahme bleibt offen. Native Theme-/Zoom-/Virtualisierungsprüfungen und React-/API-Tests sind erfolgt, aber kein Ersatz für menschliche Screenreader-Bedienung. Der Benutzer hat anschließend echten Systemruhezustand ausgelöst; [M6-03](M6-03.md) ist abgeschlossen. Das Produkt bleibt eine private Vorabversion, nicht pauschal Version 1.0.
 
 ## Regression und konkrete Umgebung
 
