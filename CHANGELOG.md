@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.0.10 – 08.10.2026
+
+- F5/F3–F8 in der Dateiliste werden bei aktivierten Commander-Tasten vollständig verarbeitet und nicht zusätzlich an VS Codes Tastaturverarbeitung weitergeleitet.
+- Modifizierte Funktionstasten und Eingabefelder behalten normale VS-Code-Tastenkürzel.
+
 ## 0.0.9 – 08.10.2026
 
 - Einstellungen, Befehle, Ansichten und Editor-URIs auf `filetandem` umgestellt.
