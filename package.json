@@ -2,7 +2,7 @@
   "name": "xscp",
   "displayName": "FileTandem – SFTP & SCP File Manager",
   "description": "%description%",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "private": true,
   "publisher": "xscp-dev",
   "type": "module",
@@ -11,6 +11,7 @@
     "node": ">=22.13.1"
   },
   "main": "./dist/extension.cjs",
+  "icon": "media/filetandem-logo.png",
   "categories": [
     "Other"
   ],
@@ -23,7 +24,8 @@
     "commands": [
       {
         "command": "xscp.openManager",
-        "title": "%xscp.openManager.title%"
+        "title": "%xscp.openManager.title%",
+        "icon": "media/filetandem-button.png"
       },
       {
         "command": "xscp.verifyLocalFile",
@@ -163,6 +165,11 @@
     },
     "menus": {
       "view/title": [
+        {
+          "command": "xscp.openManager",
+          "when": "view == xscp.connections",
+          "group": "navigation@0"
+        },
         {
           "command": "xscp.refreshConnections",
           "when": "view == xscp.connections",

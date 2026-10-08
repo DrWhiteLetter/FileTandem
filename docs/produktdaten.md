@@ -4,7 +4,7 @@ Stand: 8. Oktober 2026. **Name übernommen; rechtliche Prüfung und Publisher no
 
 ## Name
 
-Am 08.10.2026 hat der Benutzer **FileTandem** und **FileTandem – SFTP & SCP File Manager** als Marketplace-Titel gewählt und die Übernahme ausdrücklich beauftragt. Manifest, Befehle, Activity Bar, Fenster, Dialoge, Webview und aktuelle Bedienungsanleitung verwenden den Namen. Private Version: **0.0.6**.
+Am 08.10.2026 hat der Benutzer **FileTandem** und **FileTandem – SFTP & SCP File Manager** als Marketplace-Titel gewählt und die Übernahme ausdrücklich beauftragt. Manifest, Befehle, Activity Bar, Fenster, Dialoge, Webview und aktuelle Bedienungsanleitung verwenden den Namen. Private Version: **0.0.7** mit eigenem Logo und Öffnen-Button in der Verbindungen-Ansicht.
 
 Die kurze Web-/Marketplace-Recherche zu „FileTandem“ und „File Tandem“ ergab keinen eindeutig gleichnamigen Software-/Marketplace-Eintrag. Das ist kein Verfügbarkeits- oder Rechtsnachweis. Die direkte DPMA-/EUIPO-Vorrecherche ist inzwischen dokumentiert: [Registerrecherche vom 08.10.2026](nachweise/M6-08-Markenrecherche.md). FileTandem ergab in beiden Registern keine Treffer; Tandem umfasst aber auch softwarebezogene Marken und tatsächlich laufende Widersprüche. Eine vollständige Register-/Ähnlichkeitsprüfung einschließlich WIPO wurde hier nicht abgeschlossen; „Tandem“ wird bereits von [Softwareanbietern](https://usetandem.ai/) verwendet. [DPMA-Recherchehinweise](https://www.dpma.de/marken/markenrecherche/index.html) erläutern die Bedeutung ähnlicher Marken.
 
