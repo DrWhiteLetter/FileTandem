@@ -11,7 +11,7 @@ Stand: **08.10.2026**, private Kandidatenversion **0.0.8**. Benutzerauftrag: all
 | M6-03 | TCP-Abbruch, tatsächliches Remote-/Local-ENOSPC, Finalisierungsabbruch, Symlinks, Restart, echter Reload und zwei gleichzeitige Fenster bestanden | Tatsächlicher System-Ruhezustand/Resume auf dem Desktop; eine pausierte TCP-Verbindung ersetzt diese Prüfung nicht |
 | M6-04 | >4-GiB-Datei in beide Richtungen über SFTP/SCP, Speicherziel, kleine Dateien und 10.000 Einträge gemessen | Keine offene lokale Messung; Messwerte sind keine Zusage für beliebige Server/RTT |
 | M6-05 | Lokaler Code-/Host-Key-/CSP-/Secrets-/Parserreview, Abhängigkeiten und Paketinhalt geprüft | M6-05 abgeschlossen, siehe [Einzelnachweis](M6-05.md); 1.0-Gesamtfreigabe weiterhin an M6-02/M6-03 gebunden |
-| M6-06 | Installation, Quickstart, SCP-Voraussetzungen, Grenzen, Diagnose/Wartung, CHANGELOG und Lizenzhinweise fertig | Öffentliche Support-/Repository-Adressen erst bei tatsächlich verfügbarem Publisher/Repository |
+| M6-06 | Installation, Quickstart, SCP-Voraussetzungen, Grenzen, Diagnose/Wartung, CHANGELOG und Lizenzhinweise fertig | M6-06 abgeschlossen, siehe [Nachweis](M6-06.md); öffentliche Adressen erst nach Einrichtung |
 | M6-07 | Private 0.0.8 im frischen Profil installiert; beide Protokolle, Editor, Remote-SSH, Restart/Reload geprüft | Vollständiges technisches 1.0-Abnahmetor bleibt wegen offener Matrix/Bedienabnahmen offen |
 | M6-08 | MIT, Name/Logo/Texte vorhanden; juristisches Okay laut Benutzer abgeschlossen | Tatsächliches Publisher-Konto und Übergang der Extension-Identität |
 | M6-09 | Kein öffentlicher Upload | Technische Gesamtfreigabe, Publisher und ausdrücklicher Veröffentlichungsauftrag |

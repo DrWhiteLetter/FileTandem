@@ -1,6 +1,6 @@
 # Meilensteine zum Abarbeiten
 
-Dieser Backlog konkretisiert den [Umsetzungsplan](../../UMSETZUNGSPLAN.md). Er beschreibt geplante Arbeit und ihren Fortschritt; **M0 ist mit 9/9 Items technisch abgeschlossen; M1 ist mit 7/7 implementierten Items verfügbar; native Bedienabnahmen und gehostete CI bleiben offen. M2 ist mit 9/9 Items implementiert und lokal nachgewiesen. M3 ist mit 9/9 Items implementiert und lokal nachgewiesen. M4 ist mit 8/8 Items implementiert und lokal nachgewiesen. M5 ist mit 8/8 Items implementiert und lokal/Remote-SSH nachgewiesen. M6-01, M6-04 und M6-05 sind abgeschlossen; die lokal möglichen M6-Prüfungen und Dokumente liegen vor. Externe Abnahmen und Publisher bleiben offen; [M6-Nachweis](../nachweise/M6-Lokal.md).** M0-08 ergänzt die echte Remote-SSH-Abnahme von M0-02. JavaScript/JSX, SFTP als Standard und echtes SCP bleiben die Grundlage.
+Dieser Backlog konkretisiert den [Umsetzungsplan](../../UMSETZUNGSPLAN.md). Er beschreibt geplante Arbeit und ihren Fortschritt; **M0 ist mit 9/9 Items technisch abgeschlossen; M1 ist mit 7/7 implementierten Items verfügbar; native Bedienabnahmen und gehostete CI bleiben offen. M2 ist mit 9/9 Items implementiert und lokal nachgewiesen. M3 ist mit 9/9 Items implementiert und lokal nachgewiesen. M4 ist mit 8/8 Items implementiert und lokal nachgewiesen. M5 ist mit 8/8 Items implementiert und lokal/Remote-SSH nachgewiesen. M6-01, M6-04, M6-05 und M6-06 sind abgeschlossen; die lokal möglichen M6-Prüfungen und Dokumente liegen vor. Externe Abnahmen und Publisher bleiben offen; [M6-Nachweis](../nachweise/M6-Lokal.md).** M0-08 ergänzt die echte Remote-SSH-Abnahme von M0-02. JavaScript/JSX, SFTP als Standard und echtes SCP bleiben die Grundlage.
 
 **59 einzeln abhakbare Items** mit stabilen IDs, Abhängigkeiten, Umsetzung und Fertig-Kriterium.
 
@@ -14,7 +14,7 @@ Dieser Backlog konkretisiert den [Umsetzungsplan](../../UMSETZUNGSPLAN.md). Er b
 | [M3: Transfer-Engine und SFTP-Alpha](M3.md) | Installierte SFTP-Alpha mit Queue und Journal | 9/9 erledigt | 0 Resttage |
 | [M4: SCP und sicherer Wiederanlauf](M4.md) | SCP und geprüfter SFTP-Wiederanlauf nachgewiesen | 8/8 erledigt | 0 Resttage |
 | [M5: Editorintegration und Bedienung](M5.md) | Editor, Bedienung und Deutsch/Englisch nachgewiesen | 8/8 erledigt | 0 Resttage |
-| [M6: Release-Härtung und Auslieferung](M6.md) | Private VSIX 0.0.8 lokal geprüft; externe Abnahmen offen | 3/9 vollständig, übrige teilweise | Externe Abnahme |
+| [M6: Release-Härtung und Auslieferung](M6.md) | Private VSIX 0.0.8 lokal geprüft; externe Abnahmen offen | 4/9 vollständig, übrige teilweise | Externe Abnahme |
 
 Empfohlen: **M0 → M1 → M2 → M3 → M4 → M5 → M6**. Einzelne M5-Aufgaben können nach M3 beginnen; ihre vollständige Abnahme benötigt auch SCP aus M4. Bereits im Prototyp implementierte Teile werden später übernommen und gehärtet, nicht doppelt gebaut.
 

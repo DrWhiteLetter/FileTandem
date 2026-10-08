@@ -14,6 +14,14 @@ Stand: 08.10.2026, private Vorabversion 0.0.8. macOS Apple Silicon ist das lokal
 
 Passwort, Schlüssel mit optionaler Passphrase, expliziter SSH-Agent und Keyboard-Interactive werden unterstützt. Secrets werden in VS Code SecretStorage abgelegt, nicht in Webview-Nachrichten oder Profilexporten. Windows-Agent und konkrete MFA-/Hardwareverfahren benötigen eigene Abnahmen.
 
+## Installation prüfen und aktualisieren
+
+Nach der Installation in der Erweiterungsansicht den Titel **FileTandem – SFTP & SCP File Manager** und Version **0.0.8** prüfen. Den Dateimanager öffnen und eine eigene kleine Testdatei in einen dafür angelegten Serverordner hochladen, wieder unter anderem lokalen Namen herunterladen und den Inhalt vergleichen. Erst danach mit wichtigen Dateien arbeiten. Die Queue muss den Auftrag als erfolgreich anzeigen; bei einem Fehler zunächst die Diagnose unten verwenden.
+
+Für ein Update laufende Transfers abschließen oder bewusst abbrechen, die neue VSIX über **Aus VSIX installieren…** installieren und den angebotenen Reload ausführen. Version und Testtransfer erneut prüfen. Ein Reload nimmt unterbrochene Aufträge nicht automatisch wieder auf. Eine ältere geprüfte VSIX aufbewahren; ein Downgrade ist keine Zusage der Kompatibilität zukünftiger Profil-/Journalformate.
+
+Zur Deinstallation FileTandem in der Erweiterungsansicht deinstallieren und gegebenenfalls neu laden. Dies löscht keine übertragenen Serverdateien. Gespeicherte Zugangsdaten zuvor über **FileTandem: Gespeicherte Anmeldung vergessen** entfernen, falls gewünscht; ein Profil löschen entfernt ebenfalls dessen gespeicherte Zugangsdaten. Keine vollständigen VS-Code-Datenverzeichnisse als vermeintliche FileTandem-Bereinigung löschen.
+
 ## Protokolle und Bearbeitung
 
 SFTP benötigt ein SFTP-Subsystem auf dem Server, keine Shell und keinen VS Code Server. Bestehende SFTP-Dateien bis 10 MiB öffnen zunächst schreibgeschützt. Erst nach **Bearbeitung freigeben** schreibt Speichern beziehungsweise Auto Save zurück. Konflikte erfordern Review/Diff; ohne geeignete atomare Rename-Erweiterung ist der sichere Ersatzweg Download und expliziter Upload in ein neues Ziel.
@@ -52,19 +60,28 @@ Entwicklung mit Node 22.13.1 und npm 10.9.2, `npm ci` und Lockfile. Abhängigkei
 nvm use
 npm ci
 npm run quality
-# Nur die eigenen lokalen SSH-Fixtures starten; unter macOS ggf. Colima-Profil xscp:
+# Docker/Colima zuerst bereitstellen: siehe verlinkte Fixture-Anleitung unten.
+# Nur die eigenen lokalen SSH-Fixtures starten:
 XSCP_DOCKER_CONTEXT=colima-xscp npm run fixtures:start
 XSCP_DOCKER_CONTEXT=colima-xscp \
   VSCODE_TEST_EXECUTABLE="/Applications/Visual Studio Code.app/Contents/MacOS/Code" \
   npm run test:release
-# Separat, ohne parallel laufende Tests, die Host-Keys rotieren:
-npm run benchmark:release
+# Benchmark separat ausführen; nicht parallel zu Protokolltests mit Host-Key-Rotation:
+XSCP_DOCKER_CONTEXT=colima-xscp npm run benchmark:release
 XSCP_DOCKER_CONTEXT=colima-xscp npm run fixtures:stop
 ```
+
+Voraussetzungen und Start des isolierten Colima-Profils stehen in der [Fixture-Anleitung](../test/fixtures/ssh/README.md) im Quellrepository. Nach den Tests mit `fixtures:stop` eigene Container entfernen und ein eigens gestartetes Colima-Profil mit `colima stop xscp` wieder stoppen. Der Ordner `test/` wird nicht in die VSIX aufgenommen; diese Wartungsschritte gelten nur für das Quellrepository.
 
 Der M6-Runner erzeugt `out/m6/regression.json` und Schrittlogs; der Benchmark erzeugt `out/m6/performance.json`. Stable wird isoliert unter `.vscode-test/` heruntergeladen. `XSCP_STABLE_VERSION` erlaubt einen reproduzierbaren konkreten Stable-Stand; `XSCP_STABLE_EXECUTABLE` eine bereits vorhandene Testinstallation. Die Runner verändern keine persönlichen VS-Code- oder SSH-Einstellungen. Protokolltests mit Host-Key-Rotation und Benchmarks müssen nacheinander laufen. Benchmarks benötigen mindestens 5 GiB freien Platz im Fixture-Dateisystem und etwa 10 GiB lokalen Arbeitsraum; Auftragsgröße 4 GiB plus 1 MiB, 1.000 kleine Dateien und 10.000 Einträge.
 
 `npm run package` baut die private VSIX und prüft ihren ZIP-Inhalt unabhängig. Für Anwender ist nur die VSIX erforderlich; test-only SSH-/Docker-/hdiutil-Helfer werden nicht mitgeliefert. Quelltexte enthalten keine produktiven Zugangsdaten. [MIT-Lizenz](../LICENSE) und [Drittanbieterhinweise](../THIRD_PARTY_NOTICES.md) gehören zum Paket.
+
+## Änderungen warten und Fehler melden
+
+Vor Änderungen `npm ci` mit dem eingecheckten Lockfile verwenden. Bei Bibliotheksupdates Versionen und Lockfile gemeinsam ändern, `npm audit`, `npm run quality` sowie die betroffenen realen Protokoll-/Editorprüfungen ausführen und `THIRD_PARTY_NOTICES.md` mit den tatsächlich gebündelten Lizenzen abgleichen. Vor einem neuen Kandidaten die komplette M6-Regression ausführen, `CHANGELOG.md` und Versionsnummer in Manifest/Lockfile aktualisieren und mit `npm run package` neu paketieren. Die SHA-256-Datei neben der VSIX muss zum ausgelieferten Paket passen; nach jeder mitpaketierten Dokumentationsänderung neu bauen.
+
+Die private Vorabversion hat noch kein öffentliches Support-/Issue-Repository. Fehler über den bisherigen Projektkontakt mit den oben genannten anonymisierten Angaben melden. Ein späteres öffentliches Repository und ein Publisher-Konto werden erst nach ihrer Einrichtung dokumentiert. Für eine öffentliche Version gelten weiterhin die offenen Abnahmepunkte aus dem M6-Backlog.
 
 ## Bewusste Grenzen
 
