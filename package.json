@@ -320,6 +320,7 @@
     ]
   },
   "scripts": {
+    "test:faults": "node scripts/test-faults.mjs",
     "test:release": "node scripts/test-release.mjs",
     "benchmark:release": "node --expose-gc scripts/benchmark-release.mjs",
     "test:restricted": "node scripts/test-restricted.mjs",
