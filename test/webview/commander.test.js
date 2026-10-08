@@ -62,15 +62,21 @@ test('Real browser selection survives refresh; per-pane filters, symlinks and pr
   const count=messages.length;await act(() => targetPane.dispatchEvent(dragEvent('drop')));assert.equal(messages.length,count,'OS/forged drop has no matching internal drag');
   await act(() => localRow.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'F5',bubbles:true})));assert.equal(messages.length,count,'Commander shortcuts default off');
   // VS Code forwards window-level keydown even when default was prevented.
-  let forwarded=0;const bridge=()=>forwarded++;dom.window.addEventListener('keydown',bridge);
+  let forwarded=0;const bridge=event=>{forwarded++;if (event.key==='F5' && !event.shiftKey) dom.window.dispatchEvent(new dom.window.MessageEvent('message',{data:{version:1,type:'commanderCopy',id:'copy-'+forwarded,sessionId:'browser-session'}}));};dom.window.addEventListener('keydown',bridge);
   model.commanderKeys=true;await render();const beforeCopy=messages.length;
   await act(() => localRow.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'F5',bubbles:true,cancelable:true})));
-  assert.equal(messages.at(-1).type,'transfer');assert.equal(messages.length,beforeCopy+1,'one copy request');assert.equal(forwarded,0,'handled F5 never reaches VS Code keybinding bridge');
+  assert.equal(messages.at(-1).type,'transfer');assert.equal(messages.length,beforeCopy+1,'one copy request');assert.equal(forwarded,1,'F5 is routed through the scoped VS Code command');
   await act(() => localRow.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'F5',shiftKey:true,bubbles:true})));
-  assert.equal(messages.length,beforeCopy+1,'modified F5 remains a host shortcut');assert.equal(forwarded,1);
+  assert.equal(messages.length,beforeCopy+1,'modified F5 remains a host shortcut');assert.equal(forwarded,2);
+  doc.querySelector('.pathbar input').focus();
   await act(() => doc.querySelector('.pathbar input').dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'F5',bubbles:true})));
-  assert.equal(messages.length,beforeCopy+1);assert.equal(forwarded,2,'path inputs preserve host shortcuts');
+  assert.equal(messages.length,beforeCopy+1);assert.equal(forwarded,3,'path inputs never transfer files');
   dom.window.removeEventListener('keydown',bridge);
+  const hostCopy=id => dom.window.dispatchEvent(new dom.window.MessageEvent('message',{data:{version:1,type:'commanderCopy',id,sessionId:'browser-session'}}));
+  const remoteRow=doc.querySelector('.pane:nth-child(2) tr[data-entry-id]');await act(() => remoteRow.click());doc.querySelector('.toolbar button').focus();
+  const beforeRemote=messages.length;await act(() => hostCopy('remote-copy'));
+  assert.equal(messages.at(-1).side,'remote');assert.equal(messages.at(-1).destinationPath,'/tmp');assert.equal(messages.length,beforeRemote+1,'last selected pane survives toolbar focus');
+  await act(() => hostCopy('remote-copy'));assert.equal(messages.length,beforeRemote+1,'duplicate host command never copies twice');
   await act(() => localRow.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'F4',bubbles:true})));assert.equal(messages.at(-1).action,'edit');
   const shortcutCount=messages.length;await act(() => doc.querySelector('.pathbar input').dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'F8',bubbles:true})));assert.equal(messages.length,shortcutCount,'Inputs never trigger destructive shortcuts');
   await act(() => localRow.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'F10',shiftKey:true,bubbles:true})));assert.equal(doc.activeElement.getAttribute('role'),'menuitem');await act(() => doc.activeElement.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true})));assert.equal(doc.querySelector('[role=menu]'),null);

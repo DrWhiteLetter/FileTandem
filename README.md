@@ -1,12 +1,12 @@
 # FileTandem
 
-Private Vorabversion **0.0.10** einer VS-Code-Desktop-Erweiterung für SFTP und SCP. Die Commander-Ansicht bietet lokale und entfernte Dateiverwaltung, rekursive Uploads/Downloads, Transferqueue, geprüfte SFTP-Fortsetzung und kontrollierte Remote-Bearbeitung. M0 bis M5 sind umgesetzt; M6 ergänzt die lokale Release-Härtung. Windows/Linux und vollständige 1.0-Freigabe bleiben offen. [Installation, Quickstart und Troubleshooting](docs/release-anleitung.md) · [Changelog](CHANGELOG.md) · [M6-Abnahme](docs/nachweise/M6-Lokal.md).
+Private Vorabversion **0.0.11** einer VS-Code-Desktop-Erweiterung für SFTP und SCP. Die Commander-Ansicht bietet lokale und entfernte Dateiverwaltung, rekursive Uploads/Downloads, Transferqueue, geprüfte SFTP-Fortsetzung und kontrollierte Remote-Bearbeitung. M0 bis M5 sind umgesetzt; M6 ergänzt die lokale Release-Härtung. Windows/Linux und vollständige 1.0-Freigabe bleiben offen. [Installation, Quickstart und Troubleshooting](docs/release-anleitung.md) · [Changelog](CHANGELOG.md) · [M6-Abnahme](docs/nachweise/M6-Lokal.md).
 
 Der Projektordner heißt `FileTandem`; Paketierung erzeugt `out/FileTandem-<Version>.vsix` mit passender `.sha256`-Datei. Ältere lokale VSIX-Dateien wurden entsprechend umbenannt; historische Nachweise behalten ihre damaligen Dateinamen. Die technische Extension-ID bleibt bis zur Publisher-Festlegung erhalten.
 
 ## Umstieg auf die neuen Kennungen
 
-Version 0.0.10 verwendet beispielsweise `filetandem.commanderKeys`. In den VS-Code-Einstellungen (`⌘ ,`) nach `@id:filetandem.commanderKeys` suchen und aktivieren. Explizit gespeicherte alte Werte werden automatisch übernommen; bereits vorhandene neue Werte haben Vorrang. Erfolgreich migrierte alte Einstellungs-/Speicherschlüssel werden entfernt. Alte Befehl-IDs bleiben als unsichtbare Weiterleitungen für eigene Tastenkürzel verfügbar. Die Extension-ID `xscp-dev.xscp` bleibt bis zur endgültigen Publisher-Festlegung erhalten; vorhandene Transfer-Teil-Dateien und die Journaldatei behalten ihr kompatibles Format. Nach dem Update offene Remote-Editoren erneut aus FileTandem öffnen. Details: [Migrationsnachweis](docs/nachweise/FileTandem-Migration.md).
+Version 0.0.11 verwendet beispielsweise `filetandem.commanderKeys`. In den VS-Code-Einstellungen (`⌘ ,`) nach `@id:filetandem.commanderKeys` suchen und aktivieren. Explizit gespeicherte alte Werte werden automatisch übernommen; bereits vorhandene neue Werte haben Vorrang. Erfolgreich migrierte alte Einstellungs-/Speicherschlüssel werden entfernt. Alte Befehl-IDs bleiben als unsichtbare Weiterleitungen für eigene Tastenkürzel verfügbar. Die Extension-ID `xscp-dev.xscp` bleibt bis zur endgültigen Publisher-Festlegung erhalten; vorhandene Transfer-Teil-Dateien und die Journaldatei behalten ihr kompatibles Format. Nach dem Update offene Remote-Editoren erneut aus FileTandem öffnen. Details: [Migrationsnachweis](docs/nachweise/FileTandem-Migration.md).
 
 ## Entwicklung
 
@@ -159,7 +159,7 @@ npm run quality
 npm run package
 ```
 
-In VS Code Desktop ab 1.140.0: Erweiterungsansicht → Menü „…“ → „Aus VSIX installieren…“ → `out/FileTandem-0.0.10.vsix`. Dann die FileTandem-Activity-Bar öffnen oder **FileTandem: Dateimanager öffnen** über die Befehlspalette ausführen. Alternativ startet `npm start` den Entwicklungs-Host. Die aktuelle Commander-Ansicht liest das echte lokale Dateisystem und kann SFTP-Profile verbinden. Die ursprüngliche M1-Demo bleibt unter **FileTandem: Mock-Demo öffnen** verfügbar. Die SFTP-Transferknöpfe sind angebunden; [Alpha-Anleitung](docs/nachweise/M3-Alpha.md).
+In VS Code Desktop ab 1.140.0: Erweiterungsansicht → Menü „…“ → „Aus VSIX installieren…“ → `out/FileTandem-0.0.11.vsix`. Dann die FileTandem-Activity-Bar öffnen oder **FileTandem: Dateimanager öffnen** über die Befehlspalette ausführen. Alternativ startet `npm start` den Entwicklungs-Host. Die aktuelle Commander-Ansicht liest das echte lokale Dateisystem und kann SFTP-Profile verbinden. Die ursprüngliche M1-Demo bleibt unter **FileTandem: Mock-Demo öffnen** verfügbar. Die SFTP-Transferknöpfe sind angebunden; [Alpha-Anleitung](docs/nachweise/M3-Alpha.md).
 
 `npm run test:installed` installiert und testet die VSIX ausschließlich in einem temporären, anschließend entfernten Profil. Bei vorhandener VS-Code-Installation lässt sich `VSCODE_TEST_EXECUTABLE` auf die Programmdatei setzen; sonst wird die festgelegte Testversion geladen. Python 3 wird für die unabhängige ZIP-Prüfung benötigt.
 
@@ -186,7 +186,7 @@ Diese Tests benötigen laufende Fixtures (siehe oben). Der zweite Test installie
 
 ## SFTP-Alpha (M3)
 
-Private VSIX: `out/FileTandem-0.0.10.vsix`. [Anleitung, Prüfergebnisse und Grenzen](docs/nachweise/M3-Alpha.md). Reproduzierbar: `npm run quality`, `npm run test:transfers` mit laufenden eigenen Fixtures, `npm run package`, `npm run test:browser:installed`. Der Installationstest verwendet zwei reguläre isolierte Fenster und prüft zusätzlich Upload nach Tab-Schließen, Ordner-Rundlauf sowie Journal und gezielten Retry nach Neustart.
+Private VSIX: `out/FileTandem-0.0.11.vsix`. [Anleitung, Prüfergebnisse und Grenzen](docs/nachweise/M3-Alpha.md). Reproduzierbar: `npm run quality`, `npm run test:transfers` mit laufenden eigenen Fixtures, `npm run package`, `npm run test:browser:installed`. Der Installationstest verwendet zwei reguläre isolierte Fenster und prüft zusätzlich Upload nach Tab-Schließen, Ordner-Rundlauf sowie Journal und gezielten Retry nach Neustart.
 
 ## SCP und Wiederanlauf (M4)
 
@@ -200,4 +200,4 @@ Serverdateien im Commander doppelklicken oder mit Enter öffnen. SFTP startet sc
 
 ## Produktname und Lizenz
 
-Eigener Projektcode steht unter der [MIT-Lizenz](LICENSE); enthaltene Drittanbieter haben ihre [eigenen Hinweise](THIRD_PARTY_NOTICES.md). Produktname: **FileTandem**. Marketplace-Titel: **FileTandem – SFTP & SCP File Manager**. Die juristische Freigabe des Namens wurde am 08.10.2026 vom Benutzer bestätigt; Publisher `xscp-dev` bleibt ein Entwicklungsplatzhalter. Einstellungen, Befehle, Ansichten und Editor-URIs verwenden `filetandem`; vorhandene `xscp`-Einstellungen und gespeicherte Daten werden beim ersten Start von 0.0.10 migriert. Die bisherige Extension-ID bleibt vorerst zur Wahrung des Zugriffs auf Profile und Secrets erhalten. Die vorgezogene Namens-/Publisher-Klärung und vorbereiteten öffentlichen Texte stehen unter [Produktdaten](docs/produktdaten.md).
+Eigener Projektcode steht unter der [MIT-Lizenz](LICENSE); enthaltene Drittanbieter haben ihre [eigenen Hinweise](THIRD_PARTY_NOTICES.md). Produktname: **FileTandem**. Marketplace-Titel: **FileTandem – SFTP & SCP File Manager**. Die juristische Freigabe des Namens wurde am 08.10.2026 vom Benutzer bestätigt; Publisher `xscp-dev` bleibt ein Entwicklungsplatzhalter. Einstellungen, Befehle, Ansichten und Editor-URIs verwenden `filetandem`; vorhandene `xscp`-Einstellungen und gespeicherte Daten werden beim ersten Start von 0.0.11 migriert. Die bisherige Extension-ID bleibt vorerst zur Wahrung des Zugriffs auf Profile und Secrets erhalten. Die vorgezogene Namens-/Publisher-Klärung und vorbereiteten öffentlichen Texte stehen unter [Produktdaten](docs/produktdaten.md).

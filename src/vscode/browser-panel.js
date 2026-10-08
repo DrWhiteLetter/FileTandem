@@ -14,7 +14,14 @@ import { DirectoryBrowser } from '../application/directory-browser.js';
 import { browserViewState } from '../shared/browser-view-state.js';
 import { browserRequest } from '../shared/browser-messages.js';
 export function registerBrowser(context,profileUI) {
+  // The workbench must consume forwarded Commander keys instead of debugging.
+  profileUI.command('filetandem.consumeCommanderKey',() => {});
   const files=new LocalFiles();let handshakes=0,diagnostics=false;const views=new Set();
+  profileUI.command('filetandem.copySelection',() => {
+    profileUI.guard();if (!vscode.workspace.getConfiguration('filetandem').get('commanderKeys')) return;
+    const view=[...views].find(v => v.panel.active);
+    if (view) return view.panel.webview.postMessage({version:1,type:'commanderCopy',id:randomUUID(),sessionId:view.model().sessionId});
+  });
   const open=(profile,restored={},panel) => {
     profileUI.guard();if (profile) profileUI.transfers.remember(profile);restored=browserViewState(restored);
     const sessionId=randomUUID();const assets=vscode.Uri.joinPath(context.extensionUri,'dist');

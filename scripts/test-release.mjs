@@ -46,6 +46,7 @@ try {
     await run(label+'-restricted',['scripts/test-restricted.mjs'],settings);
     await run(label+'-reload',['scripts/test-reload.mjs'],settings);
     await run(label+'-two-windows',['scripts/test-two-windows.mjs'],settings);
+    await run(label+'-native-f5',['scripts/test-native-f5.mjs'],settings);
   }
   const manifest=JSON.parse(await readFile('package.json','utf8')),artifact=join('out',`FileTandem-${manifest.version}.vsix`);
   report.artifact={path:artifact,sha256:createHash('sha256').update(await readFile(artifact)).digest('hex'),version:manifest.version};

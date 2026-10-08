@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.0.11 – 08.10.2026
+
+- F5 über einen eigenen, auf FileTandem begrenzten VS-Code-Befehl verarbeitet; Auswahl wird auch nach Fokuswechsel auf Buttons übertragen. Kein zusätzlicher Debuggerstart.
+- Nativer Regressionstest mit echten Tastaturereignissen, SFTP-Testupload und Debug-Startmarker; normales F5-Debuggen außerhalb FileTandem bleibt erhalten.
+
 ## 0.0.10 – 08.10.2026
 
 - F5/F3–F8 in der Dateiliste werden bei aktivierten Commander-Tasten vollständig verarbeitet und nicht zusätzlich an VS Codes Tastaturverarbeitung weitergeleitet.

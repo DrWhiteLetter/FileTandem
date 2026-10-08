@@ -1,0 +1,42 @@
+{
+  "productVersion": "0.0.11",
+  "baseline": {
+    "productVersion": "0.0.10",
+    "toolbarFocusTriggeredDebug": true
+  },
+  "quality": {
+    "unitPassed": 51,
+    "webviewPassed": 3,
+    "lintAndCheckPassed": true
+  },
+  "nativeResults": [
+    {
+      "ok": true,
+      "debugOutsideFileTandem": true,
+      "vscode": "1.140.0",
+      "nativeKey": {
+        "key": "F5",
+        "trusted": true
+      },
+      "jobCount": 1,
+      "state": "completed",
+      "debugTaskStarted": false,
+      "size": 524288,
+      "sha256": "74e409246b1d4615a8da67eb69e70fe9cb1247ef5ad584fa0ce961ec9f791114"
+    },
+    {
+      "ok": true,
+      "debugOutsideFileTandem": true,
+      "vscode": "1.141.0",
+      "nativeKey": {
+        "key": "F5",
+        "trusted": true
+      },
+      "jobCount": 1,
+      "state": "completed",
+      "debugTaskStarted": false,
+      "size": 524288,
+      "sha256": "74e409246b1d4615a8da67eb69e70fe9cb1247ef5ad584fa0ce961ec9f791114"
+    }
+  ]
+}

@@ -33,7 +33,9 @@
   "filetandem.showHiddenFiles.description": "Versteckte Dateien in den FileTandem-Dateilisten anzeigen.",
   "filetandem.demoScenario.description": "Darstellungszustand der Mock-Dateilisten; baut keine SSH-Verbindung auf.",
   "filetandem.editorPollInterval.description": "Prüfintervall in Sekunden für die aktive SFTP-Editor-Datei (2–60). Keine Verzeichnisüberwachung.",
-  "filetandem.commanderKeys.description": "F3 Öffnen, F4 Bearbeiten mit Freigabe, F5 Kopieren, F6 Umbenennen, F7 Ordner, F8 Löschen, ausschließlich bei Fokus in einer Dateiliste. Löschbestätigung bleibt aktiv.",
+  "filetandem.commanderKeys.description": "Commander-Tasten in FileTandem: F3 Öffnen, F4 Bearbeiten mit Freigabe, F5 Auswahl zur Gegenseite übertragen, F6 Umbenennen, F7 Ordner, F8 Löschen. F5 verwendet den zuletzt ausgewählten Dateibereich auch nach Fokuswechsel auf einen Button. Löschbestätigung bleibt aktiv.",
   "filetandem.language.description": "Sprache für FileTandem-Oberfläche und Dialoge; auto folgt VS Code. Manifest-Titel folgen der VS-Code-Sprache.",
-  "connections.welcome": "Noch keine Serverprofile.\n[Profil anlegen](command:filetandem.addProfile)\n[Schnellverbindung](command:filetandem.quickConnect)\n[Lokalen Dateimanager öffnen](command:filetandem.openManager)"
+  "connections.welcome": "Noch keine Serverprofile.\n[Profil anlegen](command:filetandem.addProfile)\n[Schnellverbindung](command:filetandem.quickConnect)\n[Lokalen Dateimanager öffnen](command:filetandem.openManager)",
+  "filetandem.consumeCommanderKey.title": "FileTandem: Commander-Taste behandeln",
+  "filetandem.copySelection.title": "FileTandem: Auswahl übertragen"
 }

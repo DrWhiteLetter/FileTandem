@@ -33,7 +33,9 @@
   "filetandem.showHiddenFiles.description": "Show hidden files in FileTandem file lists.",
   "filetandem.demoScenario.description": "Mock file list display state; does not connect to SSH.",
   "filetandem.editorPollInterval.description": "Polling interval in seconds for the active SFTP editor file (2–60). No folder monitoring.",
-  "filetandem.commanderKeys.description": "F3 Open, F4 Edit with explicit permission, F5 Copy, F6 Rename, F7 Folder, F8 Delete, only when a file list has focus. Delete confirmation remains enabled.",
+  "filetandem.commanderKeys.description": "Commander keys in FileTandem: F3 open, F4 enable editing, F5 transfer selection to the opposite pane, F6 rename, F7 folder, F8 delete. F5 uses the last selected file pane even after focusing a button. Delete confirmation stays enabled.",
   "filetandem.language.description": "Language of FileTandem UI and dialogs; auto follows VS Code. Manifest titles follow the VS Code language.",
-  "connections.welcome": "No server profiles yet.\n[Add profile](command:filetandem.addProfile)\n[Quick connection](command:filetandem.quickConnect)\n[Open local file manager](command:filetandem.openManager)"
+  "connections.welcome": "No server profiles yet.\n[Add profile](command:filetandem.addProfile)\n[Quick connection](command:filetandem.quickConnect)\n[Open local file manager](command:filetandem.openManager)",
+  "filetandem.consumeCommanderKey.title": "FileTandem: Handle Commander key",
+  "filetandem.copySelection.title": "FileTandem: Transfer selection"
 }
