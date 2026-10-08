@@ -40,7 +40,7 @@ export function credentialProvider(context,profileUI) {
       return {value,remember:choice === 'Im sicheren VS-Code-Speicher merken'};
     },
   });
-  profileUI.command('xscp.forgetCredentials',async () => {const p=await profileUI.choose(); if (p) await forgetCredentials(p.id,context.secrets);});
+  profileUI.command('filetandem.forgetCredentials',async () => {const p=await profileUI.choose(); if (p) await forgetCredentials(p.id,context.secrets);});
   const originalDelete=profileUI.profiles.delete.bind(profileUI.profiles);
   profileUI.profiles.delete=async id => {await profileUI.sessions?.disconnect(id);await forgetCredentials(id,context.secrets); return originalDelete(id);};
   return provider;

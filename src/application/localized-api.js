@@ -1,6 +1,6 @@
 import { translate } from '../shared/localization.js';
 export function localizeVSCode(raw) {
-const language=() => {const requested=raw.workspace.getConfiguration('xscp').get('language','auto');return ['de','en'].includes(requested) ? requested:String(raw.env.language).startsWith('de') ? 'de':'en';};
+const language=() => {const requested=raw.workspace.getConfiguration('filetandem').get('language','auto');return ['de','en'].includes(requested) ? requested:String(raw.env.language).startsWith('de') ? 'de':'en';};
 const t=value => translate(value,language());
 const fields=new Set(['title','label','description','detail','prompt','placeHolder','openLabel','saveLabel','message','text','tooltip']);
 const options=value => {

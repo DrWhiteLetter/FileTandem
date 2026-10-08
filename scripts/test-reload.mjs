@@ -25,7 +25,7 @@ try {
       if (!proof) {
         const profile=await api.profiles.save({version:1,id:'m6-reload',name:'Disposable reload fixture',host:'127.0.0.1',port:Number(process.env.XSCP_RELOAD_PORT),username:'fixture',auth:'key',keyPath:process.env.XSCP_RELOAD_KEY,protocol:'sftp',localPath:destination,remotePath:'/data'});
         await api.probeSshAuthentication({host:profile.host,port:profile.port,username:profile.username,privateKey:await fs.readFile(profile.keyPath)},{confirmUnknown:async key => {a.equal(key.key,process.env.XSCP_RELOAD_HOST_KEY);return true;}});
-        await v.commands.executeCommand('xscp.connectProfile',profile.id);api.transfers.pause(true);
+        await v.commands.executeCommand('filetandem.connectProfile',profile.id);api.transfers.pause(true);
         const batch=await api.transfers.submit(profile.id,'download',['/data/server-marker.txt'],destination);
         a.equal(api.transfers.list().find(j => j.id===batch.ids[0]).state,'queued');
         await api.transfers.flush();await fs.writeFile(proofPath,JSON.stringify({id:batch.ids[0]}));

@@ -28,19 +28,19 @@ exports.run = async () => {
   await assert.rejects(api.verifyLocalFile(vscode.Uri.parse('file://other-host/tmp/file')), /file:-URIs/);
   await assert.rejects(api.verifyLocalFile(vscode.Uri.file('/xscp-nonexistent-test-file')), /ENOENT/);
   await assert.rejects(api.verifyLocalFile(vscode.Uri.file(require('node:path').dirname(process.env.XSCP_PROOF_FILE))), /reguläre/);
-  assert.ok((await vscode.commands.getCommands(true)).includes('xscp.verifyLocalFile'));
-  assert.ok((await vscode.commands.getCommands(true)).includes('xscp.verifySshHostKey'));
+  assert.ok((await vscode.commands.getCommands(true)).includes('filetandem.verifyLocalFile'));
+  assert.ok((await vscode.commands.getCommands(true)).includes('filetandem.verifySshHostKey'));
   assert.equal(extension.packageJSON.dependencies.ssh2, '1.17.0');
   assert.equal(extension.packageJSON.capabilities.untrustedWorkspaces.supported, false);
-  assert.ok(extension.packageJSON.contributes.views.xscp.some(view => view.id === 'xscp.connections'));
+  assert.ok(extension.packageJSON.contributes.views.filetandem.some(view => view.id === 'filetandem.connections'));
   assert.equal(extension.packageJSON.contributes.keybindings, undefined, 'F5 is not globally overridden');
   assert.ok(!extension.packageJSON.activationEvents.includes('*'));
   assert.equal(vscode.workspace.workspaceFolders?.length ?? 0, process.env.XSCP_EXPECT_REMOTE === 'ssh-remote' ? 1 : 0);
-  assert.equal(vscode.workspace.getConfiguration('xscp').get('showHiddenFiles'), false);
-  await vscode.commands.executeCommand('xscp.refreshConnections');
+  assert.equal(vscode.workspace.getConfiguration('filetandem').get('showHiddenFiles'), false);
+  await vscode.commands.executeCommand('filetandem.refreshConnections');
   console.log(`M0-02: Desktop-Dateizugriff, SHA-256 und URI-Abgrenzung erfolgreich (${process.env.XSCP_EXPECT_REMOTE || 'lokales Fenster'}).`);
-  assert.ok((await vscode.commands.getCommands(true)).includes('xscp.openManager'));
-  await vscode.commands.executeCommand('xscp.openManager');
+  assert.ok((await vscode.commands.getCommands(true)).includes('filetandem.openManager'));
+  await vscode.commands.executeCommand('filetandem.openManager');
   const hasTab = () => vscode.window.tabGroups.all.flatMap(group => group.tabs)
     .some(tab => tab.label === 'FileTandem' && tab.input instanceof vscode.TabInputWebview);
   const deadline = Date.now() + 5000;

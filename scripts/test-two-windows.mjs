@@ -31,7 +31,7 @@ try {
         for (const [protocol,offset] of [['sftp',1],['scp',2]]) {
           const profile=await api.profiles.save({version:1,id:'m6-'+protocol,name:'Two window '+protocol,host:'127.0.0.1',port:Number(process.env.XSCP_WINDOWS_PORT)+offset,username:'fixture',auth:'key',keyPath:process.env.XSCP_WINDOWS_KEY,protocol,localPath:path.join(root,'source'),remotePath:'/data'});
           await api.probeSshAuthentication({host:profile.host,port:profile.port,username:profile.username,privateKey:await fs.readFile(profile.keyPath)},{confirmUnknown:async key => {a.equal(key.key,JSON.parse(process.env.XSCP_WINDOWS_KEYS)[protocol]);return true;}});
-          await v.commands.executeCommand('xscp.connectProfile',profile.id);api.transfers.pause(true);
+          await v.commands.executeCommand('filetandem.connectProfile',profile.id);api.transfers.pause(true);
           const batch=await api.transfers.submit(profile.id,'upload',[path.join(root,'source',process.env.XSCP_WINDOWS_NAME)],'/data');
           await fs.writeFile(path.join(shared,protocol+'-ready-'+index),'ready');
           await wait(async () => {try {await fs.stat(path.join(shared,protocol+'-ready-'+(1-index)));return true;} catch {return false;}});

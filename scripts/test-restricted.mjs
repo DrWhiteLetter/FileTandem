@@ -30,7 +30,7 @@ try {
       if (extension) {try {await extension.activate();} catch {}}
       a.equal(extension?.isActive ?? false,false,'VS Code blocks activation in untrusted window');
       a.equal(extension?.exports,undefined);
-      await a.rejects(v.workspace.fs.stat(v.Uri.parse('xscp://untrusted/data/probe')));
+      await a.rejects(v.workspace.fs.stat(v.Uri.parse('filetandem://untrusted/data/probe')));
       await fs.writeFile(process.env.XSCP_TEST_RESULT,JSON.stringify({ok:true,vscode:v.version,trusted:v.workspace.isTrusted,active:extension?.isActive ?? false,installed:installed.version}));
     } catch(error) {await fs.writeFile(process.env.XSCP_TEST_RESULT,JSON.stringify({ok:false,error:error.stack}));}
   };`);

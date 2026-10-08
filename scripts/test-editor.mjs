@@ -22,8 +22,8 @@ try {
   const markerBytes = randomBytes(128); await writeFile(marker, markerBytes);
   if (remote) {
     const files = {
-      'package.json': JSON.stringify({ name: 'remote-editor-probe', publisher: 'xscp-test', version: '0.0.1', engines: { vscode: '^1.140.0' }, main: './extension.cjs', extensionKind: ['workspace'], activationEvents: ['onCommand:xscp.test.remoteEditorRead'], contributes: { commands: [{ command: 'xscp.test.remoteEditorRead', title: 'Fixture-only provider probe' }] } }),
-      'extension.cjs': `const v = require('vscode'); exports.activate = c => c.subscriptions.push(v.commands.registerCommand('xscp.test.remoteEditorRead', async (uri, marker) => ({ host: require('node:os').hostname(), localMarkerExists: require('node:fs').existsSync(marker), content: Buffer.from(await v.workspace.fs.readFile(v.Uri.parse(uri))).toString('utf8') })));`,
+      'package.json': JSON.stringify({ name: 'remote-editor-probe', publisher: 'xscp-test', version: '0.0.1', engines: { vscode: '^1.140.0' }, main: './extension.cjs', extensionKind: ['workspace'], activationEvents: ['onCommand:filetandem.test.remoteEditorRead'], contributes: { commands: [{ command: 'filetandem.test.remoteEditorRead', title: 'Fixture-only provider probe' }] } }),
+      'extension.cjs': `const v = require('vscode'); exports.activate = c => c.subscriptions.push(v.commands.registerCommand('filetandem.test.remoteEditorRead', async (uri, marker) => ({ host: require('node:os').hostname(), localMarkerExists: require('node:fs').existsSync(marker), content: Buffer.from(await v.workspace.fs.readFile(v.Uri.parse(uri))).toString('utf8') })));`,
     };
     const folder = '/home/fixture/.vscode-server/extensions/xscp-test.remote-editor-probe-0.0.1';
     const script = `mkdir -p '${folder}'\n` + Object.entries(files).map(([name,content]) => `printf '%s' '${Buffer.from(content).toString('base64')}' | base64 -d > '${folder}/${name}'`).join('\n');

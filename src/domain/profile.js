@@ -26,4 +26,4 @@ export function validateProfile(raw) {
   if (localPath && !absolute(localPath)) throw new Error('Lokaler Startordner muss ein absoluter lokaler Pfad sein.');
   return {version:1,id,name:text(raw.name,'Profilname',100),host,port,username:text(raw.username,'Benutzer',100),protocol,auth,keyPath,agentPath,localPath,remotePath,favorite:raw.favorite === true};
 }
-export const secretReference = (id,kind) => `xscp.profile.${id}.${kind}`;
+export const secretReference = (id,kind) => `filetandem.profile.${id}.${kind}`;

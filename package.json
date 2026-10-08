@@ -2,7 +2,7 @@
   "name": "xscp",
   "displayName": "FileTandem – SFTP & SCP File Manager",
   "description": "%description%",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "private": true,
   "publisher": "xscp-dev",
   "type": "module",
@@ -23,142 +23,142 @@
   "contributes": {
     "commands": [
       {
-        "command": "xscp.openManager",
-        "title": "%xscp.openManager.title%",
+        "command": "filetandem.openManager",
+        "title": "%filetandem.openManager.title%",
         "icon": "media/filetandem-button.png"
       },
       {
-        "command": "xscp.verifyLocalFile",
-        "title": "%xscp.verifyLocalFile.title%"
+        "command": "filetandem.verifyLocalFile",
+        "title": "%filetandem.verifyLocalFile.title%"
       },
       {
-        "command": "xscp.verifySshHostKey",
-        "title": "%xscp.verifySshHostKey.title%"
+        "command": "filetandem.verifySshHostKey",
+        "title": "%filetandem.verifySshHostKey.title%"
       },
       {
-        "command": "xscp.openEditorProof",
-        "title": "%xscp.openEditorProof.title%"
+        "command": "filetandem.openEditorProof",
+        "title": "%filetandem.openEditorProof.title%"
       },
       {
-        "command": "xscp.enableEditorEditing",
-        "title": "%xscp.enableEditorEditing.title%"
+        "command": "filetandem.enableEditorEditing",
+        "title": "%filetandem.enableEditorEditing.title%"
       },
       {
-        "command": "xscp.lockEditorFile",
-        "title": "%xscp.lockEditorFile.title%"
+        "command": "filetandem.lockEditorFile",
+        "title": "%filetandem.lockEditorFile.title%"
       },
       {
-        "command": "xscp.refreshConnections",
-        "title": "%xscp.refreshConnections.title%",
+        "command": "filetandem.refreshConnections",
+        "title": "%filetandem.refreshConnections.title%",
         "icon": "$(refresh)"
       },
       {
-        "command": "xscp.addProfile",
-        "title": "%xscp.addProfile.title%",
+        "command": "filetandem.addProfile",
+        "title": "%filetandem.addProfile.title%",
         "icon": "$(add)"
       },
       {
-        "command": "xscp.editProfile",
-        "title": "%xscp.editProfile.title%"
+        "command": "filetandem.editProfile",
+        "title": "%filetandem.editProfile.title%"
       },
       {
-        "command": "xscp.deleteProfile",
-        "title": "%xscp.deleteProfile.title%"
+        "command": "filetandem.deleteProfile",
+        "title": "%filetandem.deleteProfile.title%"
       },
       {
-        "command": "xscp.exportProfiles",
-        "title": "%xscp.exportProfiles.title%"
+        "command": "filetandem.exportProfiles",
+        "title": "%filetandem.exportProfiles.title%"
       },
       {
-        "command": "xscp.forgetCredentials",
-        "title": "%xscp.forgetCredentials.title%"
+        "command": "filetandem.forgetCredentials",
+        "title": "%filetandem.forgetCredentials.title%"
       },
       {
-        "command": "xscp.connectProfile",
-        "title": "%xscp.connectProfile.title%"
+        "command": "filetandem.connectProfile",
+        "title": "%filetandem.connectProfile.title%"
       },
       {
-        "command": "xscp.disconnectProfile",
-        "title": "%xscp.disconnectProfile.title%"
+        "command": "filetandem.disconnectProfile",
+        "title": "%filetandem.disconnectProfile.title%"
       },
       {
-        "command": "xscp.openDemo",
-        "title": "%xscp.openDemo.title%"
+        "command": "filetandem.openDemo",
+        "title": "%filetandem.openDemo.title%"
       },
       {
-        "command": "xscp.openProfile",
-        "title": "%xscp.openProfile.title%",
+        "command": "filetandem.openProfile",
+        "title": "%filetandem.openProfile.title%",
         "icon": "$(plug)"
       },
       {
-        "command": "xscp.quickConnect",
-        "title": "%xscp.quickConnect.title%",
+        "command": "filetandem.quickConnect",
+        "title": "%filetandem.quickConnect.title%",
         "icon": "$(plug)"
       },
       {
-        "command": "xscp.favoriteProfile",
-        "title": "%xscp.favoriteProfile.title%",
+        "command": "filetandem.favoriteProfile",
+        "title": "%filetandem.favoriteProfile.title%",
         "icon": "$(star-empty)"
       },
       {
-        "command": "xscp.reconnectProfile",
-        "title": "%xscp.reconnectProfile.title%",
+        "command": "filetandem.reconnectProfile",
+        "title": "%filetandem.reconnectProfile.title%",
         "icon": "$(refresh)"
       },
       {
-        "command": "xscp.showTransfers",
-        "title": "%xscp.showTransfers.title%"
+        "command": "filetandem.showTransfers",
+        "title": "%filetandem.showTransfers.title%"
       },
       {
-        "command": "xscp.uploadFromExplorer",
-        "title": "%xscp.uploadFromExplorer.title%"
+        "command": "filetandem.uploadFromExplorer",
+        "title": "%filetandem.uploadFromExplorer.title%"
       },
       {
-        "command": "xscp.newRemoteFile",
-        "title": "%xscp.newRemoteFile.title%"
+        "command": "filetandem.newRemoteFile",
+        "title": "%filetandem.newRemoteFile.title%"
       },
       {
-        "command": "xscp.reviewRemoteFile",
-        "title": "%xscp.reviewRemoteFile.title%"
+        "command": "filetandem.reviewRemoteFile",
+        "title": "%filetandem.reviewRemoteFile.title%"
       },
       {
-        "command": "xscp.acceptEditorReview",
-        "title": "%xscp.acceptEditorReview.title%"
+        "command": "filetandem.acceptEditorReview",
+        "title": "%filetandem.acceptEditorReview.title%"
       },
       {
-        "command": "xscp.diffRemoteFile",
-        "title": "%xscp.diffRemoteFile.title%"
+        "command": "filetandem.diffRemoteFile",
+        "title": "%filetandem.diffRemoteFile.title%"
       },
       {
-        "command": "xscp.newSession",
-        "title": "%xscp.newSession.title%"
+        "command": "filetandem.newSession",
+        "title": "%filetandem.newSession.title%"
       },
       {
-        "command": "xscp.uploadEditorCopy",
-        "title": "%xscp.uploadEditorCopy.title%"
+        "command": "filetandem.uploadEditorCopy",
+        "title": "%filetandem.uploadEditorCopy.title%"
       },
       {
-        "command": "xscp.removeEditorCopy",
-        "title": "%xscp.removeEditorCopy.title%"
+        "command": "filetandem.removeEditorCopy",
+        "title": "%filetandem.removeEditorCopy.title%"
       },
       {
-        "command": "xscp.openEditorCopy",
-        "title": "%xscp.openEditorCopy.title%"
+        "command": "filetandem.openEditorCopy",
+        "title": "%filetandem.openEditorCopy.title%"
       }
     ],
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "xscp",
+          "id": "filetandem",
           "title": "FileTandem",
           "icon": "media/activity.svg"
         }
       ]
     },
     "views": {
-      "xscp": [
+      "filetandem": [
         {
-          "id": "xscp.connections",
+          "id": "filetandem.connections",
           "name": "%connections.name%"
         }
       ]
@@ -166,113 +166,113 @@
     "menus": {
       "view/title": [
         {
-          "command": "xscp.openManager",
-          "when": "view == xscp.connections",
+          "command": "filetandem.openManager",
+          "when": "view == filetandem.connections",
           "group": "navigation@0"
         },
         {
-          "command": "xscp.refreshConnections",
-          "when": "view == xscp.connections",
+          "command": "filetandem.refreshConnections",
+          "when": "view == filetandem.connections",
           "group": "navigation"
         },
         {
-          "command": "xscp.addProfile",
-          "when": "view == xscp.connections",
+          "command": "filetandem.addProfile",
+          "when": "view == filetandem.connections",
           "group": "navigation"
         },
         {
-          "command": "xscp.quickConnect",
-          "when": "view == xscp.connections",
+          "command": "filetandem.quickConnect",
+          "when": "view == filetandem.connections",
           "group": "navigation"
         }
       ],
       "view/item/context": [
         {
-          "command": "xscp.openProfile",
-          "when": "view == xscp.connections && viewItem == xscpProfile",
-          "group": "xscp"
+          "command": "filetandem.openProfile",
+          "when": "view == filetandem.connections && viewItem == filetandemProfile",
+          "group": "filetandem"
         },
         {
-          "command": "xscp.reconnectProfile",
-          "when": "view == xscp.connections && viewItem == xscpProfile",
-          "group": "xscp"
+          "command": "filetandem.reconnectProfile",
+          "when": "view == filetandem.connections && viewItem == filetandemProfile",
+          "group": "filetandem"
         },
         {
-          "command": "xscp.disconnectProfile",
-          "when": "view == xscp.connections && viewItem == xscpProfile",
-          "group": "xscp"
+          "command": "filetandem.disconnectProfile",
+          "when": "view == filetandem.connections && viewItem == filetandemProfile",
+          "group": "filetandem"
         },
         {
-          "command": "xscp.editProfile",
-          "when": "view == xscp.connections && viewItem == xscpProfile",
-          "group": "xscp"
+          "command": "filetandem.editProfile",
+          "when": "view == filetandem.connections && viewItem == filetandemProfile",
+          "group": "filetandem"
         },
         {
-          "command": "xscp.favoriteProfile",
-          "when": "view == xscp.connections && viewItem == xscpProfile",
-          "group": "xscp"
+          "command": "filetandem.favoriteProfile",
+          "when": "view == filetandem.connections && viewItem == filetandemProfile",
+          "group": "filetandem"
         },
         {
-          "command": "xscp.deleteProfile",
-          "when": "view == xscp.connections && viewItem == xscpProfile",
-          "group": "xscp"
+          "command": "filetandem.deleteProfile",
+          "when": "view == filetandem.connections && viewItem == filetandemProfile",
+          "group": "filetandem"
         }
       ],
       "explorer/context": [
         {
-          "command": "xscp.uploadFromExplorer",
+          "command": "filetandem.uploadFromExplorer",
           "when": "resourceScheme == file",
-          "group": "xscp"
+          "group": "filetandem"
         }
       ],
       "editor/title": [
         {
-          "command": "xscp.enableEditorEditing",
-          "when": "resourceScheme == xscp || resourceScheme == xscp-remote",
-          "group": "xscp"
+          "command": "filetandem.enableEditorEditing",
+          "when": "resourceScheme == filetandem || resourceScheme == filetandem-remote",
+          "group": "filetandem"
         },
         {
-          "command": "xscp.lockEditorFile",
-          "when": "resourceScheme == xscp || resourceScheme == xscp-remote",
-          "group": "xscp"
+          "command": "filetandem.lockEditorFile",
+          "when": "resourceScheme == filetandem || resourceScheme == filetandem-remote",
+          "group": "filetandem"
         },
         {
-          "command": "xscp.reviewRemoteFile",
-          "when": "resourceScheme == xscp || resourceScheme == xscp-review",
-          "group": "xscp"
+          "command": "filetandem.reviewRemoteFile",
+          "when": "resourceScheme == filetandem || resourceScheme == filetandem-review",
+          "group": "filetandem"
         },
         {
-          "command": "xscp.acceptEditorReview",
-          "when": "resourceScheme == xscp || resourceScheme == xscp-review",
-          "group": "xscp"
+          "command": "filetandem.acceptEditorReview",
+          "when": "resourceScheme == filetandem || resourceScheme == filetandem-review",
+          "group": "filetandem"
         },
         {
-          "command": "xscp.diffRemoteFile",
-          "when": "resourceScheme == xscp || resourceScheme == xscp-review",
-          "group": "xscp"
+          "command": "filetandem.diffRemoteFile",
+          "when": "resourceScheme == filetandem || resourceScheme == filetandem-review",
+          "group": "filetandem"
         },
         {
-          "command": "xscp.uploadEditorCopy",
-          "when": "xscp.editorCopyActive",
-          "group": "xscp"
+          "command": "filetandem.uploadEditorCopy",
+          "when": "filetandem.editorCopyActive",
+          "group": "filetandem"
         },
         {
-          "command": "xscp.removeEditorCopy",
-          "when": "xscp.editorCopyActive",
-          "group": "xscp"
+          "command": "filetandem.removeEditorCopy",
+          "when": "filetandem.editorCopyActive",
+          "group": "filetandem"
         }
       ]
     },
     "configuration": {
       "title": "FileTandem",
       "properties": {
-        "xscp.showHiddenFiles": {
+        "filetandem.showHiddenFiles": {
           "type": "boolean",
           "default": false,
           "scope": "application",
-          "description": "%xscp.showHiddenFiles.description%"
+          "description": "%filetandem.showHiddenFiles.description%"
         },
-        "xscp.demoScenario": {
+        "filetandem.demoScenario": {
           "type": "string",
           "enum": [
             "ready",
@@ -283,23 +283,23 @@
           ],
           "default": "ready",
           "scope": "application",
-          "description": "%xscp.demoScenario.description%"
+          "description": "%filetandem.demoScenario.description%"
         },
-        "xscp.editorPollInterval": {
+        "filetandem.editorPollInterval": {
           "type": "integer",
           "default": 5,
           "minimum": 2,
           "maximum": 60,
           "scope": "application",
-          "description": "%xscp.editorPollInterval.description%"
+          "description": "%filetandem.editorPollInterval.description%"
         },
-        "xscp.commanderKeys": {
+        "filetandem.commanderKeys": {
           "type": "boolean",
           "default": false,
           "scope": "application",
-          "description": "%xscp.commanderKeys.description%"
+          "description": "%filetandem.commanderKeys.description%"
         },
-        "xscp.language": {
+        "filetandem.language": {
           "type": "string",
           "enum": [
             "auto",
@@ -308,18 +308,19 @@
           ],
           "default": "auto",
           "scope": "application",
-          "description": "%xscp.language.description%"
+          "description": "%filetandem.language.description%"
         }
       }
     },
     "viewsWelcome": [
       {
-        "view": "xscp.connections",
+        "view": "filetandem.connections",
         "contents": "%connections.welcome%"
       }
     ]
   },
   "scripts": {
+    "test:migration": "node scripts/test-namespace-migration.mjs",
     "test:faults": "node scripts/test-faults.mjs",
     "test:release": "node scripts/test-release.mjs",
     "benchmark:release": "node --expose-gc scripts/benchmark-release.mjs",
@@ -374,8 +375,8 @@
     "ui"
   ],
   "activationEvents": [
-    "onWebviewPanel:xscp.demo",
-    "onWebviewPanel:xscp.browser"
+    "onWebviewPanel:filetandem.demo",
+    "onWebviewPanel:filetandem.browser"
   ],
   "license": "MIT",
   "keywords": [

@@ -15,7 +15,7 @@ exports.run = async () => {
   const material = await authMaterial();
   const base = { host: '127.0.0.1', port: authPort, username: 'fixture', readyTimeout: 5000 };
   assert.equal(typeof extension.exports.editorProof.open, 'function', 'Installed bundle registers the editor API');
-  assert.ok((await vscode.commands.getCommands(true)).includes('xscp.enableEditorEditing'));
+  assert.ok((await vscode.commands.getCommands(true)).includes('filetandem.enableEditorEditing'));
   const probe = extension.exports.probeSshAuthentication;
   assert.equal(typeof probe, 'function');
   let prompts = 0;
@@ -38,9 +38,9 @@ exports.run = async () => {
   }
   assert.ok(prompts > 0);
   await assert.rejects(probe({ ...base, password: 'wrong-fixture-password' }), /authentication methods failed/i);
-  assert.ok((await vscode.commands.getCommands(true)).includes('xscp.verifySshHostKey'));
-  assert.ok((await vscode.commands.getCommands(true)).includes('xscp.openManager'));
-  await vscode.commands.executeCommand('xscp.openManager');
+  assert.ok((await vscode.commands.getCommands(true)).includes('filetandem.verifySshHostKey'));
+  assert.ok((await vscode.commands.getCommands(true)).includes('filetandem.openManager'));
+  await vscode.commands.executeCommand('filetandem.openManager');
   const deadline = Date.now() + 5000;
   const visible = () => vscode.window.tabGroups.all.flatMap(group => group.tabs).some(tab => tab.label === 'FileTandem' && tab.input instanceof vscode.TabInputWebview);
   while (!visible() && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 50));

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.0.9 – 08.10.2026
+
+- Einstellungen, Befehle, Ansichten und Editor-URIs auf `filetandem` umgestellt.
+- Bestehende Einstellungen, Profile, Host-Key-Vertrauen und SecretStorage-Schlüssel werden innerhalb der bisherigen Extension-ID migriert; neue Werte haben Vorrang. Unterbrochene Transfers starten nicht automatisch.
+
 ## 0.0.8 – 08.10.2026
 
 - Reproduzierbare M6-Regression mit isolierten VS-Code-Profilen, Mindestversion und Stable, installiertem SFTP/SCP, Editor, Remote-SSH, Restart, Reload und Restricted Mode.

@@ -7,7 +7,7 @@ export function registerTransfers(context,profileUI) {
   const changed=new vscode.EventEmitter();const ephemeral=new Map();
   const profiles={get:id => {try {return profileUI.profiles.get(id);} catch(error) {if (ephemeral.has(id)) return ephemeral.get(id);throw error;}}};
   let warned=false;const journal=new TransferJournal(join(context.globalStorageUri.fsPath,'transfers-v1.json'),message => {if (!warned) {warned=true;void vscode.window.showWarningMessage(message);}});
-  journal.ready=(async () => {let key=await context.secrets.get('xscp.journal.integrity.v1');if (!key) {key=randomBytes(32).toString('hex');await context.secrets.store('xscp.journal.integrity.v1',key);}if (!/^[a-f0-9]{64}$/.test(key)) throw new Error('Journal-Schlüssel ist ungültig.');journal.key=Buffer.from(key,'hex');})().catch(() => {journal.disabled=true;journal.onError('Transferjournal nicht verfügbar: VS-Code-SecretStorage prüfen. Keine gespeicherten Aufträge werden gestartet oder verändert.');});
+  journal.ready=(async () => {let key=await context.secrets.get('filetandem.journal.integrity.v1');if (!key) {key=randomBytes(32).toString('hex');await context.secrets.store('filetandem.journal.integrity.v1',key);}if (!/^[a-f0-9]{64}$/.test(key)) throw new Error('Journal-Schlüssel ist ungültig.');journal.key=Buffer.from(key,'hex');})().catch(() => {journal.disabled=true;journal.onError('Transferjournal nicht verfügbar: VS-Code-SecretStorage prüfen. Keine gespeicherten Aufträge werden gestartet oder verändert.');});
   const engine=new TransferEngine({sessions:profileUI.sessions,profiles,choose:conflictDialog,guard:profileUI.guard,onChange:jobs => {journal.update(jobs);changed.fire();}});
   engine.ready=journal.load().then(jobs => engine.queue.restore(jobs));
   context.subscriptions.push(engine,changed);
@@ -21,7 +21,7 @@ export function registerTransfers(context,profileUI) {
   const retry=async ids => {await prepare(ids);return engine.queue.retry(ids,randomUUID);};
   const resume=async ids => {await prepare(ids,true);return engine.resume(ids);};
   profileUI.transfers={engine,changed,resume,retry,cleanup:id => engine.cleanup(id),remember:profile => {if (profile.ephemeral) ephemeral.set(profile.id,profile);}};
-  profileUI.command('xscp.uploadFromExplorer',async (uri,uris) => {
+  profileUI.command('filetandem.uploadFromExplorer',async (uri,uris) => {
     const list=Array.isArray(uris) && uris.length ? uris:[uri];if (!list.length || list.some(value => !value)) throw new Error('Bitte lokale Dateien/Ordner auswählen.');
     const paths=list.map(localFileUri);const profile=await profileUI.choose();if (!profile) return;
     if (profileUI.sessions.snapshot(profile.id).state !== 'connected') await profileUI.connect(profile);

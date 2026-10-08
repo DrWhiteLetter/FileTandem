@@ -10,7 +10,7 @@ Die kurze Web-/Marketplace-Recherche zu „FileTandem“ und „File Tandem“ e
 
 **Juristische Prüfung:** Der Benutzer bestätigt am 08.10.2026: „juristisch habe ich das Ok für File Tandem bekommen“. Diese Rückmeldung schließt die beauftragte Namensprüfung im Projekt ab; das bestehende Branding **FileTandem** bleibt erhalten. Das juristische Dokument selbst liegt im Repository nicht vor. Keine Domain/Marke registriert und keine öffentliche Veröffentlichung ausgeführt.
 
-Interne Kennungen `xscp.*`, URI-Schemes, Paketname `xscp` und vorläufige Extension-ID `xscp-dev.xscp` bleiben erhalten. Damit verändert diese sichtbare Umbenennung die Identität und gespeicherte Profile/Secrets nicht. Historische Nachweise behalten ihren damaligen Namen und ihre geprüfte Version.
+Seit 0.0.9 verwenden Einstellungen, Befehle, Ansichten und Editor-URIs `filetandem`. Gespeicherte Einstellungen/State-/Secret-Schlüssel werden migriert. Paketname `xscp` und vorläufige Extension-ID `xscp-dev.xscp` bleiben bis zur Publisher-Festlegung erhalten, damit vorhandene Profile und SecretStorage-Daten weiterhin zugänglich sind. Historische Nachweise behalten ihren damaligen Namen und ihre geprüfte Version.
 
 ## Publisher und Identität
 

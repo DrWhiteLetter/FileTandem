@@ -28,10 +28,10 @@ export function registerProfiles(context) {
     await profiles.save(raw); changed.fire(); return profiles.get(raw.id);
   };
   const command=(name,action) => context.subscriptions.push(vscode.commands.registerCommand(name,async (...args) => {try { guard(); return await action(...args); } catch(error) { void vscode.window.showErrorMessage(`FileTandem: ${error.message}`); }}));
-  command('xscp.addProfile',() => edit());
-  command('xscp.editProfile',async id => { const p=typeof id === 'string' ? profiles.get(id) : id?.profileId ? profiles.get(id.profileId) : await choose(); if (p) return edit(p); });
-  command('xscp.deleteProfile',async id => { const p=typeof id === 'string' ? profiles.get(id) : id?.profileId ? profiles.get(id.profileId) : await choose(); if (!p) return; if (await vscode.window.showWarningMessage(`Profil „${p.name}“ löschen?`,{modal:true},'Löschen') !== 'Löschen') return; guard(); await profiles.delete(p.id); changed.fire(); });
-  command('xscp.exportProfiles',async () => { const document=await vscode.workspace.openTextDocument({content:profiles.export(),language:'json'}); await vscode.window.showTextDocument(document); });
+  command('filetandem.addProfile',() => edit());
+  command('filetandem.editProfile',async id => { const p=typeof id === 'string' ? profiles.get(id) : id?.profileId ? profiles.get(id.profileId) : await choose(); if (p) return edit(p); });
+  command('filetandem.deleteProfile',async id => { const p=typeof id === 'string' ? profiles.get(id) : id?.profileId ? profiles.get(id.profileId) : await choose(); if (!p) return; if (await vscode.window.showWarningMessage(`Profil „${p.name}“ löschen?`,{modal:true},'Löschen') !== 'Löschen') return; guard(); await profiles.delete(p.id); changed.fire(); });
+  command('filetandem.exportProfiles',async () => { const document=await vscode.workspace.openTextDocument({content:profiles.export(),language:'json'}); await vscode.window.showTextDocument(document); });
   const api={profiles,changed,choose,edit,guard,command};
   return api;
 }

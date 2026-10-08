@@ -23,7 +23,7 @@ exports.run = async () => {
   console.log('M5: profile save');
   const profile=await api.profiles.save({version:1,id:'m5-editor',name:'M5 Editor',host:config.host,port:config.port,username:config.username,auth:'key',keyPath:join(runtime,'client_ed25519'),protocol:'sftp',localPath:runtime,remotePath:'/data'});
   console.log('M5: profile connect');
-  await vscode.commands.executeCommand('xscp.connectProfile',profile.id);
+  await vscode.commands.executeCommand('filetandem.connectProfile',profile.id);
   console.log('M5: production open');
   const tabA=api.manager.open(profile),tabB=api.manager.open(profile);await delay(500);
   const views=api.manager.status().views.slice(-2);assert.equal(views.length,2);assert.notEqual(views[0].sessionId,views[1].sessionId);
@@ -34,12 +34,12 @@ exports.run = async () => {
   await wait(() => api.transfers.list().find(j => j.id===batch.ids[0]).state==='completed');assert.equal(await readFile(join(require('node:path').dirname(process.env.XSCP_EDITOR_MARKER),'editor-proof.txt'),'utf8'),'editor-initial');
   console.log('M5-05: two independent same-profile paths; queued download completes after both tabs close.');assert.equal(api.manager.status().views.some(v => views.some(old => old.sessionId===v.sessionId)),false);
   const production=await api.editor.open(profile,'/data/editor-proof.txt');
-  assert.equal(production.scheme,'xscp');
+  assert.equal(production.scheme,'filetandem');
   assert.equal((await vscode.workspace.fs.stat(production)).permissions,vscode.FilePermission.Readonly);
   assert.ok((await vscode.workspace.fs.readDirectory(production.with({path:'/data'}))).some(([name]) => name==='editor-proof.txt'));
   assert.equal(Buffer.from(await vscode.workspace.fs.readFile(production)).toString(),'editor-initial');
   await assert.rejects(vscode.workspace.fs.writeFile(production,Buffer.from('blocked')));
-  if (remote) {const result=await vscode.commands.executeCommand('xscp.test.remoteEditorRead',production.toString(),process.env.XSCP_EDITOR_MARKER);assert.equal(result.content,'editor-initial');assert.notEqual(result.host,process.env.XSCP_EDITOR_HOST);assert.equal(result.localMarkerExists,false);}
+  if (remote) {const result=await vscode.commands.executeCommand('filetandem.test.remoteEditorRead',production.toString(),process.env.XSCP_EDITOR_MARKER);assert.equal(result.content,'editor-initial');assert.notEqual(result.host,process.env.XSCP_EDITOR_HOST);assert.equal(result.localMarkerExists,false);}
   const autoDoc=await vscode.workspace.openTextDocument(production);let autoEditor=await vscode.window.showTextDocument(autoDoc);
   await vscode.workspace.getConfiguration('files').update('autoSaveDelay',300,vscode.ConfigurationTarget.Global);await vscode.workspace.getConfiguration('files').update('autoSave','afterDelay',vscode.ConfigurationTarget.Global);
   const accepted=await autoEditor.edit(b => b.insert(new vscode.Position(0,0),'blocked-'));await delay(800);assert.equal(server(),'editor-initial');await vscode.workspace.getConfiguration('files').update('autoSave','off',vscode.ConfigurationTarget.Global);if (accepted && autoDoc.isDirty) {assert.equal(await autoDoc.save(),false);await vscode.commands.executeCommand('workbench.action.files.revert');}else assert.equal(autoDoc.getText(),'editor-initial');
@@ -86,7 +86,7 @@ exports.run = async () => {
     await assert.rejects(vscode.workspace.fs.writeFile(uri, Buffer.from('blocked')));
     assert.equal(server(), 'editor-initial');
     if (remote) {
-      const result = await vscode.commands.executeCommand('xscp.test.remoteEditorRead', uri.toString(), process.env.XSCP_EDITOR_MARKER);
+      const result = await vscode.commands.executeCommand('filetandem.test.remoteEditorRead', uri.toString(), process.env.XSCP_EDITOR_MARKER);
       assert.notEqual(result.host, process.env.XSCP_EDITOR_HOST, 'Workspace extension runs on another host');
       assert.equal(result.localMarkerExists, false, 'Desktop marker is absent on remote host');
       assert.equal(result.content, 'editor-initial', 'Remote workspace extension can read the local UI provider');

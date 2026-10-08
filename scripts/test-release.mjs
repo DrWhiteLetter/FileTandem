@@ -35,6 +35,7 @@ try {
   await run('integrity',[npmCli,'run','test:integrity']);
   if (process.platform==='darwin') await run('local-disk-full',['scripts/test-disk-full.mjs']);
   await run('package',[npmCli,'run','package']);
+  await run('namespace-migration',['scripts/test-namespace-migration.mjs'],{VSCODE_TEST_EXECUTABLE:minimum});
   for (const [label,executable] of [['minimum',minimum],['stable',stable]]) {
     const settings={VSCODE_TEST_EXECUTABLE:executable};
     await run(label+'-installed',['scripts/test-installed.mjs'],settings);

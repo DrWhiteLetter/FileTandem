@@ -3,7 +3,7 @@ exports.run=async (api,runtime) => {
   const remote='/data/m5-editor-copy.txt';const ssh=command => {const p=spawnSync('ssh',['-F',path.join(runtime,'ssh_config'),'xscp-fixture-scp',command],{encoding:'utf8'});assert.equal(p.status,0,p.stderr);return p.stdout;};ssh('printf copy-initial > '+remote);
   const port=Number(process.env.XSCP_SSH_PORT_BASE)+2,privateKey=await fs.readFile(path.join(runtime,'client_ed25519'));
   await api.probeSshAuthentication({host:'127.0.0.1',port,username:'fixture',privateKey},{confirmUnknown:async () => true});
-  const profile=await api.profiles.save({version:1,id:'m5-editor-scp',name:'M5 SCP copy',host:'127.0.0.1',port,username:'fixture',auth:'key',keyPath:path.join(runtime,'client_ed25519'),protocol:'scp',localPath:runtime,remotePath:'/data'});await vscode.commands.executeCommand('xscp.connectProfile',profile.id);
+  const profile=await api.profiles.save({version:1,id:'m5-editor-scp',name:'M5 SCP copy',host:'127.0.0.1',port,username:'fixture',auth:'key',keyPath:path.join(runtime,'client_ed25519'),protocol:'scp',localPath:runtime,remotePath:'/data'});await vscode.commands.executeCommand('filetandem.connectProfile',profile.id);
   const uri=await api.editorCopies.open(profile,remote);const doc=await vscode.workspace.openTextDocument(uri),editor=await vscode.window.showTextDocument(doc);
   const wait=async condition => {const deadline=Date.now()+15000;while (!condition()) {if (Date.now()>deadline) throw new Error('Copy acceptance timeout '+JSON.stringify(api.transfers.list()));await new Promise(r => setTimeout(r,100));}};
   try {

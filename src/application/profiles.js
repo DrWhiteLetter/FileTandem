@@ -1,5 +1,5 @@
 import { validateProfile } from '../domain/profile.js';
-const key='xscp.profiles.v1';
+const key='filetandem.profiles.v1';
 export class Profiles {
   #queue=Promise.resolve();
   constructor(storage) { this.storage=storage; }

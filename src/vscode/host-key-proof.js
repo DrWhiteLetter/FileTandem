@@ -14,7 +14,7 @@ export function registerHostKeyProof(context) {
   const output = vscode.window.createOutputChannel('FileTandem: SSH-Host-Key');
   const active = new Set();
   context.subscriptions.push(output, { dispose: () => { for (const controller of active) controller.abort(); } });
-  context.subscriptions.push(vscode.commands.registerCommand('xscp.verifySshHostKey', async () => {
+  context.subscriptions.push(vscode.commands.registerCommand('filetandem.verifySshHostKey', async () => {
     let session;
     const controller = new AbortController();
     try {

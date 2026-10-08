@@ -18,10 +18,10 @@ export function registerBrowser(context,profileUI) {
   const open=(profile,restored={},panel) => {
     profileUI.guard();if (profile) profileUI.transfers.remember(profile);restored=browserViewState(restored);
     const sessionId=randomUUID();const assets=vscode.Uri.joinPath(context.extensionUri,'dist');
-    panel ??= vscode.window.createWebviewPanel('xscp.browser','FileTandem',vscode.ViewColumn.One,{});
+    panel ??= vscode.window.createWebviewPanel('filetandem.browser','FileTandem',vscode.ViewColumn.One,{});
     panel.webview.options={enableScripts:true,localResourceRoots:[assets]};
     let alive=true;const recent=new Set();
-    const model=() => ({version:1,type:'browserModel',sessionId,diagnostics,locale:language(),profileId:profile?.ephemeral ? undefined:profile?.id,queue:profileUI.transfers.engine.queue.list(profile?.id),queuePaused:profileUI.transfers.engine.queue.paused,local:local.state,remote:remote.state,...browserSettings(key => vscode.workspace.getConfiguration('xscp').get(key)),connection:profile ? {...profileUI.sessions.snapshot(profile.id),name:profile.name} : {state:'disconnected',name:'Kein Server'}});
+    const model=() => ({version:1,type:'browserModel',sessionId,diagnostics,locale:language(),profileId:profile?.ephemeral ? undefined:profile?.id,queue:profileUI.transfers.engine.queue.list(profile?.id),queuePaused:profileUI.transfers.engine.queue.paused,local:local.state,remote:remote.state,...browserSettings(key => vscode.workspace.getConfiguration('filetandem').get(key)),connection:profile ? {...profileUI.sessions.snapshot(profile.id),name:profile.name} : {state:'disconnected',name:'Kein Server'}});
     const publish=() => {if (alive) {panel.title=profile ? `FileTandem · ${profile.name}`:'FileTandem';void panel.webview.postMessage(model());}};
     let start;try {start=localStart(restored.paths?.local ?? profile?.localPath);} catch {start=localStart();}
     const local=new DirectoryBrowser({start,parent:localParent,list:path => files.list(vscode.Uri.file(localPath(path))),onChange:publish});
@@ -50,7 +50,7 @@ export function registerBrowser(context,profileUI) {
       publish();
     });
     const observedTerminal=new Set();
-    const configuration=vscode.workspace.onDidChangeConfiguration(e => {if (e.affectsConfiguration('xscp')) publish();});
+    const configuration=vscode.workspace.onDidChangeConfiguration(e => {if (e.affectsConfiguration('filetandem')) publish();});
     const transferChanges=profileUI.transfers.changed.event(() => {
       publish();
       const newly=profileUI.transfers.engine.queue.list(profile?.id).filter(j => ['completed','failed','cancelled','skipped'].includes(j.state) && !observedTerminal.has(j.id));for (const job of newly) observedTerminal.add(job.id);
@@ -74,7 +74,7 @@ export function registerBrowser(context,profileUI) {
         if (browser.state.status !== 'ready') throw new Error('Bitte erst einen Ordner laden.');
         const selected=message.ids.map(id => browser.state.entries.find(entry => entry.id === id));
         if (selected.some(entry => !entry)) throw new Error('Auswahl ist veraltet; bitte aktualisieren.');
-        if (['open','edit'].includes(message.action)) {if (selected.length!==1 || selected[0].kind!=='file') throw new Error('Bitte eine reguläre Datei auswählen.');if (message.side==='local') await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(vscode.Uri.file(selected[0].path)));else {const uri=await profileUI.editor.show(profile,selected[0].path,() => transfer({side:'remote',ids:message.ids,destination:'choose'}));if (message.action==='edit' && uri?.scheme==='xscp') await profileUI.editor.enable(uri);}return;}
+        if (['open','edit'].includes(message.action)) {if (selected.length!==1 || selected[0].kind!=='file') throw new Error('Bitte eine reguläre Datei auswählen.');if (message.side==='local') await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(vscode.Uri.file(selected[0].path)));else {const uri=await profileUI.editor.show(profile,selected[0].path,() => transfer({side:'remote',ids:message.ids,destination:'choose'}));if (message.action==='edit' && uri?.scheme==='filetandem') await profileUI.editor.enable(uri);}return;}
         const parent=browser.state.path;const windows=message.side === 'local' && process.platform === 'win32';
         const options={windows,join:message.side === 'local' ? join:posix.join};
         const adapter=message.side === 'local' ? {
@@ -148,22 +148,22 @@ export function registerBrowser(context,profileUI) {
     });
     panel.onDidDispose(() => {alive=false;views.delete(view);changes.dispose();configuration.dispose();transferChanges.dispose();receive.dispose();local.invalidate();remote.invalidate();remoteFiles?.close();});
     const script=panel.webview.asWebviewUri(vscode.Uri.joinPath(assets,'webview.js'));const style=panel.webview.asWebviewUri(vscode.Uri.joinPath(assets,'webview.css'));const nonce=randomBytes(24).toString('base64');
-    panel.webview.html=`<!DOCTYPE html><html lang="${language()}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="xscp-session" content="${sessionId}"><meta name="xscp-mode" content="browser"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${panel.webview.cspSource}; font-src ${panel.webview.cspSource}; script-src 'nonce-${nonce}';"><link rel="stylesheet" href="${style}"></head><body><div id="root"></div><script nonce="${nonce}" src="${script}"></script></body></html>`;
+    panel.webview.html=`<!DOCTYPE html><html lang="${language()}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="filetandem-session" content="${sessionId}"><meta name="filetandem-mode" content="browser"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${panel.webview.cspSource}; font-src ${panel.webview.cspSource}; script-src 'nonce-${nonce}';"><link rel="stylesheet" href="${style}"></head><body><div id="root"></div><script nonce="${nonce}" src="${script}"></script></body></html>`;
     context.subscriptions.push(panel);return panel;
   };
   profileUI.open=profile => open(profile);
-  profileUI.command('xscp.openManager',() => open());
-  profileUI.command('xscp.newSession',async id => {const p=typeof id==='string' ? profileUI.profiles.get(id):await profileUI.choose();if (!p) return;if (profileUI.sessions.snapshot(p.id).state!=='connected') await profileUI.connect(p);return open(p);});
-  profileUI.command('xscp.showTransfers',() => open());
-  profileUI.command('xscp.openProfile',async arg => {
+  profileUI.command('filetandem.openManager',() => open());
+  profileUI.command('filetandem.newSession',async id => {const p=typeof id==='string' ? profileUI.profiles.get(id):await profileUI.choose();if (!p) return;if (profileUI.sessions.snapshot(p.id).state!=='connected') await profileUI.connect(p);return open(p);});
+  profileUI.command('filetandem.showTransfers',() => open());
+  profileUI.command('filetandem.openProfile',async arg => {
     const id=typeof arg === 'string' ? arg:arg?.profileId;
     const profile=id ? profileUI.profiles.get(id):await profileUI.choose();if (!profile) return;
     if (profileUI.sessions.snapshot(profile.id).state !== 'connected') await profileUI.connect(profile);
     return open(profile);
   });
-  profileUI.command('xscp.quickConnect',async () => {const profile=await profileUI.edit(undefined,{quick:true});if (profile) {await profileUI.connect(profile);return open(profile);}});
-  profileUI.command('xscp.favoriteProfile',async arg => {const id=typeof arg === 'string' ? arg:arg?.profileId;const p=id ? profileUI.profiles.get(id):await profileUI.choose();if (p) {await profileUI.profiles.save({...p,favorite:!p.favorite});profileUI.changed.fire();}});
-  profileUI.command('xscp.reconnectProfile',async arg => {const id=typeof arg === 'string' ? arg:arg?.profileId;const p=id ? profileUI.profiles.get(id):await profileUI.choose();if (p) {await profileUI.connect(p);return open(p);}});
-  context.subscriptions.push(vscode.window.registerWebviewPanelSerializer('xscp.browser',{async deserializeWebviewPanel(panel,state) {try {const restored=browserViewState(state);let profile;if (restored.profileId) {try {profile=profileUI.profiles.get(restored.profileId);} catch { /* removed profile */ }}open(profile,restored,panel);} catch {panel.dispose();}}}));
+  profileUI.command('filetandem.quickConnect',async () => {const profile=await profileUI.edit(undefined,{quick:true});if (profile) {await profileUI.connect(profile);return open(profile);}});
+  profileUI.command('filetandem.favoriteProfile',async arg => {const id=typeof arg === 'string' ? arg:arg?.profileId;const p=id ? profileUI.profiles.get(id):await profileUI.choose();if (p) {await profileUI.profiles.save({...p,favorite:!p.favorite});profileUI.changed.fire();}});
+  profileUI.command('filetandem.reconnectProfile',async arg => {const id=typeof arg === 'string' ? arg:arg?.profileId;const p=id ? profileUI.profiles.get(id):await profileUI.choose();if (p) {await profileUI.connect(p);return open(p);}});
+  context.subscriptions.push(vscode.window.registerWebviewPanelSerializer('filetandem.browser',{async deserializeWebviewPanel(panel,state) {try {const restored=browserViewState(state);let profile;if (restored.profileId) {try {profile=profileUI.profiles.get(restored.profileId);} catch { /* removed profile */ }}open(profile,restored,panel);} catch {panel.dispose();}}}));
   return {open,diagnostics:value => {profileUI.guard();diagnostics=value===true;for (const v of views) v.publish();},navigate:async (sessionId,side,path) => {const view=[...views].find(v => v.model().sessionId===sessionId);if (!view) throw new Error('Sitzung geschlossen.');return view.navigate(side,path);},status:() => ({handshakes,views:[...views].map(v => {const m=v.model();return {sessionId:m.sessionId,renderProof:v.renderProof,connection:m.connection,local:{path:m.local.path,status:m.local.status,count:m.local.entries.length},remote:{path:m.remote.path,status:m.remote.status,count:m.remote.entries.length}};})})};
 }

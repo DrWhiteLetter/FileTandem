@@ -1,0 +1,168 @@
+{
+  "started": "2026-10-08T18:37:41.466Z",
+  "version": "0.0.9",
+  "platform": "darwin",
+  "architecture": "arm64",
+  "os": "25.6.0",
+  "node": "v22.13.1",
+  "steps": [
+    {
+      "name": "quality",
+      "exitCode": 0,
+      "seconds": 9.684,
+      "log": "quality.log"
+    },
+    {
+      "name": "fixtures-verify",
+      "exitCode": 0,
+      "seconds": 2.602,
+      "log": "fixtures-verify.log"
+    },
+    {
+      "name": "protocols",
+      "exitCode": 0,
+      "seconds": 25.895,
+      "log": "protocols.log"
+    },
+    {
+      "name": "editor-service",
+      "exitCode": 0,
+      "seconds": 0.481,
+      "log": "editor-service.log"
+    },
+    {
+      "name": "integrity",
+      "exitCode": 0,
+      "seconds": 2.458,
+      "log": "integrity.log"
+    },
+    {
+      "name": "local-disk-full",
+      "exitCode": 0,
+      "seconds": 2.676,
+      "log": "local-disk-full.log"
+    },
+    {
+      "name": "package",
+      "exitCode": 0,
+      "seconds": 2.907,
+      "log": "package.log"
+    },
+    {
+      "name": "namespace-migration",
+      "exitCode": 0,
+      "log": "namespace-migration-final.log"
+    },
+    {
+      "name": "minimum-installed",
+      "exitCode": 0,
+      "seconds": 3.813,
+      "log": "minimum-installed.log"
+    },
+    {
+      "name": "minimum-browser-restart",
+      "exitCode": 0,
+      "seconds": 10.476,
+      "log": "minimum-browser-restart.log"
+    },
+    {
+      "name": "minimum-editor",
+      "exitCode": 0,
+      "seconds": 16.398,
+      "log": "minimum-editor.log"
+    },
+    {
+      "name": "minimum-remote-editor",
+      "exitCode": 0,
+      "seconds": 74.128,
+      "log": "minimum-remote-editor.log"
+    },
+    {
+      "name": "minimum-accessibility",
+      "exitCode": 0,
+      "seconds": 5.6,
+      "log": "minimum-accessibility.log"
+    },
+    {
+      "name": "minimum-restricted",
+      "exitCode": 0,
+      "seconds": 3.622,
+      "log": "minimum-restricted.log"
+    },
+    {
+      "name": "minimum-reload",
+      "exitCode": 0,
+      "seconds": 5.319,
+      "log": "minimum-reload.log"
+    },
+    {
+      "name": "minimum-two-windows",
+      "exitCode": 0,
+      "seconds": 13.696,
+      "log": "minimum-two-windows.log"
+    },
+    {
+      "name": "stable-installed",
+      "exitCode": 0,
+      "seconds": 4.124,
+      "log": "stable-installed.log"
+    },
+    {
+      "name": "stable-browser-restart",
+      "exitCode": 0,
+      "seconds": 10.972,
+      "log": "stable-browser-restart.log"
+    },
+    {
+      "name": "stable-editor",
+      "exitCode": 0,
+      "seconds": 13.507,
+      "log": "stable-editor.log"
+    },
+    {
+      "name": "stable-remote-editor",
+      "exitCode": 0,
+      "seconds": 74.024,
+      "log": "stable-remote-editor.log"
+    },
+    {
+      "name": "stable-accessibility",
+      "exitCode": 0,
+      "seconds": 4.841,
+      "log": "stable-accessibility.log"
+    },
+    {
+      "name": "stable-restricted",
+      "exitCode": 0,
+      "seconds": 3.301,
+      "log": "stable-restricted.log"
+    },
+    {
+      "name": "stable-reload",
+      "exitCode": 0,
+      "seconds": 5.342,
+      "log": "stable-reload.log"
+    },
+    {
+      "name": "stable-two-windows",
+      "exitCode": 0,
+      "seconds": 16.487,
+      "log": "stable-two-windows.log"
+    }
+  ],
+  "correctedHarnessAttempts": [
+    {
+      "name": "minimum-restricted",
+      "exitCode": 1,
+      "seconds": 3.713,
+      "log": "minimum-restricted.log"
+    }
+  ],
+  "ok": true,
+  "completed": "2026-10-08T18:44:13.412099+00:00",
+  "additionalUnitCheck": {
+    "count": 51,
+    "passed": 51,
+    "log": "namespace-unit-final.log"
+  }
+}

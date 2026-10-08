@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';import { mkdir,rm,readFile } from 'node
 import { profileIdentity } from '../application/transfer-resume.js';import { openRemoteFiles } from '../application/remote-files.js';import { EDITOR_LIMIT } from '../adapters/sftp/editor-file.js';
 /** SCP uses ordinary desktop files. No filesystem watcher ever submits uploads. */
 export function registerLocalEditorCopies(context,ui) {
-  const root=join(context.globalStorageUri.fsPath,'editor-copies');const records=new Map();const key='xscp.editorCopies.v1';
+  const root=join(context.globalStorageUri.fsPath,'editor-copies');const records=new Map();const key='filetandem.editorCopies.v1';
   const valid=r => r?.version===1 && typeof r.local==='string' && r.local.length<=4096 && typeof r.remote==='string' && r.remote.length<=4096 && Object.keys(r).length===6 && Object.keys(r).every(key => ['version','profileId','identity','baseline','remote','local'].includes(key)) && /^[a-zA-Z0-9-]{1,64}$/.test(r.profileId) && /^[a-f0-9]{64}$/.test(r.identity) && /^[a-f0-9]{64}$/.test(r.baseline) && /^[a-f0-9-]{36}$/.test(basename(dirname(r.local ?? ''))) && dirname(dirname(r.local ?? ''))===root && basename(r.local)===posix.basename(r.remote ?? '') && typeof r.remote==='string' && r.remote.startsWith('/') && !/[\x00-\x1f]/.test(r.remote);
   for (const r of (Array.isArray(context.globalState.get(key)) ? context.globalState.get(key):[]).slice(0,64)) if (valid(r)) records.set(vscode.Uri.file(r.local).toString(),r);
   let saving=Promise.resolve();const persist=() => {const pending=saving.then(() => context.globalState.update(key,[...records.values()]));saving=pending.catch(() => {});return pending;};
@@ -13,7 +13,7 @@ export function registerLocalEditorCopies(context,ui) {
     return new Promise((resolve,reject) => {let listener;const done=() => {const jobs=check();if (jobs.length!==batch.ids.length || jobs.some(j => ['queued','running'].includes(j.state))) return;listener?.dispose();if (jobs.some(j => j.state!=='completed')) reject(new Error('Editor-Kopie konnte nicht vollständig übertragen werden. Queue prüfen.'));else resolve(jobs[0]);};listener=ui.transfers.changed.event(done);done();});
   };
   const status=vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right,22);
-  const refresh=() => {const r=records.get(vscode.window.activeTextEditor?.document.uri.toString());void vscode.commands.executeCommand('setContext','xscp.editorCopyActive',!!r);if (!r) return status.hide();status.text='$(cloud-upload) FileTandem: Lokale SCP-Kopie';status.tooltip=`${r.remote}\nAuto Save speichert nur lokal. Upload ausschließlich über diesen Befehl.`;status.command='xscp.uploadEditorCopy';status.show();};
+  const refresh=() => {const r=records.get(vscode.window.activeTextEditor?.document.uri.toString());void vscode.commands.executeCommand('setContext','filetandem.editorCopyActive',!!r);if (!r) return status.hide();status.text='$(cloud-upload) FileTandem: Lokale SCP-Kopie';status.tooltip=`${r.remote}\nAuto Save speichert nur lokal. Upload ausschließlich über diesen Befehl.`;status.command='filetandem.uploadEditorCopy';status.show();};
   const api={
     async open(profile,path,download) {
       ui.guard();if (profile.protocol!=='scp' || records.size>=64) throw new Error('SCP-Editorkopie nicht verfügbar; gespeicherte Kopien bereinigen.');
@@ -40,6 +40,6 @@ export function registerLocalEditorCopies(context,ui) {
   // uploaded bytes. Unsent drafts survive restart in private desktop storage.
   context.subscriptions.push(status,vscode.window.onDidChangeActiveTextEditor(refresh),vscode.workspace.onDidCloseTextDocument(doc => {const r=records.get(doc.uri.toString());if (r) void readFile(r.local).then(data => {if (createHash('sha256').update(data).digest('hex')===r.baseline) return api.remove(doc.uri,async () => true);}).catch(() => {});}));
   const choose=async () => {const uri=vscode.window.activeTextEditor?.document.uri;if (records.has(uri?.toString())) return uri;const selected=await vscode.window.showQuickPick([...records.values()].map(r => ({label:posix.basename(r.remote),description:r.remote,record:r})),{title:'Gespeicherte SCP-Editorkopie auswählen'});return selected && vscode.Uri.file(selected.record.local);};
-  ui.command('xscp.openEditorCopy',async () => {const uri=await choose();if (uri) {lookup(uri);await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(uri));}});ui.command('xscp.uploadEditorCopy',async () => {const uri=await choose();if (uri) return api.upload(uri);});ui.command('xscp.removeEditorCopy',async () => {const uri=await choose();if (uri) return api.remove(uri);});
+  ui.command('filetandem.openEditorCopy',async () => {const uri=await choose();if (uri) {lookup(uri);await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(uri));}});ui.command('filetandem.uploadEditorCopy',async () => {const uri=await choose();if (uri) return api.upload(uri);});ui.command('filetandem.removeEditorCopy',async () => {const uri=await choose();if (uri) return api.remove(uri);});
   return api;
 }

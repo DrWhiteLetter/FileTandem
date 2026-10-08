@@ -1,0 +1,13 @@
+# FileTandem – Migration der internen Kennungen
+
+Stand: 08.10.2026, private Version 0.0.9.
+
+Einstellungen, Befehle, View-/Panel-IDs, Editor-/Review-URI-Schemes und Webview-Metadaten verwenden `filetandem`. Beispiel: `filetandem.commanderKeys`. Benutzerseitige Einstellungen sind unter dem neuen Präfix registriert. Alte Befehle bleiben nur als unsichtbare Weiterleitungen für vorhandene Tastenkürzel.
+
+Vor Aktivierung der Produktmodule werden explizite alte globale Einstellungen kopiert; vorhandene neue Werte gewinnen. Alle fünf Einstellungen haben Anwendungsscope. Profile, Host-Key-Vertrauen und private SCP-Kopien werden als GlobalState-Schlüssel migriert. Passwort-/Passphrase-Referenzen und der Journal-HMAC-Schlüssel wechseln im SecretStorage auf den neuen Präfix; Secrets werden nicht exportiert. Alte Schlüssel werden erst nach erfolgreicher Speicherung gelöscht. Bei Fehlern bleibt die alte Quelle für einen weiteren Versuch vorhanden. Die Migration ist wiederholbar.
+
+Die installierte Identität `xscp-dev.xscp` bleibt bewusst erhalten: Eine neue Identität hätte keinen Zugriff auf bisherigen GlobalState/SecretStorage. Die endgültige Publisher-/Extension-ID wird vor öffentlicher Veröffentlichung separat festgelegt. Journaldatei und `.xscp-…`-Teil-Dateiformat bleiben kompatibel, damit vorhandene Aufträge und Partials weiterhin sicher zugeordnet werden. Nach Update alte Remote-Editoren erneut öffnen; kein automatischer Upload oder Retry. Ein Downgrade auf 0.0.8 liest die neuen Speicherschlüssel nicht und benötigt eine separate Rückmigration.
+
+Prüfung: vier Unit-Fälle für Übernahme, Vorrang neuer Werte und fehlgeschlagenes SecretStorage-Schreiben sowie Manifest-/Menü-Konsistenz; reale Installation im normalen privaten Profil mit altem Zustand, danach Installation 0.0.9 und neuer Host. Einstellungen und Profil bleiben erhalten; ein mit altem Schlüssel signiertes Journal wird erfolgreich geladen und bleibt `interrupted`, ohne automatischen Start. Der VS-Code-Extension-Testmodus verwendet In-Memory-State und wird dafür nicht als Persistenznachweis eingesetzt. `npm run test:migration` reproduziert den Wechsel; die Test-Seed-VSIX wird ausschließlich in einem temporären Profil erzeugt und entfernt.
+
+Zusätzlich vollständige lokale M6-Regression auf VS Code 1.140.0 und 1.141.0; **24 Prüfschritte erfolgreich**, 51/51 Unit-Tests. [Verdichtete Ergebnisse](FileTandem-Migration-Ergebnisse.json); Rohlogs unter `out/m6/`. Windows/Linux und manuelle Screenreader-Abnahme bleiben eigene offene Release-Gates. Die frühere echte Ruhezustandsprüfung bleibt als Nachweis des Transferpfads erhalten; sie wurde für diese Kennungsänderung nicht erneut ausgelöst.

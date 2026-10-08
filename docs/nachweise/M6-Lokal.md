@@ -2,6 +2,8 @@
 
 Stand: **08.10.2026**, private Kandidatenversion **0.0.8**. Benutzerauftrag: alle hier selbst durchführbaren M6-Arbeiten erledigen; Windows-/Linux-Systeme aktuell nicht verfügbar. Juristisches Okay für FileTandem laut Benutzer dokumentiert. Der Marketplace-Publisher ist weiterhin ein Entwicklungsplatzhalter.
 
+Nachfolgekandidat **0.0.9** stellt die Kennungen auf `filetandem` um und prüft zusätzlich die Migration im installierten Paket. [Aktueller Nachweis](FileTandem-Migration.md). Die folgenden Messwerte bleiben historische Ergebnisse des ursprünglichen 0.0.8-Kandidaten.
+
 ## Ergebnis und Restpunkte
 
 | Item | Lokales Ergebnis | Verbleibende Abnahme |

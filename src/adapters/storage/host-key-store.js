@@ -5,7 +5,7 @@ import { HostKeyStore } from '../ssh/host-keys.js';
  * @param {import('vscode').Memento} memento
  */
 export function createHostKeyStore(memento) {
-  const key = id => `xscp.host-key.v1.${createHash('sha256').update(id).digest('hex')}`;
+  const key = id => `filetandem.host-key.v1.${createHash('sha256').update(id).digest('hex')}`;
   return new HostKeyStore({
     read: async id => memento.get(key(id)),
     write: async (id, record) => { await memento.update(key(id), record); },

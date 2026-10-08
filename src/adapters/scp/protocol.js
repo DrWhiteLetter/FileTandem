@@ -1,4 +1,4 @@
-export const EXEC_ACTIVITY=Symbol('xscp.exec.activity');
+export const EXEC_ACTIVITY=Symbol('filetandem.exec.activity');
 export const CHUNK_BYTES = 64 * 1024;
 export const MAX_FILE_BYTES = Number.MAX_SAFE_INTEGER;
 export const MAX_PROOF_BYTES = MAX_FILE_BYTES; // Legacy probe import; production sizes remain exact integers.

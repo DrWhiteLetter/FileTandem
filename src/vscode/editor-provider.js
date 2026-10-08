@@ -16,7 +16,7 @@ export function registerEditorProvider(context, trust, currentEditor) {
   const entry = uri => {
     guard();
     const value = entries.get(uri.authority);
-    if (uri.scheme !== 'xscp-remote' || uri.query || uri.fragment || !value || value.uri.path !== uri.path) throw vscode.FileSystemError.Unavailable('Editor-Sitzung geschlossen. Datei neu öffnen.');
+    if (uri.scheme !== 'filetandem-remote' || uri.query || uri.fragment || !value || value.uri.path !== uri.path) throw vscode.FileSystemError.Unavailable('Editor-Sitzung geschlossen. Datei neu öffnen.');
     return value;
   };
   const changed = uri => changes.fire([{ type: vscode.FileChangeType.Changed, uri }]);
@@ -38,11 +38,11 @@ export function registerEditorProvider(context, trust, currentEditor) {
   const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 20);
   const refresh = () => {
     const uri = vscode.window.activeTextEditor?.document.uri;
-    const e = uri?.scheme === 'xscp-remote' && entries.get(uri.authority);
+    const e = uri?.scheme === 'filetandem-remote' && entries.get(uri.authority);
     if (!e) return status.hide();
     status.text = e.allowed ? '$(edit) FileTandem: Bearbeitung freigegeben' : '$(lock) FileTandem: Schreibgeschützt';
     status.tooltip = `${e.endpoint}: ${uri.path}\nSpeichern und Auto Save schreiben nach Freigabe direkt auf den Server.`;
-    status.command = e.allowed ? 'xscp.lockEditorFile' : 'xscp.enableEditorEditing'; status.show();
+    status.command = e.allowed ? 'filetandem.lockEditorFile' : 'filetandem.enableEditorEditing'; status.show();
   };
   const api = {
     async open(config, path, { confirmUnknown = unknownHostKeyDialog(vscode.window) } = {}) {
@@ -50,7 +50,7 @@ export function registerEditorProvider(context, trust, currentEditor) {
       const session = await connectSsh(config, { trust, confirmUnknown });
       try {
         const file = await openEditorFile(session, path);
-        const uri = vscode.Uri.from({ scheme: 'xscp-remote', authority: randomUUID(), path });
+        const uri = vscode.Uri.from({ scheme: 'filetandem-remote', authority: randomUUID(), path });
         entries.set(uri.authority, { uri, file, endpoint: session.endpoint.label, allowed: false, modified: 0 });
         return uri;
       } catch (error) { await session.close(); throw error; }
@@ -68,7 +68,7 @@ export function registerEditorProvider(context, trust, currentEditor) {
   const command = (name, action) => context.subscriptions.push(vscode.commands.registerCommand(name, async () => {
     try { await action(); } catch (e) { await vscode.window.showErrorMessage(`FileTandem: ${e.message}`); }
   }));
-  command('xscp.openEditorProof', async () => {
+  command('filetandem.openEditorProof', async () => {
     guard();
     const host = await vscode.window.showInputBox({ title: 'SFTP-Editor: Host', value: '127.0.0.1' }); if (host === undefined) return;
     const port = await vscode.window.showInputBox({ title: 'SSH-Port', value: '22221' }); if (port === undefined) return;
@@ -81,11 +81,11 @@ export function registerEditorProvider(context, trust, currentEditor) {
     const uri = await api.open({ host, port: Number(port), username, privateKey: await readFile(key.fsPath) }, path);
     try { await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(uri)); } catch (e) { await api.close(uri); throw e; }
   });
-  const active = () => { const uri = vscode.window.activeTextEditor?.document.uri; if (!uri || uri.scheme !== 'xscp-remote') throw new Error('Zuerst eine FileTandem-Remote-Datei öffnen.'); return uri; };
-  command('xscp.enableEditorEditing', () => vscode.window.activeTextEditor?.document.uri.scheme==='xscp' ? currentEditor.enable(vscode.window.activeTextEditor.document.uri):api.enable(active()));
-  command('xscp.lockEditorFile', () => vscode.window.activeTextEditor?.document.uri.scheme==='xscp' ? currentEditor.lock(vscode.window.activeTextEditor.document.uri):api.lock(active()));
-  context.subscriptions.push(changes, status, vscode.workspace.registerFileSystemProvider('xscp-remote', provider, { isCaseSensitive: true }), vscode.window.onDidChangeActiveTextEditor(refresh), vscode.workspace.onDidCloseTextDocument(document => {
-    if (document.uri.scheme === 'xscp-remote' && entries.has(document.uri.authority)) void api.close(document.uri);
+  const active = () => { const uri = vscode.window.activeTextEditor?.document.uri; if (!uri || uri.scheme !== 'filetandem-remote') throw new Error('Zuerst eine FileTandem-Remote-Datei öffnen.'); return uri; };
+  command('filetandem.enableEditorEditing', () => vscode.window.activeTextEditor?.document.uri.scheme==='filetandem' ? currentEditor.enable(vscode.window.activeTextEditor.document.uri):api.enable(active()));
+  command('filetandem.lockEditorFile', () => vscode.window.activeTextEditor?.document.uri.scheme==='filetandem' ? currentEditor.lock(vscode.window.activeTextEditor.document.uri):api.lock(active()));
+  context.subscriptions.push(changes, status, vscode.workspace.registerFileSystemProvider('filetandem-remote', provider, { isCaseSensitive: true }), vscode.window.onDidChangeActiveTextEditor(refresh), vscode.workspace.onDidCloseTextDocument(document => {
+    if (document.uri.scheme === 'filetandem-remote' && entries.has(document.uri.authority)) void api.close(document.uri);
   }), { dispose() { for (const e of entries.values()) { e.allowed = false; void e.file.close(); } entries.clear(); } });
   return api;
 }

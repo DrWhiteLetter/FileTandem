@@ -1,11 +1,11 @@
 # FileTandem installieren, verwenden und warten
 
-Stand: 08.10.2026, private Vorabversion 0.0.8. macOS Apple Silicon ist das lokal geprüfte System. Windows/Linux, macOS Intel und weitere Remote-Fensterkombinationen sind nicht freigegeben. Die vollständige 1.0-Abnahme und Marketplace-Veröffentlichung bleiben an [M6](meilensteine/M6.md) gebunden.
+Stand: 08.10.2026, private Vorabversion 0.0.9. macOS Apple Silicon ist das lokal geprüfte System. Windows/Linux, macOS Intel und weitere Remote-Fensterkombinationen sind nicht freigegeben. Die vollständige 1.0-Abnahme und Marketplace-Veröffentlichung bleiben an [M6](meilensteine/M6.md) gebunden.
 
 ## Installation und erster Transfer
 
 1. VS Code Desktop ab 1.140.0 öffnen. Für die lokale M6-Abnahme wird zusätzlich Stable 1.141.0 geprüft. Anwender benötigen kein separat installiertes Node/npm, Docker oder lokales SCP-Programm.
-2. Erweiterungen → Menü „…“ → **Aus VSIX installieren…** → `out/FileTandem-0.0.8.vsix` wählen; einen angebotenen Fenster-Reload durchführen.
+2. Erweiterungen → Menü „…“ → **Aus VSIX installieren…** → `out/FileTandem-0.0.9.vsix` wählen; einen angebotenen Fenster-Reload durchführen.
 3. FileTandem in der Activity Bar öffnen. Der Logo-Button oben in **Verbindungen** öffnet den Dateimanager; alternativ **FileTandem: Dateimanager öffnen** in der Befehlspalette.
 4. **Profil anlegen** wählen: Host, Port, Benutzer, lokalen und entfernten Startordner sowie Anmeldung eintragen. **SFTP** ist voreingestellt. Ein leerer lokaler Startordner verwendet dein Home-Verzeichnis.
 5. **Profil verbinden** wählen. Den SHA-256-Fingerprint des Host-Keys mit einer unabhängig beschafften Angabe vergleichen und ausdrücklich bestätigen. Ein geänderter bekannter Host-Key blockiert die Verbindung.
@@ -14,9 +14,11 @@ Stand: 08.10.2026, private Vorabversion 0.0.8. macOS Apple Silicon ist das lokal
 
 Passwort, Schlüssel mit optionaler Passphrase, expliziter SSH-Agent und Keyboard-Interactive werden unterstützt. Secrets werden in VS Code SecretStorage abgelegt, nicht in Webview-Nachrichten oder Profilexporten. Windows-Agent und konkrete MFA-/Hardwareverfahren benötigen eigene Abnahmen.
 
+Version 0.0.9 migriert alte `xscp`-Einstellungen automatisch nach `filetandem`; bereits gesetzte neue Werte bleiben erhalten. Für Commander-Tasten in den VS-Code-Einstellungen nach `@id:filetandem.commanderKeys` suchen. Alte Befehl-IDs bleiben für eigene Tastenkürzel kompatibel. Die Extension-ID bleibt vorerst gleich; nach dem Update offene Remote-Editoren erneut aus dem Dateimanager öffnen.
+
 ## Installation prüfen und aktualisieren
 
-Nach der Installation in der Erweiterungsansicht den Titel **FileTandem – SFTP & SCP File Manager** und Version **0.0.8** prüfen. Den Dateimanager öffnen und eine eigene kleine Testdatei in einen dafür angelegten Serverordner hochladen, wieder unter anderem lokalen Namen herunterladen und den Inhalt vergleichen. Erst danach mit wichtigen Dateien arbeiten. Die Queue muss den Auftrag als erfolgreich anzeigen; bei einem Fehler zunächst die Diagnose unten verwenden.
+Nach der Installation in der Erweiterungsansicht den Titel **FileTandem – SFTP & SCP File Manager** und Version **0.0.9** prüfen. Den Dateimanager öffnen und eine eigene kleine Testdatei in einen dafür angelegten Serverordner hochladen, wieder unter anderem lokalen Namen herunterladen und den Inhalt vergleichen. Erst danach mit wichtigen Dateien arbeiten. Die Queue muss den Auftrag als erfolgreich anzeigen; bei einem Fehler zunächst die Diagnose unten verwenden.
 
 Für ein Update laufende Transfers abschließen oder bewusst abbrechen, die neue VSIX über **Aus VSIX installieren…** installieren und den angebotenen Reload ausführen. Version und Testtransfer erneut prüfen. Ein Reload nimmt unterbrochene Aufträge nicht automatisch wieder auf. Eine ältere geprüfte VSIX aufbewahren; ein Downgrade ist keine Zusage der Kompatibilität zukünftiger Profil-/Journalformate.
 
@@ -74,6 +76,8 @@ XSCP_DOCKER_CONTEXT=colima-xscp npm run fixtures:stop
 Voraussetzungen und Start des isolierten Colima-Profils stehen in der [Fixture-Anleitung](../test/fixtures/ssh/README.md) im Quellrepository. Nach den Tests mit `fixtures:stop` eigene Container entfernen und ein eigens gestartetes Colima-Profil mit `colima stop xscp` wieder stoppen. Der Ordner `test/` wird nicht in die VSIX aufgenommen; diese Wartungsschritte gelten nur für das Quellrepository.
 
 Gezielt nur Fehler-/Integritätsfälle erneut prüfen: mit laufenden eigenen Fixtures `XSCP_DOCKER_CONTEXT=colima-xscp npm run test:faults`. Der Runner prüft Protokoll-/Symlinkregeln, Netzabbruch, Finalisierungsabbruch, volle Datenträger und Restart/Reload/zwei Fenster auf Mindestversion und Stable. Er versetzt den Desktop nicht in Ruhezustand; die erfolgreiche manuelle macOS-Abnahme ist in [M6-03](nachweise/M6-03.md) dokumentiert. Ergebnisse unter `out/m6/faults/results.json`.
+
+Seit 0.0.9 führt der M6-Runner zusätzlich den installierten Migrationstest aus (24 Schritte auf macOS). `npm run test:migration` kann ihn separat in eigenen Profilen wiederholen.
 
 Der M6-Runner erzeugt `out/m6/regression.json` und Schrittlogs; der Benchmark erzeugt `out/m6/performance.json`. Stable wird isoliert unter `.vscode-test/` heruntergeladen. `XSCP_STABLE_VERSION` erlaubt einen reproduzierbaren konkreten Stable-Stand; `XSCP_STABLE_EXECUTABLE` eine bereits vorhandene Testinstallation. Die Runner verändern keine persönlichen VS-Code- oder SSH-Einstellungen. Protokolltests mit Host-Key-Rotation und Benchmarks müssen nacheinander laufen. Benchmarks benötigen mindestens 5 GiB freien Platz im Fixture-Dateisystem und etwa 10 GiB lokalen Arbeitsraum; Auftragsgröße 4 GiB plus 1 MiB, 1.000 kleine Dateien und 10.000 Einträge.
 

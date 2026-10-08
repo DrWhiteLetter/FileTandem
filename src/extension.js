@@ -1,3 +1,4 @@
+import { migrateNamespace } from './application/namespace-migration.js';
 import { registerLocalEditorCopies } from './vscode/local-editor-copy.js';
 import { registerSessionEditor } from './vscode/session-editor.js';
 let transferLifecycle;
@@ -18,7 +19,8 @@ import { registerHostKeyProof } from './vscode/host-key-proof.js';
 import { executionLocation, registerLocalProof, verifyLocalFile } from './vscode/local-proof.js';
 
 /** @param {import('vscode').ExtensionContext} context */
-export function activate(context) {
+export async function activate(context) {
+  await migrateNamespace(context,vscode.workspace,vscode.ConfigurationTarget.Global);
   const profileUI=registerProfiles(context);
   profileUI.credentials=credentialProvider(context,profileUI);
   registerLocalProof(context);
@@ -33,13 +35,13 @@ export function activate(context) {
       try { return await profileUI.sessions.connect(profile,{signal:controller.signal}); } finally {cancellation.dispose();}
     });
   };
-  profileUI.command('xscp.connectProfile',async id => {const p=typeof id === 'string' ? profileUI.profiles.get(id) : id?.profileId ? profileUI.profiles.get(id.profileId) : await profileUI.choose(); if (p) { await profileUI.connect(p); return profileUI.open(p); }});
+  profileUI.command('filetandem.connectProfile',async id => {const p=typeof id === 'string' ? profileUI.profiles.get(id) : id?.profileId ? profileUI.profiles.get(id.profileId) : await profileUI.choose(); if (p) { await profileUI.connect(p); return profileUI.open(p); }});
   profileUI.disconnect=async profile => {
     const jobs=profileUI.transfers.engine.queue.list(profile.id).filter(j => ['queued','running'].includes(j.state));
     if (jobs.length && await vscode.window.showWarningMessage(`${jobs.length} laufende oder wartende Transfers werden abgebrochen.`,{modal:true,detail:'Eigene Teil-Dateien bleiben für geprüfte Fortsetzung oder Bereinigung erhalten. Andere Profile bleiben verbunden.'},'Verbindung trennen')!=='Verbindung trennen') return false;
     profileUI.guard();for (const job of jobs) profileUI.transfers.engine.queue.cancel(job.id);await profileUI.sessions.disconnect(profile.id);return true;
   };
-  profileUI.command('xscp.disconnectProfile',async id => {const p=typeof id === 'string' ? profileUI.profiles.get(id) : id?.profileId ? profileUI.profiles.get(id.profileId) : await profileUI.choose(); if (p) return profileUI.disconnect(p);});
+  profileUI.command('filetandem.disconnectProfile',async id => {const p=typeof id === 'string' ? profileUI.profiles.get(id) : id?.profileId ? profileUI.profiles.get(id.profileId) : await profileUI.choose(); if (p) return profileUI.disconnect(p);});
   const transfers=registerTransfers(context,profileUI);transferLifecycle=transfers;
   const editorCopies=registerLocalEditorCopies(context,profileUI);profileUI.editorCopies=editorCopies;
   const editor=registerSessionEditor(context,profileUI);profileUI.editor=editor;
@@ -47,6 +49,10 @@ export function activate(context) {
   registerManager(context);
   const manager = registerBrowser(context,profileUI);
   registerConnectionsView(context,profileUI);
+  // Existing user keybindings can still call the old command IDs.
+  for (const {command} of context.extension.packageJSON.contributes.commands) {
+    if (command.startsWith('filetandem.')) context.subscriptions.push(vscode.commands.registerCommand(command.replace(/^filetandem\./,'xscp.'),(...args) => vscode.commands.executeCommand(command,...args)));
+  }
   return {
     manager,
     transfers,

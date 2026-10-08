@@ -60,7 +60,7 @@ export async function verifyLocalFile(context, uri) {
 /** @param {import('vscode').ExtensionContext} context */
 export function registerLocalProof(context) {
   const output = vscode.window.createOutputChannel('FileTandem: Ausführungsort');
-  context.subscriptions.push(output, vscode.commands.registerCommand('xscp.verifyLocalFile', async () => {
+  context.subscriptions.push(output, vscode.commands.registerCommand('filetandem.verifyLocalFile', async () => {
     try {
       if (!executionLocation(context).local) {
         throw new Error('FileTandem läuft nicht im lokalen UI Extension Host. Bitte lokal installieren und remote.extensionKind prüfen.');
