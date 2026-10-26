@@ -1,4 +1,5 @@
 export const english={
+  "Ordner abgleichen …": "Synchronize folders …",
   " Neue Starts pausiert; aktive Transfers laufen weiter.": " New starts paused; active transfers continue.",
   " Remote-Workspace gehört nicht zur lokalen Dateiquelle.": " The remote workspace is not a local file source.",
   "$(lock) FileTandem: Schreibgeschützt": "$(lock) FileTandem: Read-only",

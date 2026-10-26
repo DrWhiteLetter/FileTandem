@@ -46,6 +46,7 @@ test('Real browser selection survives refresh; per-pane filters, symlinks and pr
   const row=doc.querySelector('.pane tbody tr');await act(() => row.click());assert.equal(row.getAttribute('aria-selected'),'true');
   await render();assert.equal(doc.querySelector('.pane tbody tr').getAttribute('aria-selected'),'true');
   const button=text => [...doc.querySelectorAll('button')].find(b => b.textContent===text);
+  assert.equal(button('Ordner abgleichen …').disabled,false);await act(() => button('Ordner abgleichen …').click());assert.equal(messages.at(-1).type,'synchronize');
   await act(() => button('Hochladen →').click());assert.equal(messages.at(-1).type,'transfer');assert.equal(messages.at(-1).side,'local');assert.deepEqual(JSON.parse(JSON.stringify(messages.at(-1).ids)),['/tmp/a.txt']);
   await act(() => doc.querySelector('.pane:last-child tbody tr').click());await act(() => button('Download nach …').click());assert.equal(messages.at(-1).destination,'choose');assert.equal(messages.at(-1).side,'remote');
   model.queue=[{id:'running',source:'/a',target:'/b',direction:'upload',state:'running',bytes:12,rate:10},{id:'failed',source:'/a',target:'/c',direction:'upload',protocol:'sftp',attempt:{part:'/own-part'},state:'failed',bytes:0,rate:0},{id:'success',source:'/a',target:'/d',direction:'upload',state:'completed',bytes:12,rate:10}];await render();
@@ -84,6 +85,10 @@ test('Real browser selection survives refresh; per-pane filters, symlinks and pr
   await act(() => {Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype,'value').set.call(filter,'link');filter.dispatchEvent(new dom.window.Event('input',{bubbles:true}));});
   assert.equal(doc.querySelectorAll('.pane:first-child tbody tr').length,1);assert.equal(doc.querySelectorAll('.pane:last-child tbody tr').length,1);
   await act(() => doc.querySelector('button[aria-label="Lokal: Pfadfavorit"]').click());assert.ok(saved.panes.local.favorites.includes('/tmp'));assert.equal(saved.panes.remote.filter,'');
+  assert.equal(messages.at(-1).type,'pathFavorite');assert.equal(messages.at(-1).path,'/tmp');assert.equal(messages.at(-1).favorite,true);
+  model.pathFavorites={local:['/persisted'],remote:['/server-favorite']};await render();
+  assert.equal(doc.querySelector('select[aria-label="Lokal: Pfadfavoriten"] option:nth-child(2)').value,'/persisted');
+  assert.equal(doc.querySelector('select[aria-label="Remote: Pfadfavoriten"] option:nth-child(2)').value,'/server-favorite');
   await act(() => {Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype,'value').set.call(filter,'');filter.dispatchEvent(new dom.window.Event('input',{bubbles:true}));});
   model.local.entries=Array.from({length:10000},(_,i) => entry('file-'+String(i).padStart(5,'0')));await render();
   assert.equal(doc.querySelector('.pane table').getAttribute('aria-rowcount'),'10001');assert.ok(doc.querySelectorAll('.pane:first-child tr[data-entry-id]').length<80,'DOM stays bounded for 10,000 entries');

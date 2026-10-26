@@ -7,15 +7,18 @@ import { hasDesktopAccess } from '../application/access-policy.js';
 import { executionLocation } from './local-proof.js';
 import { createFolder,renameEntry } from '../application/file-operations.js';
 import { fileName } from '../domain/file-name.js';
-import { posix,join } from 'node:path';
+import path,{ posix,join } from 'node:path';
+import { planDirectorySync } from '../application/directory-sync.js';
 import { openRemoteFiles } from '../application/remote-files.js';
 import { LocalFiles,localFileUri,localPath,localParent,localStart } from '../adapters/local/files.js';
 import { DirectoryBrowser } from '../application/directory-browser.js';
 import { browserViewState } from '../shared/browser-view-state.js';
+import { pathFavorites } from '../application/path-favorites.js';
 import { browserRequest } from '../shared/browser-messages.js';
 export function registerBrowser(context,profileUI) {
   // The workbench must consume forwarded Commander keys instead of debugging.
   profileUI.command('filetandem.consumeCommanderKey',() => {});
+  const favorites=pathFavorites(context.globalState);
   const files=new LocalFiles();let handshakes=0,diagnostics=false;const views=new Set();
   profileUI.command('filetandem.copySelection',() => {
     profileUI.guard();if (!vscode.workspace.getConfiguration('filetandem').get('commanderKeys')) return;
@@ -28,7 +31,7 @@ export function registerBrowser(context,profileUI) {
     panel ??= vscode.window.createWebviewPanel('filetandem.browser','FileTandem',vscode.ViewColumn.One,{});
     panel.webview.options={enableScripts:true,localResourceRoots:[assets]};
     let alive=true;const recent=new Set();
-    const model=() => ({version:1,type:'browserModel',sessionId,diagnostics,locale:language(),profileId:profile?.ephemeral ? undefined:profile?.id,queue:profileUI.transfers.engine.queue.list(profile?.id),queuePaused:profileUI.transfers.engine.queue.paused,local:local.state,remote:remote.state,...browserSettings(key => vscode.workspace.getConfiguration('filetandem').get(key)),connection:profile ? {...profileUI.sessions.snapshot(profile.id),name:profile.name} : {state:'disconnected',name:'Kein Server'}});
+    const model=() => ({version:1,type:'browserModel',sessionId,diagnostics,pathFavorites:favorites.get(profile?.id),locale:language(),profileId:profile?.ephemeral ? undefined:profile?.id,queue:profileUI.transfers.engine.queue.list(profile?.id),queuePaused:profileUI.transfers.engine.queue.paused,local:local.state,remote:remote.state,...browserSettings(key => vscode.workspace.getConfiguration('filetandem').get(key)),connection:profile ? {...profileUI.sessions.snapshot(profile.id),name:profile.name} : {state:'disconnected',name:'Kein Server'}});
     const publish=() => {if (alive) {panel.title=profile ? `FileTandem · ${profile.name}`:'FileTandem';void panel.webview.postMessage(model());}};
     let start;try {start=localStart(restored.paths?.local ?? profile?.localPath);} catch {start=localStart();}
     const local=new DirectoryBrowser({start,parent:localParent,list:path => files.list(vscode.Uri.file(localPath(path))),onChange:publish});
@@ -72,6 +75,31 @@ export function registerBrowser(context,profileUI) {
       if (message.destination === 'choose') {const folders=await vscode.window.showOpenDialog({title:'Download nach',canSelectFolders:true,canSelectFiles:false,canSelectMany:false});if (!folders?.length) return;destination=localFileUri(folders[0]);}
       profileUI.guard();if (!alive) return;if (message.destination==='opposite' && destination!==(message.side==='local' ? remote.state.path:local.state.path)) throw new Error('Transferziel wurde gewechselt.');
       await profileUI.transfers.engine.submit(profile.id,message.side === 'local' ? 'upload':'download',selected.map(e => e.path),destination);
+    };
+    let syncing=false;
+    const synchronize=async () => {
+      if (syncing) throw new Error('Ein Abgleich läuft bereits.');
+      syncing=true;
+      try {
+        if (!profile || profileUI.sessions.snapshot(profile.id).state!=='connected' || local.state.status!=='ready' || remote.state.status!=='ready') throw new Error('Bitte verbinden und beide Ordner laden.');
+        const direction=await vscode.window.showQuickPick([{label:'Lokal → Remote',value:'upload'},{label:'Remote → Lokal',value:'download'}],{title:'FileTandem: Abgleichrichtung'});
+        if (!direction || !alive) return;
+        const roots={local:local.state.path,remote:remote.state.path},owner=profile,transport=profileUI.sessions.transport(profile.id);
+        const valid=() => {profileUI.guard();if (!alive || profile!==owner || local.state.path!==roots.local || remote.state.path!==roots.remote || profileUI.sessions.transport(owner.id)!==transport || !profileUI.sessions.matches(owner)) throw new Error('Abgleichziel wurde geändert; Vorschau erneut erstellen.');};
+        const remoteAdapter=await service();
+        const localAdapter={stat:p => files.stat(vscode.Uri.file(p)),listNoFollow:p => files.listNoFollow(p)};
+        const upload=direction.value==='upload';
+        const options={source:upload ? localAdapter:remoteAdapter,target:upload ? remoteAdapter:localAdapter,sourceRoot:upload ? roots.local:roots.remote,targetRoot:upload ? roots.remote:roots.local,sourcePath:upload ? path:posix,targetPath:upload ? posix:path,windowsTarget:!upload && process.platform==='win32'};
+        const plan=await planDirectorySync(options);valid();
+        if (!plan.operations.length) {await vscode.window.showInformationMessage(`Abgleich: keine Transfers erforderlich. Übersprungen: ${plan.skipped.length}. Vergleich nach Größe und Änderungszeit.`);return;}
+        const selected=await vscode.window.showQuickPick(plan.operations.map(operation => ({label:operation.relative,description:operation.kind==='directory' ? 'Ordner einschließlich Unterordnern':'Datei',picked:true,operation})),{title:`Abgleich: ${direction.label} · ${plan.skipped.length} übersprungen`,placeHolder:'Größe und Änderungszeit; keine Löschungen. Transfers auswählen.',canPickMany:true,ignoreFocusOut:true});
+        if (!selected?.length) return;valid();
+        const confirmed=await vscode.window.showWarningMessage('Ausgewählte Abgleich-Transfers starten?',{modal:true,detail:`${direction.label}\n${roots.local}\n${roots.remote}\n${selected.length} Auswahlen; Ordner rekursiv. Vergleich nach Größe und Änderungszeit, kein Inhaltsvergleich. Zusätzliche Zieldateien bleiben erhalten. Symlinks/Spezialdateien werden übersprungen. Bestehende Dateien verwenden die normalen Konfliktdialoge.`},'Transfers starten');
+        if (confirmed!=='Transfers starten') return;valid();
+        const fresh=await planDirectorySync(options);valid();
+        if (fresh.fingerprint!==plan.fingerprint) throw new Error('Dateien wurden seit der Vorschau geändert; Abgleich erneut starten.');
+        for (const {operation} of selected) {valid();await profileUI.transfers.engine.submit(owner.id,direction.value,[operation.source],operation.destination);}
+      } finally {syncing=false;}
     };
     let busy=false;
     const action=async message => {
@@ -127,6 +155,7 @@ export function registerBrowser(context,profileUI) {
       try {
         profileUI.guard();const browser=message.side === 'remote' ? remote : local;
         if (message.type === 'ready') {handshakes++;await Promise.all([local.refresh(),...(profile && profileUI.sessions.snapshot(profile.id).state === 'connected' ? [remote.refresh()] : [])]);publish();}
+        else if (message.type === 'pathFavorite') {await favorites.set(message.side,profile?.id,message.path,message.favorite);for (const view of views) view.publish();}
         else if (message.type === 'connect') {
           const chosen=await profileUI.choose();if (chosen && alive) {await profileUI.connect(chosen);if (!alive) return;profile=chosen;remoteFiles?.close();remoteTransport=undefined;opening=undefined;remote.history=[chosen.remotePath];remote.index=0;await remote.navigate(chosen.remotePath,{history:false});}
         } else if (message.type==='renderProof') {view.renderProof={rows:message.rows,height:message.height,rowHeight:message.rowHeight,scrollHeight:message.scrollHeight,theme:message.theme,focusColor:message.focusColor};}
@@ -146,6 +175,7 @@ export function registerBrowser(context,profileUI) {
           const uris=await vscode.window.showOpenDialog({defaultUri:vscode.Uri.file(localStart()),canSelectFiles:true,canSelectFolders:true,canSelectMany:true,title:'Dateien/Ordner hochladen'});
           if (uris?.length && alive) await profileUI.transfers.engine.submit(profile.id,'upload',uris.map(localFileUri),remote.state.path);
         }
+        else if (message.type === 'synchronize') await synchronize();
         else if (message.type === 'transfer') await transfer(message);
         else if (message.type === 'action') await action(message);
         else if (message.type === 'navigate') await browser.navigate(message.path);

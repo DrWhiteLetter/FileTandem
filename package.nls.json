@@ -37,5 +37,10 @@
   "filetandem.language.description": "Language of FileTandem UI and dialogs; auto follows VS Code. Manifest titles follow the VS Code language.",
   "connections.welcome": "No server profiles yet.\n[Add profile](command:filetandem.addProfile)\n[Quick connection](command:filetandem.quickConnect)\n[Open local file manager](command:filetandem.openManager)",
   "filetandem.consumeCommanderKey.title": "FileTandem: Handle Commander key",
-  "filetandem.copySelection.title": "FileTandem: Transfer selection"
+  "filetandem.copySelection.title": "FileTandem: Transfer selection",
+  "filetandem.showHiddenFiles.title": "Show Hidden Files",
+  "filetandem.demoScenario.title": "Demo Scenario",
+  "filetandem.editorPollInterval.title": "Editor Poll Interval",
+  "filetandem.commanderKeys.title": "Commander Keys",
+  "filetandem.language.title": "Language"
 }

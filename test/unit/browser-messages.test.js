@@ -10,3 +10,10 @@ test('browser requests isolate sessions and reject shell, secrets and forged ext
   const restored=browserViewState({version:1,profileId:'p1',password:'secret',split:999,panes:{local:{favorites:['/path'],sort:{column:'size',direction:'desc'}}}});
   assert.equal(restored.password,undefined);assert.equal(restored.split,50);assert.equal(restored.profileId,'p1');assert.deepEqual(restored.panes.local.sort,{column:'size',direction:'desc'});
 });
+
+test('sync requests carry no client-controlled paths or overwrite approvals',() => {
+  const request={version:1,type:'synchronize',sessionId:'session-a',id:'sync'};
+  assert.equal(browserRequest(request,'session-a'),true);
+  assert.equal(browserRequest({...request,path:'/forged'},'session-a'),false);
+  assert.equal(browserRequest(request,'session-b'),false);
+});
