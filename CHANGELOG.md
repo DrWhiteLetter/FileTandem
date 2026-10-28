@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.16 – 28.10.2026
+- Commander gezielt verfeinert: klare Aktionsgruppen, ruhige Dateiwerkzeuge, konsistente Abstände, kompakte Pfadnavigation und strukturierter Überwachungsstatus mit einer Stopp-Aktion.
+- Transferhistorie zeigt neueste Aufträge zuerst, vollständige Zielpfade als Tooltip, getrennte Status-/Aktionsbereiche und einen Hinweis auf fehlgeschlagene Aufträge. Der eingeklappte Zustand bleibt erhalten; bereits veröffentlichte Dateien bieten keine unnötige Teil-Datei-Bereinigung mehr an.
+- Filter lassen sich direkt zurücksetzen; Leer-, Lade-, Verbindungs- und Fehlerzustände bieten passende nächste Schritte. Fehler zeigen keine veraltete Dateiliste als aktuellen Inhalt.
+- Native Theme-Tokens, helle/dunkle Formulare, sichtbare Tastaturfokusse, bedienbare Kontextmenüs und Umbruch in schmalen Ansichten verbessert. Keine neuen Abhängigkeiten.
+- Isolierte VS-Code-Vorschau mit synthetischen Daten für Theme-/Layoutkontrollen ergänzt; Bedienung und Abnahme siehe `docs/ui-feinschliff.md`.
+
 ## 0.0.15 – 27.10.2026
 - Start der Überwachung spiegelt den lokalen Ordner auf die Gegenstelle: fehlende/abweichende Dateien übertragen, überzählige Remote-Einträge löschen, leere Ordner und Typkonflikte abgleichen.
 - Lokale Löschungen einschließlich Unterordnern übernehmen; Remote-Ansicht automatisch aktualisieren und gelöschte Einträge im Status zählen.

@@ -1,6 +1,6 @@
 # FileTandem
 
-Private Vorabversion **0.0.15** einer VS-Code-Desktop-Erweiterung für SFTP und SCP. Die Commander-Ansicht bietet lokale und entfernte Dateiverwaltung, rekursive Uploads/Downloads, Transferqueue, geprüfte SFTP-Fortsetzung und kontrollierte Remote-Bearbeitung. M0 bis M5 sind umgesetzt; M6 ergänzt die lokale Release-Härtung. Windows/Linux und vollständige 1.0-Freigabe bleiben offen. [Installation, Quickstart und Troubleshooting](docs/release-anleitung.md) · [Changelog](CHANGELOG.md) · [M6-Abnahme](docs/nachweise/M6-Lokal.md).
+Private Vorabversion **0.0.16** einer VS-Code-Desktop-Erweiterung für SFTP und SCP. Die Commander-Ansicht bietet lokale und entfernte Dateiverwaltung, rekursive Uploads/Downloads, Transferqueue, geprüfte SFTP-Fortsetzung und kontrollierte Remote-Bearbeitung. M0 bis M5 sind umgesetzt; M6 ergänzt die lokale Release-Härtung. Windows/Linux und vollständige 1.0-Freigabe bleiben offen. [Installation, Quickstart und Troubleshooting](docs/release-anleitung.md) · [Changelog](CHANGELOG.md) · [M6-Abnahme](docs/nachweise/M6-Lokal.md).
 
 Der Projektordner heißt `FileTandem`; Paketierung erzeugt `out/FileTandem-<Version>.vsix` mit passender `.sha256`-Datei. Ältere lokale VSIX-Dateien wurden entsprechend umbenannt; historische Nachweise behalten ihre damaligen Dateinamen. Die technische Extension-ID bleibt bis zur Publisher-Festlegung erhalten.
 

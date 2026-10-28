@@ -1,6 +1,6 @@
 import globals from 'globals';
 export default [
-  { ignores: ['node_modules/**', 'dist/**', '.vscode-test/**', 'test/fixtures/ssh/.runtime/**'] },
+  { ignores: ['node_modules/**', 'dist/**', 'out/**', '.vscode-test/**', 'test/fixtures/ssh/.runtime/**'] },
   { files: ['**/*.{js,mjs,cjs,jsx}'], languageOptions: { ecmaVersion: 2022, sourceType: 'module', globals: globals.node },
     rules: { 'no-undef': 'error', 'no-unused-vars': ['error', { argsIgnorePattern: '^_', caughtErrors: 'none' }],
       'no-unreachable': 'error', 'no-constant-condition': ['error', { checkLoops: false }], 'no-dupe-keys': 'error', 'constructor-super': 'error' } },

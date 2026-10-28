@@ -2,7 +2,7 @@
   "name": "xscp",
   "displayName": "FileTandem \u2013 SFTP & SCP File Manager",
   "description": "%description%",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "private": true,
   "publisher": "xscp-dev",
   "type": "module",
@@ -409,7 +409,8 @@
     "test:browser:installed": "node scripts/test-browser-installed.mjs",
     "test:transfers": "node --test --test-concurrency=1 test/integration/transfers.test.js",
     "test:protocols": "node --test --test-concurrency=1 test/integration/host-keys.test.js test/integration/authentication.test.js test/integration/sftp-streaming.test.js test/integration/scp.test.js test/integration/scp-engine.test.js test/integration/transfers.test.js test/integration/resume.test.js test/integration/transfer-auth.test.js test/integration/browser.test.js",
-    "test:native:f5": "node scripts/test-native-f5.mjs"
+    "test:native:f5": "node scripts/test-native-f5.mjs",
+    "preview:ui": "node scripts/preview-ui.mjs"
   },
   "dependencies": {
     "react": "19.3.0",

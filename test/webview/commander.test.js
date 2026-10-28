@@ -45,7 +45,7 @@ test('Real browser selection survives refresh; per-pane filters, symlinks and pr
   await render();const doc=dom.window.document;assert.ok(doc.body.textContent.includes('Symlink → target'));assert.ok(!doc.body.textContent.includes('.hidden'));
   const row=doc.querySelector('.pane tbody tr');await act(() => row.click());assert.equal(row.getAttribute('aria-selected'),'true');
   await render();assert.equal(doc.querySelector('.pane tbody tr').getAttribute('aria-selected'),'true');
-  const button=text => [...doc.querySelectorAll('button')].find(b => b.textContent===text);
+  const button=text => [...doc.querySelectorAll('button')].find(b => b.textContent.trim()===text);
   assert.equal(button('Ordner abgleichen …').disabled,false);await act(() => button('Ordner abgleichen …').click());assert.equal(messages.at(-1).type,'synchronize');
   await act(() => button('Hochladen →').click());assert.equal(messages.at(-1).type,'transfer');assert.equal(messages.at(-1).side,'local');assert.deepEqual(JSON.parse(JSON.stringify(messages.at(-1).ids)),['/tmp/a.txt']);
   await act(() => doc.querySelector('.pane:last-child tbody tr').click());await act(() => button('Download nach …').click());assert.equal(messages.at(-1).destination,'choose');assert.equal(messages.at(-1).side,'remote');
@@ -113,10 +113,10 @@ test('automatic upload mode is visible, stops explicitly and blocks manual trans
   const entry={id:'/local/file',path:'/local/file',name:'file',kind:'file',size:4,modified:0,mode:0o644};
   const model={version:1,type:'browserModel',sessionId:'watch-session',locale:'de',commanderKeys:true,connection:{state:'connected',protocol:'sftp'},local:{path:'/local',entries:[entry],status:'ready'},remote:{path:'/remote',entries:[],status:'ready'}};
   const render=()=>act(()=>dom.window.dispatchEvent(new dom.window.MessageEvent('message',{data:dom.window.JSON.parse(JSON.stringify(model))})));
-  const doc=dom.window.document,button=text=>[...doc.querySelectorAll('button')].find(b=>b.textContent===text);await render();
+  const doc=dom.window.document,button=text=>[...doc.querySelectorAll('button')].find(b=>b.textContent.trim()===text);await render();
   await act(()=>button('Remote-Ordner aktuell halten …').click());assert.equal(messages.at(-1).type,'autoUploadStart');
   model.autoUpload={active:true,starting:false,localRoot:'/local',remoteRoot:'/remote',uploaded:2,deleted:3};await render();
-  assert.ok(doc.body.textContent.includes('Gelöschte Einträge: 3'));assert.ok(doc.body.textContent.includes('Automatischer Upload aktiv'));assert.ok(doc.body.textContent.includes('/local → /remote'));
+  assert.ok(doc.body.textContent.includes('Gelöschte Einträge: 3'));assert.ok(doc.body.textContent.includes('Automatischer Upload aktiv'));assert.equal(doc.querySelector('.watch-paths > span[title]').title,'/local');assert.equal(doc.querySelectorAll('.watch-paths > span[title]')[1].title,'/remote');assert.equal([...doc.querySelectorAll('button')].filter(b=>b.textContent.trim()==='Überwachung stoppen').length,1);
   assert.equal(button('Ordner abgleichen …').disabled,true);assert.equal(button('Dateien/Ordner hochladen …').disabled,true);
   const row=doc.querySelector('tr[data-entry-id]');await act(()=>row.click());assert.equal(button('Hochladen →').disabled,true);assert.equal(button('← Herunterladen').disabled,true);assert.equal(row.draggable,false);
   assert.equal(doc.querySelector('.pathbar input').disabled,true);
@@ -124,4 +124,52 @@ test('automatic upload mode is visible, stops explicitly and blocks manual trans
   await act(()=>button('Überwachung stoppen').click());assert.equal(messages.at(-1).type,'autoUploadStop');
   model.autoUpload={active:false,starting:false,error:'Verbindung unterbrochen'};await render();assert.ok(doc.querySelector('[role=alert]').textContent.includes('Verbindung unterbrochen'));assert.equal(button('Ordner abgleichen …').disabled,false);assert.equal(button('Hochladen →').disabled,false);
   model.locale='en';model.autoUpload={active:true,localRoot:'/local',remoteRoot:'/remote',uploaded:2,deleted:3};await render();assert.ok(doc.body.textContent.includes('Automatic upload active'));assert.ok(button('Stop monitoring'));dom.window.close();
+});
+
+async function polishFixture(t,overrides={}) {
+  const dom=new JSDOM('<div id="root"></div>',{runScripts:'outside-only',url:'https://filetandem.test'});
+  dom.window.MessageChannel=class {constructor(){this.port1={onmessage:null};this.port2={postMessage:()=>setTimeout(()=>this.port1.onmessage?.(),0)};}};
+  dom.window.IS_REACT_ACT_ENVIRONMENT=true;dom.window.eval(result.outputFiles.find(f=>f.path.endsWith('.js')).text);
+  const messages=[];let saved;await dom.window.testMountBrowser({getState:()=>overrides.saved,setState:v=>{saved=v;},postMessage:v=>messages.push(v)},'polish');
+  t.after(()=>dom.window.close());const act=action=>dom.window.testAct(action),doc=dom.window.document;
+  const entry=name=>({id:'/local/'+name,path:'/local/'+name,name,kind:'file',size:0,modified:0,mode:0o644});
+  const model={version:1,type:'browserModel',sessionId:'polish',locale:'de',connection:{id:'test',state:'connected',protocol:'sftp'},local:{path:'/local',status:'ready',entries:[entry('test.txt'),entry('.hidden')],canBack:false,canForward:false},remote:{path:'/remote',status:'ready',entries:[]},queue:[],...overrides.model};
+  const render=()=>act(()=>dom.window.dispatchEvent(new dom.window.MessageEvent('message',{data:dom.window.JSON.parse(JSON.stringify(model))})));
+  await render();return {dom,doc,act,model,messages,render,saved:()=>saved};
+}
+
+test('filter recovery, hidden-only folders and unavailable directory states remain actionable',async t=>{
+  const {doc,dom,act,model,messages,render}=await polishFixture(t);
+  const filter=doc.querySelector('input[aria-label="Lokal: Namensfilter"]');
+  await act(()=>{Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype,'value').set.call(filter,'missing');filter.dispatchEvent(new dom.window.Event('input',{bubbles:true}));});
+  assert.ok(doc.querySelector('.pane .list-message').textContent.includes('Keine passenden Dateien.'));
+  await act(()=>doc.querySelector('button[aria-label="Lokal: Filter zurücksetzen"]').click());
+  assert.equal(filter.value,'');assert.equal(doc.activeElement,filter);assert.equal(doc.querySelectorAll('.pane:first-child tr[data-entry-id]').length,1);
+  model.local.entries=model.local.entries.filter(e=>e.name.startsWith('.'));await render();
+  const reveal=[...doc.querySelectorAll('button')].find(b=>b.textContent==='Versteckte Dateien anzeigen');assert.ok(reveal);await act(()=>reveal.click());assert.equal(doc.querySelectorAll('.pane:first-child tr[data-entry-id]').length,1);
+  model.remote.status='error';model.remote.error='Keine Berechtigung für diesen Ordner.';await render();
+  assert.equal(doc.querySelector('.pane:last-child table').hidden,true);assert.equal(doc.querySelector('.pane:last-child footer').textContent,'Dateiliste nicht verfügbar');
+  const retry=[...doc.querySelectorAll('button')].find(b=>b.textContent==='Erneut versuchen');await act(()=>retry.click());assert.equal(messages.at(-1).type,'refresh');assert.equal(messages.at(-1).side,'remote');
+  model.remote.status='loading';await render();assert.equal(doc.querySelector('.pane:last-child .file-scroll').getAttribute('aria-busy'),'true');
+  assert.equal(doc.querySelector('button[aria-label="Lokal: Zurück"]').disabled,true);
+});
+
+test('history is newest first, collapse persists and published files have no partial cleanup action',async t=>{
+  const {doc,act,model,render,saved}=await polishFixture(t);
+  const job=(id,state,extra={})=>({id,state,source:'/source/'+id,target:'/target/'+id,direction:'upload',bytes:0,rate:0,...extra});
+  model.queue=[job('old','completed',{committed:true,attempt:{part:'/old.part'}}),job('failed','failed',{attempt:{part:'/failed.part'}}),job('new','running')];await render();
+  assert.equal(doc.querySelector('.transfer-name').textContent,'new');assert.equal([...doc.querySelectorAll('.queue button')].filter(b=>b.textContent==='Teil-Datei bereinigen').length,1);
+  assert.ok(doc.querySelector('.queue-toggle').textContent.includes('1 fehlgeschlagen'));
+  await act(()=>doc.querySelector('.queue-toggle').click());assert.equal(saved().queueOpen,false);assert.equal(doc.querySelector('#transfer-content'),null);
+  await render();assert.equal(doc.querySelector('.queue-toggle').getAttribute('aria-expanded'),'false');
+});
+
+test('keyboard context menu skips disabled items during monitoring and restores row focus',async t=>{
+  const {doc,dom,act,model,render}=await polishFixture(t);
+  model.autoUpload={active:true,localRoot:'/local',remoteRoot:'/remote',uploaded:0,deleted:0};await render();
+  const row=doc.querySelector('tr[data-entry-id]');await act(()=>row.focus());
+  await act(()=>row.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'F10',shiftKey:true,bubbles:true})));
+  assert.equal(doc.activeElement.disabled,false);assert.equal(doc.activeElement.textContent,'Öffnen');
+  await act(()=>doc.activeElement.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
+  assert.equal(doc.activeElement,row);assert.equal(doc.querySelector('[role="menu"]'),null);
 });

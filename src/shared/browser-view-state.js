@@ -1,6 +1,7 @@
 export function browserViewState(raw) {
-  const state={version:1,paths:{},split:50,panes:{}};
+  const state={version:1,paths:{},split:50,queueOpen:true,panes:{}};
   if (raw?.version !== 1) raw={};
+  if (typeof raw.queueOpen==='boolean') state.queueOpen=raw.queueOpen;
   if (typeof raw.profileId === 'string' && /^[a-zA-Z0-9-]{1,64}$/.test(raw.profileId)) state.profileId=raw.profileId;
   for (const side of ['local','remote']) {
     const value=raw.panes?.[side] ?? {};

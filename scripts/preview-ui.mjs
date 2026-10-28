@@ -1,0 +1,16 @@
+import { spawn,spawnSync } from 'node:child_process';
+import { mkdir,writeFile,copyFile,cp } from 'node:fs/promises';
+import { resolve,join } from 'node:path';
+const executable=process.env.VSCODE_TEST_EXECUTABLE ?? '/Applications/Visual Studio Code.app/Contents/MacOS/Code';
+const root=resolve('out/ui-preview'),harness=join(root,'extension'),user=join(root,'user');
+const built=spawnSync(process.execPath,['scripts/build.mjs'],{stdio:'inherit'});if(built.status!==0)process.exit(built.status ?? 1);
+await mkdir(harness,{recursive:true});await mkdir(join(user,'User'),{recursive:true});await mkdir(join(root,'extensions'),{recursive:true});
+await cp('dist',join(harness,'dist'),{recursive:true});await copyFile('test/extension/ui-preview.cjs',join(harness,'main.cjs'));
+await writeFile(join(harness,'package.json'),JSON.stringify({name:'ui-preview',publisher:'filetandem-test',version:'0.0.1',engines:{vscode:'^1.140.0'},main:'main.cjs',activationEvents:['onStartupFinished']}));
+await writeFile(join(harness,'control.json'),JSON.stringify({theme:'Default Dark Modern',scenario:'watch'}));
+await writeFile(join(user,'User/settings.json'),JSON.stringify({'workbench.startupEditor':'none','window.restoreWindows':'none','security.workspace.trust.enabled':false,'workbench.colorTheme':'Default Dark Modern','window.zoomLevel':0,'workbench.activityBar.location':'hidden','workbench.statusBar.visible':false}));
+const env=Object.fromEntries(Object.entries(process.env).filter(([key])=>!key.startsWith('VSCODE_')&&key!=='ELECTRON_RUN_AS_NODE'));
+const child=spawn(executable,['--user-data-dir',user,'--extensions-dir',join(root,'extensions'),'--extensionDevelopmentPath='+harness,'--new-window','--skip-welcome','--skip-release-notes'],{env,stdio:'ignore'});
+process.once('SIGINT',()=>child.kill('SIGTERM'));process.once('SIGTERM',()=>child.kill('SIGTERM'));
+child.on('error',error=>{console.error(error);process.exitCode=1;});
+console.log('Isolierte VS-Code-Vorschau. Szenario/Theme: '+join(harness,'control.json')+'; Layoutmessung: '+join(harness,'probe.json'));
