@@ -305,3 +305,7 @@ M0-01 bis M0-09 sind abgeschlossen. Beide Protokollwege sind tragfähig, der lok
 Nächste Arbeit: M1-01 – Module und Qualitätsbefehle strukturieren, vorhandene M0-Adapter übernehmen, anschließend Manifest/Mock-Commander/CI ergänzen. Keine weitere technische Grundsatzfreigabe ist dafür erforderlich. Windows/Linux/Agent, größere Dateien, produktive Transferfinalisierung und vollständige Bedienabnahme bleiben den fest zugeordneten M1–M6-Items vorbehalten.
 
 Vor öffentlichem Release noch erforderlich: finaler Produktname/Identifier, Umsetzung der gewählten MIT-Lizenz und ein tatsächlich verfügbarer Publisher. Diese Punkte werden erst dann entscheidend; die technische Umsetzung kann mit dem Arbeitstitel beginnen.
+
+## Ergänzung vom 26.10.2026: automatischer Upload
+
+Der bisher nach 1.0 eingeordnete Upload lokaler Änderungen wird auf ausdrücklichen Nutzerwunsch vorgezogen: „Remote-Ordner aktuell halten …“ überwacht lokale gespeicherte Dateiänderungen mit fester Ordnerzuordnung und Sperre manueller Transfers für dasselbe Profil. Der manuelle „Ordner abgleichen …“-Befehl bleibt erhalten. Keine Löschsynchronisierung und kein automatischer Wiederanlauf. Die ursprüngliche 1.0-Abgrenzung oben beschreibt den bisherigen Meilensteinumfang; die Zusatzfunktion und ihre Testgrenzen sind in [Automatischer Upload](docs/automatischer-upload.md) dokumentiert.

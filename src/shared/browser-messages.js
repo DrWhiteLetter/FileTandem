@@ -15,7 +15,7 @@ export function browserRequest(value,sessionId) {
   } else if (value.type==='renderProof') {keys.push('rows','height','rowHeight','scrollHeight','theme','focusColor');if (!Number.isInteger(value.rows) || value.rows<0 || value.rows>10000 || ![value.height,value.rowHeight,value.scrollHeight].every(n => Number.isFinite(n) && n>=0 && n<=1000000) || !['vscode-light','vscode-dark','vscode-high-contrast','vscode-high-contrast-light'].includes(value.theme) || typeof value.focusColor!=='string' || value.focusColor.length>64) return false;
   } else if (value.type === 'queuePause') {keys.push('paused');if (typeof value.paused !== 'boolean') return false;}
   else if (value.type === 'queueAction') {keys.push('action','ids');if (!['cancel','retry','resume','cleanup'].includes(value.action) || (value.action==='cleanup' && value.ids?.length!==1) || !Array.isArray(value.ids) || !value.ids.length || value.ids.length > 1000 || value.ids.some(id => !token(id)) || new Set(value.ids).size !== value.ids.length) return false;}
-  else if (!['synchronize','ready','connect','newSession','disconnect','reconnect','selectUpload'].includes(value.type)) return false;
+  else if (!['autoUploadStart','autoUploadStop','synchronize','ready','connect','newSession','disconnect','reconnect','selectUpload'].includes(value.type)) return false;
   return Object.keys(value).length === keys.length && Object.keys(value).every(k => keys.includes(k));
 }
 export function browserResponse(value,sessionId) {

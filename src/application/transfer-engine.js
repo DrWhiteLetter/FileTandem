@@ -7,13 +7,28 @@ import { TransferQueue } from './transfer-queue.js';import { discoverTree } from
 import { serverIdentity } from '../adapters/ssh/host-keys.js';
 export class TransferEngine {
   constructor({sessions,profiles,choose,guard=() => {},onChange=() => {}}) {
-    this.ready=Promise.resolve();this.sessions=sessions;this.profiles=profiles;this.guard=guard;this.local=new LocalFiles();this.conflicts=new ConflictRules(choose);
+    this.autoUploads=new Map();this.autoJobs=new Map();this.ready=Promise.resolve();this.sessions=sessions;this.profiles=profiles;this.guard=guard;this.local=new LocalFiles();this.conflicts=new ConflictRules(choose);
     this.queue=new TransferQueue({run:(j,s,p) => this.run(j,s,p),onChange});
   }
   key(job,path) {if (job.direction === 'upload') return 'remote:'+job.server+':'+posix.normalize(path);const local=resolve(path).replaceAll('\\','/');return 'local:'+(process.platform === 'win32' ? local.toLowerCase():local);}
-  async submit(profileId,direction,paths,destination,{reviewedReplacement}={}) {
+  assertManual(profileId) {if (this.autoUploads.has(profileId)) throw new Error('Automatischer Upload aktiv; zuerst die Überwachung stoppen.');}
+  beginAutoUpload(profileId,permission) {
+    this.guard();this.assertManual(profileId);
+    if (this.queue.list(profileId).some(job => ['queued','running'].includes(job.state))) throw new Error('Bitte laufende Transfers zuerst abschließen oder abbrechen.');
+    this.autoUploads.set(profileId,permission);
+  }
+  endAutoUpload(profileId,permission) {
+    if (this.autoUploads.get(profileId)!==permission) return;
+    this.autoUploads.delete(profileId);
+    for (const [id,owner] of this.autoJobs) if (owner===permission) {const job=this.queue.list(profileId).find(job => job.id===id);if (job && ['queued','running'].includes(job.state)) this.queue.cancel(id);this.autoJobs.delete(id);}
+  }
+  async submit(profileId,direction,paths,destination,{reviewedReplacement,automatic}={}) {
     if (reviewedReplacement!==undefined && (direction!=='upload' || paths?.length!==1 || !/^[a-f0-9]{64}$/.test(reviewedReplacement))) throw new Error('Ungültige geprüfte Ersetzung.');
     await this.ready;this.guard();if (!['upload','download'].includes(direction) || !Array.isArray(paths) || !paths.length || paths.length > 1000) throw new Error('Ungültige Transferauswahl.');
+    const authorized=() => {
+      if (!automatic) this.assertManual(profileId);
+      else {if (direction!=='upload' || this.autoUploads.get(profileId)!==automatic) throw new Error('Überwachung wurde beendet.');automatic.validate();}
+    };authorized();
     const profile=this.profiles.get(profileId);
     paths=paths.map(direction === 'upload' ? localPath:p => pathFor(p,profile.protocol));destination=direction === 'upload' ? pathFor(destination,profile.protocol):localPath(destination);
     if (this.sessions.matches && !this.sessions.matches(profile)) throw new Error('Profil wurde geändert; bitte erneut verbinden.');
@@ -27,12 +42,20 @@ export class TransferEngine {
         if (profile.protocol === 'scp') pathFor(direction === 'upload' ? target:node.source,profile.protocol);
         const parent=node.relative ? parents.get(posix.dirname(node.relative) === '.' ? '':posix.dirname(node.relative)):undefined;
         const job={id,batchId,profileId,server,direction,source:node.source,target,kind:node.kind,metadata:node.metadata,profileKey:profileIdentity(profile),protocol:profile.protocol,...(reviewedReplacement && node.kind==='file' && !node.relative ? {reviewedReplacement}:{}),parentId:parent,name:node.relative ? posix.basename(node.relative):sourceBase(path)};
-        job.lockKey=this.key(job,target);this.queue.add(job);ids.push(id);if (node.kind === 'directory') parents.set(node.relative,id);
-      }} catch {const job={id:randomUUID(),batchId,profileId,server,direction,source:path,target:root,kind:'error'};job.lockKey=this.key(job,root);this.queue.add(job);ids.push(job.id);}
+        authorized();if (automatic) {job.automatic=true;this.autoJobs.set(job.id,automatic);}job.lockKey=this.key(job,target);this.queue.add(job);ids.push(id);if (node.kind === 'directory') parents.set(node.relative,id);
+      }} catch(error) {if (automatic) throw error;authorized();const job={id:randomUUID(),batchId,profileId,server,direction,source:path,target:root,kind:'error'};job.lockKey=this.key(job,root);this.queue.add(job);ids.push(job.id);}
     }} finally {files.close();}return {batchId,ids};
   }
   async run(job,signal,onProgress) {
-    this.guard();signal.throwIfAborted();if (job.kind === 'error') throw Object.assign(new Error(),{publicMessage:'Transferbaum konnte nicht vollständig entdeckt werden.'});
+    this.guard();signal.throwIfAborted();
+    const automatic=job.automatic && this.autoJobs.get(job.id);
+    const validate=async () => {
+      this.guard();signal.throwIfAborted();
+      if (job.automatic) {if (!automatic || this.autoUploads.get(job.profileId)!==automatic) throw new Error('Überwachung wurde beendet.');await automatic.check(job);}
+      else this.assertManual(job.profileId);
+      signal.throwIfAborted();
+    };
+    await validate();if (job.kind === 'error') throw Object.assign(new Error(),{publicMessage:'Transferbaum konnte nicht vollständig entdeckt werden.'});
     if (['symlink','other'].includes(job.kind)) return {skipped:true,reason:'Symlink/Spezialdatei übersprungen.'};
     const profile=this.profiles.get(job.profileId);if ((job.profileKey && job.profileKey!==profileIdentity(profile)) || ((job.protocol ?? 'sftp') !== profile.protocol) || serverIdentity(profile.host,profile.port).id !== job.server) throw Object.assign(new Error(),{publicMessage:'Profilziel wurde geändert; neuen Auftrag anlegen.'});
     if (this.sessions.matches && !this.sessions.matches(profile)) throw new Error('Profil wurde geändert; bitte erneut verbinden.');
@@ -43,14 +66,14 @@ export class TransferEngine {
       const initial=job.resumeFrom ? job.attempt.target:parent?.finalTarget ? (job.direction === 'upload' ? posix.join:join)(parent.finalTarget,job.name):job.target;
       let path=initial,replace=false;
       if (!job.resumeFrom && !(job.kind === 'directory' && (await targetSnapshot(target,path))?.kind === 'directory')) {
-        const decision=job.reviewedReplacement ? {path,replace:true}:await this.conflicts.resolve({...job,target:path},target,signal);if (decision.skipped) return decision;path=decision.path;replace=decision.replace;
+        const decision=automatic || job.reviewedReplacement ? {path,replace:true}:await this.conflicts.resolve({...job,target:path},target,signal);if (decision.skipped) return decision;path=decision.path;replace=decision.replace;
       }
       return await this.queue.withLock(job.id,this.key(job,path),async () => {
-        this.guard();signal.throwIfAborted();
+        await validate();
         if (job.kind === 'directory') {const existing=await targetSnapshot(target,path);if (!existing) await (job.direction === 'upload' ? files.mkdir(path):this.local.mkdir(path));else if (existing.kind !== 'directory') throw new Error('Ordnerziel ist keine directory.');return {bytes:0,committed:true,finalTarget:path};}
         const source=job.direction==='upload' ? localTarget:targetFor(files);
         const current=await source.stat(job.source);const metadata={mode:current.mode&0o777,modified:current.modified};
-        const result=await transferFile(session,{...job,target:path,metadata},{target,source,identity:profileIdentity(profile),replace,signal,onProgress,stream:streamFor(profile.protocol),onCheckpoint:attempt => this.queue.checkpoint(job.id,attempt,this.key(job,attempt.target))});return {...result,finalTarget:path};
+        const result=await transferFile(session,{...job,target:path,metadata,...(automatic ? {expectedTarget:automatic.expected.get(path)?.info ?? null,expectedTargetHash:automatic.expected.get(path)?.hash}: {})},{target,source,identity:profileIdentity(profile),replace,signal,onProgress,stream:streamFor(profile.protocol),beforePublish:validate,onCheckpoint:attempt => this.queue.checkpoint(job.id,attempt,this.key(job,attempt.target))});return {...result,finalTarget:path};
       },signal);
     } finally {signal.removeEventListener('abort',close);files.close();}
   }
@@ -68,6 +91,6 @@ export class TransferEngine {
       } finally {files?.close();}
     });
   }
-  resume(ids) {this.guard();return this.queue.retry(ids,randomUUID,{resume:true});}
+  resume(ids) {this.guard();for (const job of this.queue.validateRetry(ids,{resume:true})) this.assertManual(job.profileId);return this.queue.retry(ids,randomUUID,{resume:true});}
   dispose() {this.queue.dispose();}
 }

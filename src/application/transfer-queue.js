@@ -48,7 +48,7 @@ export class TransferQueue {
   retry(ids,idFactory,{resume=false}={}) {
     const retryable=this.validateRetry(ids,{resume});const mapping=new Map(retryable.map(j => [j.id,idFactory()]));const batchId=idFactory();
     for (const job of retryable) {
-      const copy={...job};for (const key of ['bytes','error','errorCode','started','rate','state','sha256','committed','finalTarget','partialPath','resumedBytes','resumeFrom']) delete copy[key];
+      const copy={...job};for (const key of ['automatic','bytes','error','errorCode','started','rate','state','sha256','committed','finalTarget','partialPath','resumedBytes','resumeFrom']) delete copy[key];
       if (!resume) delete copy.attempt;else copy.resumeFrom=job.id;
       this.add({...copy,id:mapping.get(job.id),batchId,parentId:mapping.get(job.parentId) ?? job.parentId,retryOf:job.id});
     }

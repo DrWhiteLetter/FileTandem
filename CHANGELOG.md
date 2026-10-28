@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.0.15 – 27.10.2026
+- Start der Überwachung spiegelt den lokalen Ordner auf die Gegenstelle: fehlende/abweichende Dateien übertragen, überzählige Remote-Einträge löschen, leere Ordner und Typkonflikte abgleichen.
+- Lokale Löschungen einschließlich Unterordnern übernehmen; Remote-Ansicht automatisch aktualisieren und gelöschte Einträge im Status zählen.
+- Prüfsummen bereits beim Start erfassen, fremde Änderungen vor Löschungen schützen und Queue-Pause auch für Löschungen beachten.
+- Docker-unabhängige Diensttests mit echten lokalen Dateibäumen für Startabgleich, Dateilöschungen, Typkonflikte und Stopp ergänzen.
+
+## 0.0.14 – 26.10.2026
+
+- „Remote-Ordner aktuell halten …“ ergänzt: gespeicherte lokale Dateiänderungen rekursiv erkennen und automatisch hochladen, auch aus externen Programmen. Sichtbarer Status mit Stoppen, feste Ordnerzuordnung und Sperre manueller Transfers für dasselbe Profil.
+- Mehrere Speichervorgänge bündeln, Serverkonflikte erkennen und bei Fehlern oder Verbindungswechsel stoppen. Lokale Dateilöschungen werden nach zwei Beobachtungen remote übernommen; geänderte Remote-Dateien bleiben erhalten. Kein automatischer Neustart nach Sitzungsende.
+- Manueller Ordnerabgleich bleibt als Erstabgleich und für einzelne Abgleiche erhalten.
+
+## 0.0.13 – 26.10.2026
+
+- Überschreibkonflikte in einem einzigen modalen Dialog entscheiden: „Ersetzen“ startet direkt für diese Datei, „Alle weiteren ersetzen“ gilt zusätzlich für weitere Dateikonflikte desselben Sammelauftrags. Die leicht übersehbare zweite Auswahl entfällt.
+
+## 0.0.12 – 26.10.2026
+
+- Pfadfavoriten und manueller rekursiver Ordnerabgleich mit Vorschau und Transferauswahl ergänzt.
+
 ## 0.0.11 – 08.10.2026
 
 - F5 über einen eigenen, auf FileTandem begrenzten VS-Code-Befehl verarbeitet; Auswahl wird auch nach Fokuswechsel auf Buttons übertragen. Kein zusätzlicher Debuggerstart.

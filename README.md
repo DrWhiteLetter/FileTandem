@@ -1,8 +1,12 @@
 # FileTandem
 
-Private Vorabversion **0.0.11** einer VS-Code-Desktop-Erweiterung für SFTP und SCP. Die Commander-Ansicht bietet lokale und entfernte Dateiverwaltung, rekursive Uploads/Downloads, Transferqueue, geprüfte SFTP-Fortsetzung und kontrollierte Remote-Bearbeitung. M0 bis M5 sind umgesetzt; M6 ergänzt die lokale Release-Härtung. Windows/Linux und vollständige 1.0-Freigabe bleiben offen. [Installation, Quickstart und Troubleshooting](docs/release-anleitung.md) · [Changelog](CHANGELOG.md) · [M6-Abnahme](docs/nachweise/M6-Lokal.md).
+Private Vorabversion **0.0.15** einer VS-Code-Desktop-Erweiterung für SFTP und SCP. Die Commander-Ansicht bietet lokale und entfernte Dateiverwaltung, rekursive Uploads/Downloads, Transferqueue, geprüfte SFTP-Fortsetzung und kontrollierte Remote-Bearbeitung. M0 bis M5 sind umgesetzt; M6 ergänzt die lokale Release-Härtung. Windows/Linux und vollständige 1.0-Freigabe bleiben offen. [Installation, Quickstart und Troubleshooting](docs/release-anleitung.md) · [Changelog](CHANGELOG.md) · [M6-Abnahme](docs/nachweise/M6-Lokal.md).
 
 Der Projektordner heißt `FileTandem`; Paketierung erzeugt `out/FileTandem-<Version>.vsix` mit passender `.sha256`-Datei. Ältere lokale VSIX-Dateien wurden entsprechend umbenannt; historische Nachweise behalten ihre damaligen Dateinamen. Die technische Extension-ID bleibt bis zur Publisher-Festlegung erhalten.
+
+## Ordnerabgleich und automatischer Upload
+
+**Ordner abgleichen …** vergleicht die beiden angezeigten Ordner einmalig mit Vorschau und Transferauswahl. **Remote-Ordner aktuell halten …** überwacht dagegen nach ausdrücklicher Aktivierung lokale gespeicherte Änderungen und lädt sie automatisch hoch. Ein sichtbarer Statusbereich bietet **Überwachung stoppen**; manuelle Transfers für dasselbe Profil sind währenddessen gesperrt. Beim Aktivieren wird der Remote-Ordner an den lokalen Stand angeglichen, einschließlich des endgültigen Löschens überzähliger Remote-Dateien und -Ordner. Lokale Dateilöschungen werden auf den Server übertragen. [Bedienung, Grenzen und Tests](docs/automatischer-upload.md).
 
 ## Umstieg auf die neuen Kennungen
 

@@ -1,12 +1,15 @@
 import { streamFile } from '../adapters/sftp/pipeline.js';import { verifyResume } from './transfer-resume.js';
+const autoConflict=message => Object.assign(new Error(message),{code:'AUTO_UPLOAD_CONFLICT',publicMessage:message});
 export const snapshotEqual=(a,b) => JSON.stringify(a && [a.kind,a.size,a.modified,a.mode,a.ino,a.dev]) === JSON.stringify(b && [b.kind,b.size,b.modified,b.mode,b.ino,b.dev]);
 export async function targetSnapshot(target,path) {try {return await target.stat(path);} catch(error) {if (['ENOENT',2].includes(error.code)) return undefined;throw error;}}
-export async function transferFile(session,job,{target,replace=false,signal,onProgress,stream=streamFile,source,identity,onCheckpoint=() => {}}) {
+export async function transferFile(session,job,{target,replace=false,signal,onProgress,stream=streamFile,source,identity,onCheckpoint=() => {},beforePublish=() => {}}) {
  if (!/^[a-zA-Z0-9-]{1,64}$/.test(job.id)) throw new Error('Ungültige Transfer-ID.');
  let before=await targetSnapshot(target,job.target),part=target.partial(job.target,job.id),offset=0,sourceHash,attempt;
  if (job.resumeFrom) {const verified=await verifyResume(job,{target,source,identity,signal});({before,part,offset,sourceHash,attempt}=verified);replace=!!before;}
  if (before && (!replace || before.kind !== 'file' || !target.atomicReplace)) throw Object.assign(new Error('Zielkonflikt.'),{publicMessage:'Ziel existiert; sichere Ersetzung nicht freigegeben oder verfügbar.'});
  if (job.reviewedReplacement && (!before || before.kind!=='file' || await target.hash(job.target,signal)!==job.reviewedReplacement)) throw Object.assign(new Error('Serverstand der Editorkopie wurde geändert.'),{code:'EDITOR_CONFLICT',publicMessage:'Serverstand der Editorkopie wurde geändert; Kopie neu herunterladen und Änderungen vergleichen.'});
+ if (Object.hasOwn(job,'expectedTarget') && !snapshotEqual(job.expectedTarget ?? undefined,before)) throw autoConflict('Remote-Datei wurde seit Aktivierung der Überwachung geändert.');
+ if (job.expectedTargetHash && (!before || await target.hash(job.target,signal)!==job.expectedTargetHash)) throw autoConflict('Remote-Datei wurde seit dem letzten automatischen Upload geändert.');
  signal?.throwIfAborted();
  if (source && !attempt) {const sourceInfo=await source.stat(job.source);if (sourceInfo.kind!=='file') throw new Error('Quelle ist keine reguläre Datei.');sourceHash=await source.hash(job.source,signal);if (!snapshotEqual(sourceInfo,await source.stat(job.source))) throw new Error('Quelle während der Vorprüfung geändert.');attempt={id:job.id,part,target:job.target,source:job.source,protocol:job.protocol ?? 'sftp',identity,sourceInfo,sourceHash,before:before ?? null};}
  if (attempt) await onCheckpoint(attempt);
@@ -15,5 +18,7 @@ export async function transferFile(session,job,{target,replace=false,signal,onPr
  await target.prepare?.(part,job.metadata);signal?.throwIfAborted();
  if (!snapshotEqual(before,await targetSnapshot(target,job.target))) throw Object.assign(new Error('Ziel wurde zwischenzeitlich geändert.'),{publicMessage:'Ziel wurde während des Transfers geändert; Teil-Datei bleibt zur Prüfung erhalten.'});
  if (job.reviewedReplacement && await target.hash(job.target,signal)!==job.reviewedReplacement) throw Object.assign(new Error('Serverstand wurde während des Uploads geändert.'),{code:'EDITOR_CONFLICT',publicMessage:'Serverstand wurde während des Uploads geändert; Ziel bleibt erhalten.'});
- await target.publish(part,job.target,!!before);return {...result,committed:true,partialPath:part};
+ await beforePublish();
+ if (job.expectedTargetHash && await target.hash(job.target,signal)!==job.expectedTargetHash) throw autoConflict('Remote-Datei wurde während des automatischen Uploads geändert.');
+ signal?.throwIfAborted();await target.publish(part,job.target,!!before);return {...result,committed:true,partialPath:part};
 }

@@ -17,3 +17,9 @@ test('sync requests carry no client-controlled paths or overwrite approvals',() 
   assert.equal(browserRequest({...request,path:'/forged'},'session-a'),false);
   assert.equal(browserRequest(request,'session-b'),false);
 });
+test('automatic-upload requests cannot choose paths or inject persistent replacement permissions',() => {
+  for (const type of ['autoUploadStart','autoUploadStop']) {
+    const request={version:1,type,id:'watch',sessionId:'session-a'};assert.equal(browserRequest(request,'session-a'),true);
+    for (const extra of [{path:'/other'},{automatic:true},{replace:true}]) assert.equal(browserRequest({...request,...extra},'session-a'),false);
+  }
+});

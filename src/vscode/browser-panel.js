@@ -31,7 +31,7 @@ export function registerBrowser(context,profileUI) {
     panel ??= vscode.window.createWebviewPanel('filetandem.browser','FileTandem',vscode.ViewColumn.One,{});
     panel.webview.options={enableScripts:true,localResourceRoots:[assets]};
     let alive=true;const recent=new Set();
-    const model=() => ({version:1,type:'browserModel',sessionId,diagnostics,pathFavorites:favorites.get(profile?.id),locale:language(),profileId:profile?.ephemeral ? undefined:profile?.id,queue:profileUI.transfers.engine.queue.list(profile?.id),queuePaused:profileUI.transfers.engine.queue.paused,local:local.state,remote:remote.state,...browserSettings(key => vscode.workspace.getConfiguration('filetandem').get(key)),connection:profile ? {...profileUI.sessions.snapshot(profile.id),name:profile.name} : {state:'disconnected',name:'Kein Server'}});
+    const model=() => ({version:1,type:'browserModel',sessionId,diagnostics,autoUpload:profileUI.transfers.autoUpload.state(profile?.id),pathFavorites:favorites.get(profile?.id),locale:language(),profileId:profile?.ephemeral ? undefined:profile?.id,queue:profileUI.transfers.engine.queue.list(profile?.id),queuePaused:profileUI.transfers.engine.queue.paused,local:local.state,remote:remote.state,...browserSettings(key => vscode.workspace.getConfiguration('filetandem').get(key)),connection:profile ? {...profileUI.sessions.snapshot(profile.id),name:profile.name} : {state:'disconnected',name:'Kein Server'}});
     const publish=() => {if (alive) {panel.title=profile ? `FileTandem · ${profile.name}`:'FileTandem';void panel.webview.postMessage(model());}};
     let start;try {start=localStart(restored.paths?.local ?? profile?.localPath);} catch {start=localStart();}
     const local=new DirectoryBrowser({start,parent:localParent,list:path => files.list(vscode.Uri.file(localPath(path))),onChange:publish});
@@ -51,7 +51,7 @@ export function registerBrowser(context,profileUI) {
     };
     const remote=new DirectoryBrowser({start:restored.paths.remote ?? profile?.remotePath ?? '/',parent:path => posix.dirname(path),list:async path => (await service()).list(path),onChange:publish});
     remote.state.status='disconnected';
-    const view={model,panel,publish,navigate:async (side,path) => {profileUI.guard();if (!alive || !['local','remote'].includes(side)) throw new Error('Sitzung geschlossen.');await (side==='local' ? local:remote).navigate(path);}};views.add(view);
+    const view={model,panel,publish,navigate:async (side,path) => {profileUI.guard();if (!alive || !['local','remote'].includes(side)) throw new Error('Sitzung geschlossen.');profileUI.transfers.engine.assertManual(profile?.id);await (side==='local' ? local:remote).navigate(path);}};views.add(view);
     const changes=profileUI.changed.event(() => {
       if (!alive) return;
       if (profile && !profile.ephemeral) {try {profile=profileUI.profiles.get(profile.id);} catch { /* deleted profile keeps disconnected view */ }}
@@ -59,14 +59,23 @@ export function registerBrowser(context,profileUI) {
       else if (remote.state.status === 'disconnected') void remote.refresh();
       publish();
     });
-    const observedTerminal=new Set();
+    const observedTerminal=new Set();let observedAuto='',refreshPending=false,refreshing=false;
+    const refreshAfterTransfer=async () => {
+      refreshPending=true;if (refreshing) return;refreshing=true;
+      try {while (refreshPending && alive) {
+        refreshPending=false;
+        await Promise.allSettled([local.refresh(),...(profileUI.sessions.snapshot(profile?.id).state==='connected' ? [remote.refresh()]:[])]);
+      }} finally {refreshing=false;}
+    };
     const configuration=vscode.workspace.onDidChangeConfiguration(e => {if (e.affectsConfiguration('filetandem')) publish();});
     const transferChanges=profileUI.transfers.changed.event(() => {
       publish();
       const newly=profileUI.transfers.engine.queue.list(profile?.id).filter(j => ['completed','failed','cancelled','skipped'].includes(j.state) && !observedTerminal.has(j.id));for (const job of newly) observedTerminal.add(job.id);
-      if (newly.length && local.state.status !== 'loading') {void local.refresh();if (profileUI.sessions.snapshot(profile?.id).state === 'connected') void remote.refresh();}
+      const auto=profileUI.transfers.autoUpload.state(profile?.id),autoKey=JSON.stringify([auto.localRoot,auto.remoteRoot,auto.starting,auto.uploaded,auto.deleted,auto.directories]),autoChanged=autoKey!==observedAuto;observedAuto=autoKey;
+      if (newly.length || autoChanged) void refreshAfterTransfer();
     });
     const transfer=async message => {
+      profileUI.transfers.engine.assertManual(profile?.id);
       if (!profile || profileUI.sessions.snapshot(profile.id).state !== 'connected') throw new Error('Bitte ein Profil verbinden.');
       const browser=message.side === 'local' ? local:remote;
       if (browser.state.status !== 'ready') throw new Error('Bitte den Quellordner laden.');
@@ -78,7 +87,8 @@ export function registerBrowser(context,profileUI) {
     };
     let syncing=false;
     const synchronize=async () => {
-      if (syncing) throw new Error('Ein Abgleich läuft bereits.');
+      profileUI.transfers.engine.assertManual(profile?.id);
+      if (syncing || startingAuto) throw new Error('Ein Abgleich läuft bereits.');
       syncing=true;
       try {
         if (!profile || profileUI.sessions.snapshot(profile.id).state!=='connected' || local.state.status!=='ready' || remote.state.status!=='ready') throw new Error('Bitte verbinden und beide Ordner laden.');
@@ -101,6 +111,19 @@ export function registerBrowser(context,profileUI) {
         for (const {operation} of selected) {valid();await profileUI.transfers.engine.submit(owner.id,direction.value,[operation.source],operation.destination);}
       } finally {syncing=false;}
     };
+    let startingAuto=false;
+    const startAutoUpload=async () => {
+      if (startingAuto || syncing || busy) throw new Error('Eine Ordneraktion läuft bereits.');
+      startingAuto=true;
+      try {
+        if (!profile || profileUI.sessions.snapshot(profile.id).state!=='connected' || local.state.status!=='ready' || remote.state.status!=='ready') throw new Error('Bitte verbinden und beide Ordner laden.');
+        const owner=profile.id,roots={local:local.state.path,remote:remote.state.path};
+        const allowed=() => {if (!alive || profile?.id!==owner || local.state.path!==roots.local || remote.state.path!==roots.remote) throw new Error('Überwachungsordner oder Sitzung wurde geändert.');};
+        const confirmed=await vscode.window.showWarningMessage('Remote-Ordner automatisch aktuell halten?',{modal:true,detail:`Lokal: ${roots.local}\nRemote: ${roots.remote}\nNeue und geänderte lokale Dateien werden nach dem Speichern automatisch hochgeladen und bestehende Zieldateien ersetzt. Die Überwachung umfasst Unterordner und Änderungen aus anderen Programmen. Beim Start wird der Remote-Ordner vollständig an den lokalen Ordner angeglichen: fehlende und abweichende Dateien werden hochgeladen, nur remote vorhandene Dateien und Ordner endgültig gelöscht. Der lokale Ordner ist die Vorgabe. Lokal gelöschte Dateien werden auch remote endgültig gelöscht. Manuelle Transfers und Ordnerwechsel sind währenddessen gesperrt. Stoppen, Verbindungsabbruch oder Schließen dieser Sitzung beendet die Überwachung.`},'Überwachung starten');
+        if (confirmed!=='Überwachung starten') return;allowed();if (busy || syncing) throw new Error('Eine Ordneraktion läuft bereits.');
+        await profileUI.transfers.autoUpload.start({profileId:owner,localRoot:roots.local,remoteRoot:roots.remote,owner:sessionId,allowed});
+      } finally {startingAuto=false;}
+    };
     let busy=false;
     const action=async message => {
       if (busy) throw new Error('Eine Dateiaktion läuft bereits.'); busy=true;
@@ -120,7 +143,7 @@ export function registerBrowser(context,profileUI) {
         } : await service();
         if (['delete','properties','chmod'].includes(message.action)) {
           if (!selected.length || (message.action !== 'delete' && selected.length !== 1)) throw new Error('Bitte passende Einträge auswählen.');
-          const allowed=() => alive && browser.state.path === parent && hasDesktopAccess(executionLocation(context),vscode.workspace.isTrusted);
+          const allowed=() => !profileUI.transfers.engine.autoUploads.has(profile?.id) && alive && browser.state.path === parent && hasDesktopAccess(executionLocation(context),vscode.workspace.isTrusted);
           if (message.action === 'properties') {
             const info=await adapter.stat(selected[0].path);
             await vscode.window.showInformationMessage(`Eigenschaften: ${info.name}`,{modal:true,detail:`Pfad: ${info.path}\nTyp: ${t({file:'Datei',directory:'Ordner',symlink:'Symlink',other:'Andere'}[info.kind])}\nGröße: ${info.size} Bytes\nGeändert: ${new Date(info.modified).toLocaleString(language())}\nRechte: ${info.mode.toString(8).padStart(3,'0')}${info.kind === 'symlink' ? `\nLinkziel: ${info.linkTarget}`:''}`},'Schließen');return;
@@ -144,6 +167,7 @@ export function registerBrowser(context,profileUI) {
         const name=await vscode.window.showInputBox({title:message.action === 'mkdir' ? 'FileTandem: Neuen Ordner anlegen':'FileTandem: Eintrag umbenennen',value:message.action === 'rename' ? selected[0].name:'',ignoreFocusOut:true,validateInput:value => {try {fileName(value,windows);return undefined;} catch(error) {return error.message;}}});
         if (name === undefined) return;
         profileUI.guard();if (!alive || browser.state.path !== parent) throw new Error('Ordner wurde während des Dialogs gewechselt.');
+        profileUI.transfers.engine.assertManual(profile?.id);
         if (message.action === 'mkdir') await createFolder(adapter,parent,name,options);
         else await renameEntry(adapter,selected[0].path,parent,name,options);
         await browser.refresh();
@@ -154,7 +178,13 @@ export function registerBrowser(context,profileUI) {
       recent.add(message.id);if (recent.size > 256) recent.delete(recent.values().next().value);
       try {
         profileUI.guard();const browser=message.side === 'remote' ? remote : local;
-        if (message.type === 'ready') {handshakes++;await Promise.all([local.refresh(),...(profile && profileUI.sessions.snapshot(profile.id).state === 'connected' ? [remote.refresh()] : [])]);publish();}
+        const watching=profileUI.transfers.autoUpload.state(profile?.id);
+        if (watching.active || watching.starting) {
+          if (['transfer','selectUpload','synchronize','connect','reconnect','navigate','history'].includes(message.type) || (message.type==='action' && (message.action!=='properties' && !(message.action==='open' && message.side==='local')))) throw new Error('Automatischer Upload aktiv; zuerst die Überwachung stoppen.');
+        }
+        if (message.type === 'autoUploadStart') await startAutoUpload();
+        else if (message.type === 'autoUploadStop') profileUI.transfers.autoUpload.stop(profile?.id);
+        else if (message.type === 'ready') {handshakes++;await Promise.all([local.refresh(),...(profile && profileUI.sessions.snapshot(profile.id).state === 'connected' ? [remote.refresh()] : [])]);publish();}
         else if (message.type === 'pathFavorite') {await favorites.set(message.side,profile?.id,message.path,message.favorite);for (const view of views) view.publish();}
         else if (message.type === 'connect') {
           const chosen=await profileUI.choose();if (chosen && alive) {await profileUI.connect(chosen);if (!alive) return;profile=chosen;remoteFiles?.close();remoteTransport=undefined;opening=undefined;remote.history=[chosen.remotePath];remote.index=0;await remote.navigate(chosen.remotePath,{history:false});}
@@ -171,6 +201,7 @@ export function registerBrowser(context,profileUI) {
           else {const job=owned.find(j => j.id===message.ids[0]);if (!job?.attempt) throw new Error('Keine eigene Teil-Datei verfügbar.');if (await vscode.window.showWarningMessage('Eigene Teil-Datei bereinigen?',{modal:true,detail:job.attempt.part},'Teil-Datei löschen')==='Teil-Datei löschen') {profileUI.guard();await profileUI.transfers.cleanup(job.id);}}
         }
         else if (message.type === 'selectUpload') {
+          profileUI.transfers.engine.assertManual(profile?.id);
           if (!profile) throw new Error('Bitte ein Profil verbinden.');
           const uris=await vscode.window.showOpenDialog({defaultUri:vscode.Uri.file(localStart()),canSelectFiles:true,canSelectFolders:true,canSelectMany:true,title:'Dateien/Ordner hochladen'});
           if (uris?.length && alive) await profileUI.transfers.engine.submit(profile.id,'upload',uris.map(localFileUri),remote.state.path);
@@ -183,7 +214,7 @@ export function registerBrowser(context,profileUI) {
         else if (message.type === 'history') await browser[message.direction]();
       } catch(error) {if (alive) void vscode.window.showErrorMessage(error.code === 'EEXIST' || error.code === 'FileExists' ? 'FileTandem: Ziel existiert bereits; nichts überschrieben.':`FileTandem: ${error.message}`);}
     });
-    panel.onDidDispose(() => {alive=false;views.delete(view);changes.dispose();configuration.dispose();transferChanges.dispose();receive.dispose();local.invalidate();remote.invalidate();remoteFiles?.close();});
+    panel.onDidDispose(() => {profileUI.transfers.autoUpload.stop(profile?.id,sessionId);alive=false;views.delete(view);changes.dispose();configuration.dispose();transferChanges.dispose();receive.dispose();local.invalidate();remote.invalidate();remoteFiles?.close();});
     const script=panel.webview.asWebviewUri(vscode.Uri.joinPath(assets,'webview.js'));const style=panel.webview.asWebviewUri(vscode.Uri.joinPath(assets,'webview.css'));const nonce=randomBytes(24).toString('base64');
     panel.webview.html=`<!DOCTYPE html><html lang="${language()}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="filetandem-session" content="${sessionId}"><meta name="filetandem-mode" content="browser"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${panel.webview.cspSource}; font-src ${panel.webview.cspSource}; script-src 'nonce-${nonce}';"><link rel="stylesheet" href="${style}"></head><body><div id="root"></div><script nonce="${nonce}" src="${script}"></script></body></html>`;
     context.subscriptions.push(panel);return panel;

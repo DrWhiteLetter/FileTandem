@@ -105,3 +105,23 @@ test('English Commander and switching back localize labels, menus, errors and ac
  assert.ok(doc.querySelector('input[aria-label="Local: Name filter"]'));assert.ok(doc.querySelector('table[aria-label="Local: File list"]'));assert.equal(doc.documentElement.lang,'en');assert.ok(!/Versteckte|Namensfilter|Herunterladen|Dateiliste|Nicht verbunden/.test(doc.body.textContent));
  model.locale='de';await render();assert.ok(doc.body.textContent.includes('Profil verbinden'));assert.ok(doc.body.textContent.includes('Fehlgeschlagen'));assert.equal(doc.documentElement.lang,'de');assert.equal(messages[0].type,'ready');dom.window.close();
 });
+test('automatic upload mode is visible, stops explicitly and blocks manual transfer paths',async () => {
+  const dom=new JSDOM('<div id="root"></div>',{runScripts:'outside-only',url:'https://filetandem.test'});
+  dom.window.MessageChannel=class {constructor(){this.port1={onmessage:null};this.port2={postMessage:()=>setTimeout(()=>this.port1.onmessage?.(),0)};}};
+  dom.window.IS_REACT_ACT_ENVIRONMENT=true;dom.window.eval(result.outputFiles.find(f=>f.path.endsWith('.js')).text);
+  const messages=[];await dom.window.testMountBrowser({postMessage:value=>messages.push(value)},'watch-session');const act=action=>dom.window.testAct(action);
+  const entry={id:'/local/file',path:'/local/file',name:'file',kind:'file',size:4,modified:0,mode:0o644};
+  const model={version:1,type:'browserModel',sessionId:'watch-session',locale:'de',commanderKeys:true,connection:{state:'connected',protocol:'sftp'},local:{path:'/local',entries:[entry],status:'ready'},remote:{path:'/remote',entries:[],status:'ready'}};
+  const render=()=>act(()=>dom.window.dispatchEvent(new dom.window.MessageEvent('message',{data:dom.window.JSON.parse(JSON.stringify(model))})));
+  const doc=dom.window.document,button=text=>[...doc.querySelectorAll('button')].find(b=>b.textContent===text);await render();
+  await act(()=>button('Remote-Ordner aktuell halten …').click());assert.equal(messages.at(-1).type,'autoUploadStart');
+  model.autoUpload={active:true,starting:false,localRoot:'/local',remoteRoot:'/remote',uploaded:2,deleted:3};await render();
+  assert.ok(doc.body.textContent.includes('Gelöschte Einträge: 3'));assert.ok(doc.body.textContent.includes('Automatischer Upload aktiv'));assert.ok(doc.body.textContent.includes('/local → /remote'));
+  assert.equal(button('Ordner abgleichen …').disabled,true);assert.equal(button('Dateien/Ordner hochladen …').disabled,true);
+  const row=doc.querySelector('tr[data-entry-id]');await act(()=>row.click());assert.equal(button('Hochladen →').disabled,true);assert.equal(button('← Herunterladen').disabled,true);assert.equal(row.draggable,false);
+  assert.equal(doc.querySelector('.pathbar input').disabled,true);
+  const count=messages.length;await act(()=>dom.window.dispatchEvent(new dom.window.MessageEvent('message',{data:{version:1,type:'commanderCopy',sessionId:'watch-session',id:'watch-copy'}})));assert.equal(messages.length,count,'F5 cannot bypass the manual-transfer lock');
+  await act(()=>button('Überwachung stoppen').click());assert.equal(messages.at(-1).type,'autoUploadStop');
+  model.autoUpload={active:false,starting:false,error:'Verbindung unterbrochen'};await render();assert.ok(doc.querySelector('[role=alert]').textContent.includes('Verbindung unterbrochen'));assert.equal(button('Ordner abgleichen …').disabled,false);assert.equal(button('Hochladen →').disabled,false);
+  model.locale='en';model.autoUpload={active:true,localRoot:'/local',remoteRoot:'/remote',uploaded:2,deleted:3};await render();assert.ok(doc.body.textContent.includes('Automatic upload active'));assert.ok(button('Stop monitoring'));dom.window.close();
+});

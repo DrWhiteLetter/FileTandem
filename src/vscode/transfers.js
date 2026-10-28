@@ -1,3 +1,4 @@
+import { AutoUploadService } from '../application/auto-upload-service.js';
 import { serverIdentity } from '../adapters/ssh/host-keys.js';
 import { profileIdentity } from '../application/transfer-resume.js';
 import { join } from 'node:path';import { TransferJournal } from '../application/transfer-journal.js';
@@ -10,17 +11,20 @@ export function registerTransfers(context,profileUI) {
   journal.ready=(async () => {let key=await context.secrets.get('filetandem.journal.integrity.v1');if (!key) {key=randomBytes(32).toString('hex');await context.secrets.store('filetandem.journal.integrity.v1',key);}if (!/^[a-f0-9]{64}$/.test(key)) throw new Error('Journal-Schlüssel ist ungültig.');journal.key=Buffer.from(key,'hex');})().catch(() => {journal.disabled=true;journal.onError('Transferjournal nicht verfügbar: VS-Code-SecretStorage prüfen. Keine gespeicherten Aufträge werden gestartet oder verändert.');});
   const engine=new TransferEngine({sessions:profileUI.sessions,profiles,choose:conflictDialog,guard:profileUI.guard,onChange:jobs => {journal.update(jobs);changed.fire();}});
   engine.ready=journal.load().then(jobs => engine.queue.restore(jobs));
-  context.subscriptions.push(engine,changed);
+  const autoUpload=new AutoUploadService({engine,sessions:profileUI.sessions,profiles,guard:profileUI.guard,onChange:() => changed.fire()});
+  const autoChanges=profileUI.changed.event(() => autoUpload.validate());
+  context.subscriptions.push(autoUpload,autoChanges,engine,changed);
   const prepare=async (ids,resume=false) => {
     await engine.ready;profileUI.guard();const jobs=engine.queue.validateRetry(ids,{resume});
     for (const id of new Set(jobs.map(j => j.profileId))) {
+      engine.assertManual(id);
       const profile=profiles.get(id);if (jobs.some(j => j.profileId===id && (j.server!==serverIdentity(profile.host,profile.port).id || (j.profileKey && j.profileKey!==profileIdentity(profile)) || (j.attempt && j.attempt.identity!==profileIdentity(profile))))) throw new Error('Profil wurde geändert; neuen Auftrag anlegen.');
       if (profileUI.sessions.snapshot(id).state!=='connected' || !profileUI.sessions.matches(profile)) await profileUI.connect(profile);
     }profileUI.guard();
   };
   const retry=async ids => {await prepare(ids);return engine.queue.retry(ids,randomUUID);};
   const resume=async ids => {await prepare(ids,true);return engine.resume(ids);};
-  profileUI.transfers={engine,changed,resume,retry,cleanup:id => engine.cleanup(id),remember:profile => {if (profile.ephemeral) ephemeral.set(profile.id,profile);}};
+  profileUI.transfers={engine,changed,autoUpload,resume,retry,cleanup:id => engine.cleanup(id),remember:profile => {if (profile.ephemeral) ephemeral.set(profile.id,profile);}};
   profileUI.command('filetandem.uploadFromExplorer',async (uri,uris) => {
     const list=Array.isArray(uris) && uris.length ? uris:[uri];if (!list.length || list.some(value => !value)) throw new Error('Bitte lokale Dateien/Ordner auswählen.');
     const paths=list.map(localFileUri);const profile=await profileUI.choose();if (!profile) return;

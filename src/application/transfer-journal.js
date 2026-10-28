@@ -2,11 +2,12 @@ import { localPath } from '../adapters/local/files.js';import { remotePath } fro
 import { mkdir,readFile,open,rename,unlink } from 'node:fs/promises';
 import { createHmac,timingSafeEqual } from 'node:crypto';
 import { dirname } from 'node:path';import { randomUUID } from 'node:crypto';
-const fields=['id','batchId','profileId','profileKey','server','direction','source','target','lockKey','kind','protocol','metadata','parentId','name','state','bytes','error','errorCode','started','rate','reason','sha256','committed','finalTarget','partialPath','retryOf','attempt','resumeFrom','resumedBytes','partialCleaned'];
+const fields=['automatic','id','batchId','profileId','profileKey','server','direction','source','target','lockKey','kind','protocol','metadata','parentId','name','state','bytes','error','errorCode','started','rate','reason','sha256','committed','finalTarget','partialPath','retryOf','attempt','resumeFrom','resumedBytes','partialCleaned'];
 const states=['queued','running','completed','failed','cancelled','skipped','interrupted'];
 export function journalJob(raw) {
   if (!raw || typeof raw !== 'object' || Object.keys(raw).some(k => !fields.includes(k)) || !['id','batchId','profileId','server','source','target','lockKey'].every(k => typeof raw[k] === 'string' && raw[k].length > 0 && raw[k].length <= 32768) || !['upload','download'].includes(raw.direction) || !states.includes(raw.state) || !['file','directory','symlink','other','error'].includes(raw.kind)) throw new Error('Ungültiger Journaleintrag.');
   (raw.direction === 'upload' ? localPath:remotePath)(raw.source);(raw.direction === 'upload' ? remotePath:localPath)(raw.target);
+  if (raw.automatic!==undefined && typeof raw.automatic!=='boolean') throw new Error('Ungültiger automatischer Auftrag.');
   if (raw.partialCleaned !== undefined && typeof raw.partialCleaned!=='boolean') throw new Error('Ungültiger Bereinigungszustand.');
   if (raw.committed !== undefined && typeof raw.committed !== 'boolean') throw new Error('Ungültiger Journalabschluss.');
   if (raw.profileKey !== undefined && !/^[a-f0-9]{64}$/.test(raw.profileKey)) throw new Error('Ungültige Profilidentität.');

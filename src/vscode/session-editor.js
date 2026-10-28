@@ -25,8 +25,8 @@ export function registerSessionEditor(context, ui) {
     readDirectory:uri => translated(async () => (await resolve(uri).metadata.list(uri.path)).entries.map(e => [e.name,e.kind==='directory' ? vscode.FileType.Directory:e.kind==='symlink' ? vscode.FileType.SymbolicLink:vscode.FileType.File])),
     readFile:uri => translated(async () => {const file=await resource(uri);const data=await file.read();const doc=vscode.workspace.textDocuments.find(d => d.uri.toString()===uri.toString());const b=resolve(uri);b.loaded.set(uri.path,data);if (!doc || (!doc.isDirty && doc.getText()===data.toString('utf8'))) {await file.rebase(data);b.observed=digest(data);}return data;}),
     writeFile:(uri,data,options) => translated(async () => {
-      const b=resolve(uri);if (!b.grants.has(uri.path)) throw vscode.FileSystemError.NoPermissions('Bearbeitung zuerst ausdrücklich freigeben.');
-      const file=await resource(uri);const allowed=() => {try {return resolve(uri)===b && b.grants.has(uri.path);} catch {return false;}};
+      const b=resolve(uri);ui.transfers.engine.assertManual(b.profile.id);if (!b.grants.has(uri.path)) throw vscode.FileSystemError.NoPermissions('Bearbeitung zuerst ausdrücklich freigeben.');
+      const file=await resource(uri);const allowed=() => {try {ui.transfers.engine.assertManual(b.profile.id);return resolve(uri)===b && b.grants.has(uri.path);} catch {return false;}};
       const job={server:serverIdentity(b.profile.host,b.profile.port).id,direction:'upload'};
       await ui.transfers.engine.queue.maintain(ui.transfers.engine.key(job,uri.path),async () => {if (!allowed()) throw vscode.FileSystemError.NoPermissions();try {await file.write(Buffer.from(data),allowed,options);} catch(e) {
         if (e.code==='EDITOR_CONFLICT' && !b.notice) {b.notice=true;void vscode.window.showWarningMessage('Remote-Datei geändert. Lokale Änderungen bleiben ungespeichert.','Änderungen vergleichen').then(async choice => {if (choice==='Änderungen vergleichen') await api.diff(uri);}).catch(() => {}).finally(() => {b.notice=false;});}throw e;

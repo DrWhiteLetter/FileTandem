@@ -71,3 +71,6 @@ body.vscode-high-contrast .selected, body.vscode-high-contrast-light .selected {
 .file-menu button:focus-visible,summary:focus-visible { outline: 2px solid var(--vscode-focusBorder); }
 .queue { max-height: 30vh; overflow: auto; flex-shrink: 0; }
 @media (forced-colors: active) { .pane tbody tr.selected { outline: 2px solid Highlight; } button:focus-visible,tr:focus-visible { outline-color: Highlight; } }
+
+.auto-upload-status { display:flex; flex-wrap:wrap; align-items:center; gap:8px 16px; padding:12px; margin:8px 0; border:1px solid var(--vscode-focusBorder); background:var(--vscode-textBlockQuote-background); }
+.auto-upload-status span { overflow-wrap:anywhere; }
