@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.19 – 29.10.2026
+- Bei geändertem SSH-Host-Key zusätzlich „Ohne Prüfung vertrauen und verbinden“ anbieten. Der Dialog erklärt das Risiko; die Bestätigung durch exakte Fingerprint-Eingabe bleibt verfügbar.
+
 ## 0.0.18 – 29.10.2026
 - Geänderte SSH-Host-Keys nach Serverumzug im nativen Dialog prüfen: bisherigen und neuen Fingerprint anzeigen, unabhängigen Abgleich verlangen und Ersatz erst nach exakter Eingabe des neuen SHA256-Fingerprints speichern. Abbruch und nicht bestätigte Schlüssel bleiben blockiert.
 

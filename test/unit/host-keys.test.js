@@ -155,13 +155,23 @@ test('changed key dialog requires independent exact fingerprint entry and reject
   for (const input of [undefined,'wrong',request.received.fingerprint]) {
     const window={showWarningMessage:async(message,options,...buttons)=>{
       assert.ok(options.detail.includes(request.expected.fingerprint));assert.ok(options.detail.includes(request.received.fingerprint));
-      assert.deepEqual(buttons,['Neuen Schlüssel prüfen …']);return 'Neuen Schlüssel prüfen …';
+      assert.deepEqual(buttons,['Neuen Schlüssel prüfen …','Ohne Prüfung vertrauen und verbinden']);return 'Neuen Schlüssel prüfen …';
     },showInputBox:async options=>{assert.equal(options.value,undefined);assert.ok(options.validateInput('wrong'));assert.equal(options.validateInput(request.received.fingerprint),undefined);return input;}};
     assert.equal(await changedHostKeyDialog(window)(request),input===request.received.fingerprint);
   }
   assert.equal(await changedHostKeyDialog({showWarningMessage:async()=>undefined,showInputBox:()=>{throw Error('must not prompt');}})(request),false);
   const controller=new AbortController();controller.abort();
   assert.equal(await changedHostKeyDialog({showWarningMessage:()=>{throw Error('must not prompt');}})(request,controller.signal),false);
+});
+
+test('changed key dialog allows explicit unverified trust but rejects stale consent',async () => {
+  const {changedHostKeyDialog}=await import('../../src/vscode/host-key-dialog.js');
+  const request={endpoint,expected:describeHostKey(raw),received:describeHostKey(other)};
+  const controller=new AbortController();
+  const window={showWarningMessage:async()=> 'Ohne Prüfung vertrauen und verbinden',showInputBox:()=>{throw Error('must not prompt');}};
+  assert.equal(await changedHostKeyDialog(window)(request),true);
+  window.showWarningMessage=async()=>{controller.abort();return 'Ohne Prüfung vertrauen und verbinden';};
+  assert.equal(await changedHostKeyDialog(window)(request,controller.signal),false);
 });
 
 test('real SSH handshake blocks authentication until changed key is approved',async t => {

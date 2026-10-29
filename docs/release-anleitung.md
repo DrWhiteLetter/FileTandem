@@ -45,7 +45,7 @@ Serveroperationen bieten kein globales Undo. Remote-Löschen ist endgültig und 
 | Beobachtung | Vorgehen |
 | --- | --- |
 | Erweiterung in Restricted Mode deaktiviert | Workspace-Vertrauen in VS Code prüfen; nur selbst geprüfte Inhalte freigeben. |
-| Host-Key geändert | Verbindung bleibt gesperrt. Änderung unabhängig mit dem Serverbetreiber klären; keinen ungeprüften Ersatz akzeptieren. |
+| Host-Key geändert | Verbindung bleibt gesperrt. Änderung mit dem Serverbetreiber klären und den neuen Schlüssel bestätigen. Alternativ ist ausdrückliches Vertrauen ohne Prüfung möglich. |
 | SFTP funktioniert, SCP nicht | Protokollauswahl und GNU/Linux-Werkzeuge prüfen. SCP ist kein Ersatz für einen fehlenden SFTP-Zugang auf einem beliebigen SSH-Server. |
 | Profil in Remote-SSH-Fenster nicht lokal ausgeführt | FileTandem auf dem Desktop installieren; eine `remote.extensionKind`-Übersteuerung entfernen. Linke Dateiquelle bleibt immer der Desktop. |
 | Transfer fehlgeschlagen / Datenträger voll | Quelle/Ziel, freien Speicher und Rechte prüfen. Bisheriges Ziel und eigene Teil-Datei prüfen; gezielt neu starten oder SFTP-Fortsetzung wählen. |
@@ -100,4 +100,4 @@ Ab 0.0.18 zeigt FileTandem beim Verbinden einen nativen Dialog mit altem und neu
 
 Auf dem neuen Linux-Server zeigt beispielsweise `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub -E sha256` den Ed25519-Fingerprint. Für andere im Dialog angezeigte Algorithmen die zugehörige öffentliche Host-Key-Datei prüfen, etwa `ssh_host_ecdsa_key.pub` oder `ssh_host_rsa_key.pub`.
 
-Im Dialog „Neuen Schlüssel prüfen …“ wählen und den unabhängig geprüften SHA256-Fingerprint eingeben. Nur bei exakter Übereinstimmung ersetzt FileTandem den gespeicherten Schlüssel für diesen Host und Port und fährt mit der Verbindung fort. Abbrechen erhält den bisherigen Schlüssel. Andere Hosts und Ports bleiben unverändert. Keine Schlüsseldateien oder known_hosts-Einträge müssen gelöscht werden; FileTandem verwaltet seinen eigenen lokalen Vertrauensspeicher.
+Im Dialog „Neuen Schlüssel prüfen …“ wählen und den unabhängig geprüften SHA256-Fingerprint eingeben. Bei exakter Übereinstimmung ersetzt FileTandem den gespeicherten Schlüssel für diesen Host und Port und fährt mit der Verbindung fort. Alternativ bestätigt „Ohne Prüfung vertrauen und verbinden“ den neuen Schlüssel direkt, ohne Fingerprint-Eingabe. Dabei besteht das Risiko, Zugangsdaten an einen fremden Server zu senden. Abbrechen erhält den bisherigen Schlüssel. Andere Hosts und Ports bleiben unverändert. Keine Schlüsseldateien oder known_hosts-Einträge müssen gelöscht werden; FileTandem verwaltet seinen eigenen lokalen Vertrauensspeicher.

@@ -1,8 +1,8 @@
 {
   "name": "xscp",
-  "displayName": "FileTandem \u2013 SFTP & SCP File Manager",
+  "displayName": "FileTandem – SFTP & SCP File Manager",
   "description": "%description%",
-  "version": "0.0.18",
+  "version": "0.0.19",
   "private": true,
   "publisher": "xscp-dev",
   "type": "module",

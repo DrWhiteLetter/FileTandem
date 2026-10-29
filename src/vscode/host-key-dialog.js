@@ -9,7 +9,7 @@ export function unknownHostKeyDialog(window) {
   };
 }
 
-/** A changed server identity requires independent verification and an exact fingerprint. */
+/** A changed server identity requires explicit consent for this host and port. */
 export function changedHostKeyDialog(window) {
   return async (request, signal) => {
     if (signal?.aborted) return false;
@@ -20,9 +20,11 @@ export function changedHostKeyDialog(window) {
 Bisher (${request.expected.algorithm}): ${request.expected.fingerprint}
 Neu (${request.received.algorithm}): ${request.received.fingerprint}
 
-Vergleiche den neuen SHA256-Fingerprint über die Serverkonsole des Hosters oder mit dem Administrator. Nur bei Übereinstimmung fortfahren. Der gespeicherte Schlüssel wird ausschließlich für diesen Host und Port ersetzt.` },
-      'Neuen Schlüssel prüfen …');
-    if (signal?.aborted || answer !== 'Neuen Schlüssel prüfen …') return false;
+Prüfe den neuen SHA256-Fingerprint über die Serverkonsole des Hosters oder mit dem Administrator. Alternativ kannst du ohne Prüfung vertrauen. Dabei besteht das Risiko, Zugangsdaten an einen fremden Server zu senden. Beide Möglichkeiten ersetzen den gespeicherten Schlüssel ausschließlich für diesen Host und Port.` },
+      'Neuen Schlüssel prüfen …', 'Ohne Prüfung vertrauen und verbinden');
+    if (signal?.aborted) return false;
+    if (answer === 'Ohne Prüfung vertrauen und verbinden') return true;
+    if (answer !== 'Neuen Schlüssel prüfen …') return false;
     const fingerprint = await window.showInputBox({
       title: `FileTandem: Neuen Host-Key für ${request.endpoint.label} bestätigen`,
       prompt: 'Den unabhängig geprüften neuen SHA256-Fingerprint eingeben. Bestätigen ersetzt den bisherigen Host-Key und erlaubt die Verbindung.',
