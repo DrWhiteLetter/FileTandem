@@ -73,8 +73,9 @@ export class HostKeyStore {
    * @param {Buffer} rawKey
    * @param {(request: object, signal?: AbortSignal) => Promise<boolean>} confirmUnknown
    * @param {AbortSignal} [signal]
+   * @param {(request: object, signal?: AbortSignal) => Promise<boolean>} [confirmChanged]
    */
-  async verify(endpoint, rawKey, confirmUnknown, signal) {
+  async verify(endpoint, rawKey, confirmUnknown, signal, confirmChanged) {
     const identity = serverIdentity(endpoint.host, endpoint.port);
     const key = describeHostKey(rawKey);
     const previous = this.#queues.get(identity.id) ?? Promise.resolve();
@@ -92,8 +93,16 @@ export class HostKeyStore {
           throw new HostKeyError('INVALID_TRUST_RECORD', 'Gespeicherter Host-Key ist ungültig. Verbindung blockiert.');
         }
         if (saved.key !== key.key) {
-          throw new HostKeyError('HOST_KEY_CHANGED', `Der Host-Key für ${identity.label} hat sich geändert. Verbindung blockiert.`,
-            { endpoint: identity, expected: stored, received: key });
+          const request = { endpoint: identity, expected: stored, received: key };
+          if (typeof confirmChanged !== 'function' || await awaitDecision(confirmChanged(request, signal), signal) !== true) {
+            throw new HostKeyError('HOST_KEY_CHANGED', `Der Host-Key für ${identity.label} hat sich geändert. Verbindung blockiert.`, request);
+          }
+          checkActive(signal);
+          const current = await this.#storage.read(identity.id);
+          checkActive(signal);
+          if (JSON.stringify(current) !== JSON.stringify(saved)) throw new HostKeyError('TRUST_RECORD_CHANGED', 'Host-Key-Speicher wurde zwischenzeitlich geändert. Bitte erneut verbinden.');
+          await this.#storage.write(identity.id, { version: 1, host: identity.host, port: identity.port, ...key });
+          checkActive(signal);
         }
         return key;
       }

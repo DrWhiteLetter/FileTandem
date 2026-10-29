@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.18 – 29.10.2026
+- Geänderte SSH-Host-Keys nach Serverumzug im nativen Dialog prüfen: bisherigen und neuen Fingerprint anzeigen, unabhängigen Abgleich verlangen und Ersatz erst nach exakter Eingabe des neuen SHA256-Fingerprints speichern. Abbruch und nicht bestätigte Schlüssel bleiben blockiert.
+
+## 0.0.17 – 28.10.2026
+- Dateiliste bleibt bei Aktualisierungen stabil: vorhandene Zeilen, Auswahl und Scrollposition bleiben erhalten; Ladeanzeige nach 300 ms als Spinner in der Kopfzeile. Ladehinweis im Listenbereich nur beim erstmaligen Laden ohne vorhandene Einträge.
+- Aktualisierungen nach Transfers in 250-ms-Fenstern bündeln; laufende Verzeichnisabfragen nicht überlappen und ausstehende Aktualisierungen beim Schließen verwerfen.
+- Separaten Website-Checkout aus dem Erweiterungspaket ausschließen.
+
 ## 0.0.16 – 28.10.2026
 - Commander gezielt verfeinert: klare Aktionsgruppen, ruhige Dateiwerkzeuge, konsistente Abstände, kompakte Pfadnavigation und strukturierter Überwachungsstatus mit einer Stopp-Aktion.
 - Transferhistorie zeigt neueste Aufträge zuerst, vollständige Zielpfade als Tooltip, getrennte Status-/Aktionsbereiche und einen Hinweis auf fehlgeschlagene Aufträge. Der eingeklappte Zustand bleibt erhalten; bereits veröffentlichte Dateien bieten keine unnötige Teil-Datei-Bereinigung mehr an.

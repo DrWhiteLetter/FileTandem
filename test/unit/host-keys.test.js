@@ -119,3 +119,68 @@ test('Native dialog shows endpoint and fingerprint and defaults to rejection', a
     assert.equal(await unknownHostKeyDialog(window)(request), accepted);
   }
 });
+
+test('changed host keys require separate explicit approval and persist only the approved replacement',async () => {
+  const {records,trust}=memory();await trust.verify(endpoint,raw,async()=>true);
+  for (const answer of [false,undefined,'yes']) {
+    await assert.rejects(trust.verify(endpoint,other,async()=>true,undefined,async()=>answer),{code:'HOST_KEY_CHANGED'});
+    assert.equal(records.get(endpoint.id).key,describeHostKey(raw).key);
+  }
+  await trust.verify(endpoint,other,undefined,undefined,async request=>{
+    assert.equal(request.expected.fingerprint,describeHostKey(raw).fingerprint);
+    assert.equal(request.received.fingerprint,describeHostKey(other).fingerprint);
+    assert.equal(request.endpoint.id,endpoint.id);return true;
+  });
+  await trust.verify(endpoint,other,()=>{throw Error('must not prompt');});
+  await assert.rejects(trust.verify(endpoint,raw),{code:'HOST_KEY_CHANGED'});
+  assert.equal(records.size,1);
+});
+
+test('cancelled or stale replacement decisions cannot overwrite host trust',async () => {
+  const {records,trust}=memory();await trust.verify(endpoint,raw,async()=>true);
+  const controller=new AbortController();let consent;
+  const pending=trust.verify(endpoint,other,undefined,controller.signal,()=>new Promise(resolve=>{consent=resolve;}));
+  await new Promise(resolve=>setImmediate(resolve));controller.abort();
+  await assert.rejects(pending,{code:'CONNECTION_ABORTED'});consent(true);
+  assert.equal(records.get(endpoint.id).key,describeHostKey(raw).key);
+  await assert.rejects(trust.verify(endpoint,other,undefined,undefined,async()=>{
+    records.set(endpoint.id,{...records.get(endpoint.id),changed:true});return true;
+  }),{code:'TRUST_RECORD_CHANGED'});
+  assert.equal(records.get(endpoint.id).key,describeHostKey(raw).key);
+});
+
+test('changed key dialog requires independent exact fingerprint entry and rejects cancellation',async () => {
+  const {changedHostKeyDialog}=await import('../../src/vscode/host-key-dialog.js');
+  const request={endpoint,expected:describeHostKey(raw),received:describeHostKey(other)};
+  for (const input of [undefined,'wrong',request.received.fingerprint]) {
+    const window={showWarningMessage:async(message,options,...buttons)=>{
+      assert.ok(options.detail.includes(request.expected.fingerprint));assert.ok(options.detail.includes(request.received.fingerprint));
+      assert.deepEqual(buttons,['Neuen Schlüssel prüfen …']);return 'Neuen Schlüssel prüfen …';
+    },showInputBox:async options=>{assert.equal(options.value,undefined);assert.ok(options.validateInput('wrong'));assert.equal(options.validateInput(request.received.fingerprint),undefined);return input;}};
+    assert.equal(await changedHostKeyDialog(window)(request),input===request.received.fingerprint);
+  }
+  assert.equal(await changedHostKeyDialog({showWarningMessage:async()=>undefined,showInputBox:()=>{throw Error('must not prompt');}})(request),false);
+  const controller=new AbortController();controller.abort();
+  assert.equal(await changedHostKeyDialog({showWarningMessage:()=>{throw Error('must not prompt');}})(request,controller.signal),false);
+});
+
+test('real SSH handshake blocks authentication until changed key is approved',async t => {
+  const {generateKeyPairSync}=await import('node:crypto');
+  const {default:ssh2}=await import('ssh2');
+  const privateKey=generateKeyPairSync('rsa',{modulusLength:2048}).privateKey.export({type:'pkcs1',format:'pem'});
+  let authenticated=0,approved=false;
+  const server=new ssh2.Server({hostKeys:[privateKey]},client=>{
+    client.on('error',()=>{});
+    client.on('authentication',ctx=>{assert.equal(approved,true,'no credentials before host approval');authenticated++;ctx.accept();});
+  });
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  t.after(()=>new Promise(resolve=>server.close(resolve)));
+  const port=server.address().port,identity=serverIdentity('127.0.0.1',port);
+  const {trust}=memory();await trust.verify(identity,raw,async()=>true);
+  const config={host:identity.host,port,username:'fixture',password:'fixture-only',readyTimeout:10000};
+  await assert.rejects(connectSsh(config,{trust}),{code:'HOST_KEY_CHANGED'});assert.equal(authenticated,0);
+  const session=await connectSsh(config,{trust,confirmChanged:async request=>{
+    assert.equal(request.received.algorithm,'ssh-rsa');approved=true;return true;
+  }});
+  try {assert.equal(authenticated,1);}finally {await session.close();}
+});

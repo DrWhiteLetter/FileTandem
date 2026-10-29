@@ -1,3 +1,4 @@
+import { coalescedRefresh } from '../application/coalesced-refresh.js';
 import { browserSettings } from '../shared/browser-settings.js';
 import { vscode,language,t } from './localized-vscode.js';
 import { randomUUID,randomBytes } from 'node:crypto';
@@ -59,20 +60,16 @@ export function registerBrowser(context,profileUI) {
       else if (remote.state.status === 'disconnected') void remote.refresh();
       publish();
     });
-    const observedTerminal=new Set();let observedAuto='',refreshPending=false,refreshing=false;
-    const refreshAfterTransfer=async () => {
-      refreshPending=true;if (refreshing) return;refreshing=true;
-      try {while (refreshPending && alive) {
-        refreshPending=false;
-        await Promise.allSettled([local.refresh(),...(profileUI.sessions.snapshot(profile?.id).state==='connected' ? [remote.refresh()]:[])]);
-      }} finally {refreshing=false;}
-    };
+    const observedTerminal=new Set();let observedAuto='';
+    const transferRefresh=coalescedRefresh(() => Promise.allSettled([
+      local.refresh(),...(profileUI.sessions.snapshot(profile?.id).state==='connected' ? [remote.refresh()]:[])
+    ]));
     const configuration=vscode.workspace.onDidChangeConfiguration(e => {if (e.affectsConfiguration('filetandem')) publish();});
     const transferChanges=profileUI.transfers.changed.event(() => {
       publish();
       const newly=profileUI.transfers.engine.queue.list(profile?.id).filter(j => ['completed','failed','cancelled','skipped'].includes(j.state) && !observedTerminal.has(j.id));for (const job of newly) observedTerminal.add(job.id);
       const auto=profileUI.transfers.autoUpload.state(profile?.id),autoKey=JSON.stringify([auto.localRoot,auto.remoteRoot,auto.starting,auto.uploaded,auto.deleted,auto.directories]),autoChanged=autoKey!==observedAuto;observedAuto=autoKey;
-      if (newly.length || autoChanged) void refreshAfterTransfer();
+      if (newly.length || autoChanged) transferRefresh.request();
     });
     const transfer=async message => {
       profileUI.transfers.engine.assertManual(profile?.id);
@@ -214,7 +211,7 @@ export function registerBrowser(context,profileUI) {
         else if (message.type === 'history') await browser[message.direction]();
       } catch(error) {if (alive) void vscode.window.showErrorMessage(error.code === 'EEXIST' || error.code === 'FileExists' ? 'FileTandem: Ziel existiert bereits; nichts überschrieben.':`FileTandem: ${error.message}`);}
     });
-    panel.onDidDispose(() => {profileUI.transfers.autoUpload.stop(profile?.id,sessionId);alive=false;views.delete(view);changes.dispose();configuration.dispose();transferChanges.dispose();receive.dispose();local.invalidate();remote.invalidate();remoteFiles?.close();});
+    panel.onDidDispose(() => {profileUI.transfers.autoUpload.stop(profile?.id,sessionId);alive=false;transferRefresh.dispose();views.delete(view);changes.dispose();configuration.dispose();transferChanges.dispose();receive.dispose();local.invalidate();remote.invalidate();remoteFiles?.close();});
     const script=panel.webview.asWebviewUri(vscode.Uri.joinPath(assets,'webview.js'));const style=panel.webview.asWebviewUri(vscode.Uri.joinPath(assets,'webview.css'));const nonce=randomBytes(24).toString('base64');
     panel.webview.html=`<!DOCTYPE html><html lang="${language()}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="filetandem-session" content="${sessionId}"><meta name="filetandem-mode" content="browser"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${panel.webview.cspSource}; font-src ${panel.webview.cspSource}; script-src 'nonce-${nonce}';"><link rel="stylesheet" href="${style}"></head><body><div id="root"></div><script nonce="${nonce}" src="${script}"></script></body></html>`;
     context.subscriptions.push(panel);return panel;

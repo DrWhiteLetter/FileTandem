@@ -5,7 +5,7 @@ import { homedir } from 'node:os';
 import { executionLocation } from './local-proof.js';
 import { connectSsh } from '../adapters/ssh/connect.js';
 import { createHostKeyStore } from '../adapters/storage/host-key-store.js';
-import { unknownHostKeyDialog } from './host-key-dialog.js';
+import { unknownHostKeyDialog, changedHostKeyDialog } from './host-key-dialog.js';
 import { serverIdentity } from '../adapters/ssh/host-keys.js';
 
 /** @param {import('vscode').ExtensionContext} context */
@@ -42,7 +42,7 @@ export function registerHostKeyProof(context) {
         if (token.isCancellationRequested) controller.abort();
         try {
           session = await connectSsh({ host: endpoint.host, port: endpoint.port, username, privateKey },
-            { trust, confirmUnknown: unknownHostKeyDialog(vscode.window), signal: controller.signal });
+            { trust, confirmUnknown: unknownHostKeyDialog(vscode.window), confirmChanged: changedHostKeyDialog(vscode.window), signal: controller.signal });
         } finally { cancellation.dispose(); }
       });
       output.appendLine(`${session.endpoint.label}: ${session.hostKey.algorithm} ${session.hostKey.fingerprint} – Host-Key geprüft, Authentifizierung erfolgreich.`);

@@ -1,4 +1,15 @@
 export const english={
+  "SSH-Host-Key geändert: {0}": "SSH host key changed: {0}",
+  "Neuen Schlüssel prüfen …": "Verify new key …",
+  "FileTandem: Neuen Host-Key für {0} bestätigen": "FileTandem: Confirm new host key for {0}",
+  "Den unabhängig geprüften neuen SHA256-Fingerprint eingeben. Bestätigen ersetzt den bisherigen Host-Key und erlaubt die Verbindung.": "Enter the independently verified new SHA256 fingerprint. Confirming replaces the previous host key and allows the connection.",
+  "Der Fingerprint stimmt nicht mit dem neuen Server-Schlüssel überein.": "The fingerprint does not match the new server key.",
+  "Host-Key-Speicher wurde zwischenzeitlich geändert. Bitte erneut verbinden.": "The host key store has changed in the meantime. Please reconnect.",
+  "Ein Serverumzug kann den Schlüsselwechsel erklären. Ein fremder Server oder ein Angriff ist ebenfalls möglich.": "A server migration may explain the key change. A different server or an attack is also possible.",
+  "Bisher ({0}): {1}": "Previous ({0}): {1}",
+  "Neu ({0}): {1}": "New ({0}): {1}",
+  "Vergleiche den neuen SHA256-Fingerprint über die Serverkonsole des Hosters oder mit dem Administrator. Nur bei Übereinstimmung fortfahren. Der gespeicherte Schlüssel wird ausschließlich für diesen Host und Port ersetzt.": "Compare the new SHA256 fingerprint using the hosting provider’s server console or with the administrator. Proceed only if it matches. The saved key is replaced only for this host and port.",
+
   "Dateiliste nicht verfügbar": "File list unavailable",
   "{0} fehlgeschlagen": "{0} failed",
   "Filter zurücksetzen": "Clear filter",

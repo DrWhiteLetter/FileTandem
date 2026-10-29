@@ -4,9 +4,9 @@ import { HostKeyStore, HostKeyError, serverIdentity } from './host-keys.js';
 
 /** Sole SSH creation path. Callers cannot supply hostVerifier, hostHash, sock or algorithms.
  * @param {{host: string, port?: number, username: string, privateKey?: Buffer|string, password?: string, passphrase?: string, agent?: string, keyboardInteractive?: Function, readyTimeout?: number}} config
- * @param {{trust: HostKeyStore, confirmUnknown?: Function, signal?: AbortSignal}} policy
+ * @param {{trust: HostKeyStore, confirmUnknown?: Function, confirmChanged?: Function, signal?: AbortSignal}} policy
  */
-export async function connectSsh(config, { trust, confirmUnknown, signal } = {}) {
+export async function connectSsh(config, { trust, confirmUnknown, confirmChanged, signal } = {}) {
   if (!(trust instanceof HostKeyStore)) throw new HostKeyError('MISSING_HOST_KEY_POLICY', 'Verpflichtender Host-Key-Speicher fehlt.');
   const allowed = new Set(['host', 'port', 'username', 'privateKey', 'password', 'passphrase', 'agent', 'keyboardInteractive', 'readyTimeout']);
   if (!config || Object.keys(config).some(key => !allowed.has(key))) {
@@ -87,7 +87,7 @@ export async function connectSsh(config, { trust, confirmUnknown, signal } = {})
         ...auth,
         readyTimeout: timeout, keepaliveInterval: 15000, keepaliveCountMax: 3,
         hostVerifier: (rawKey, finish) => {
-          trust.verify(endpoint, rawKey, confirmUnknown, controller.signal).then(key => {
+          trust.verify(endpoint, rawKey, confirmUnknown, controller.signal, confirmChanged).then(key => {
             if (closed || controller.signal.aborted) return;
             verified = key;
             finish(true);

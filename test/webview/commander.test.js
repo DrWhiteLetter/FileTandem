@@ -27,7 +27,7 @@ test('Rendered Commander: selection, folders, filter, safe names, queue and all 
   await act(() => row.dispatchEvent(new dom.window.MouseEvent('click',{bubbles:true}))); assert.equal(row.getAttribute('aria-selected'),'true');
   await act(() => doc.querySelector('.pane tbody tr').dispatchEvent(new dom.window.MouseEvent('dblclick',{bubbles:true}))); assert.ok(doc.querySelector('.path').textContent.endsWith('/assets'));
   await act(() => doc.querySelector('.queue-toggle').click()); assert.equal(doc.querySelector('.queue table'),null);
-  for (const [mode,text] of [['loading','wird geladen'],['empty','ist leer'],['error','Keine Berechtigung'],['disconnected','Nicht verbunden']]) { await render(mode); assert.ok(doc.body.textContent.includes(text)); }
+  for (const [mode,text] of [['empty','ist leer'],['error','Keine Berechtigung'],['disconnected','Nicht verbunden']]) { await render(mode); assert.ok(doc.body.textContent.includes(text)); }
   assert.equal(persisted.paths.local,'/Desktop/Demo/assets');
   assert.deepEqual(JSON.parse(JSON.stringify(persisted.sorts.remote)),{column:'size',direction:'desc'});
   assert.equal(persisted.queueOpen,false);
@@ -172,4 +172,30 @@ test('keyboard context menu skips disabled items during monitoring and restores 
   assert.equal(doc.activeElement.disabled,false);assert.equal(doc.activeElement.textContent,'Öffnen');
   await act(()=>doc.activeElement.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
   assert.equal(doc.activeElement,row);assert.equal(doc.querySelector('[role="menu"]'),null);
+});
+
+
+test('directory refresh keeps rows, selection and scroll stable with a delayed header spinner',async t=>{
+  const {doc,dom,act,model,render}=await polishFixture(t);
+  model.local.entries=Array.from({length:200},(_,i)=>({id:'/local/'+i,path:'/local/'+i,name:String(i).padStart(3,'0'),kind:'file',size:1,modified:0,mode:0o644}));await render();
+  const pane=doc.querySelector('.pane'),scroll=pane.querySelector('.file-scroll');
+  await act(()=>{scroll.scrollTop=720;scroll.dispatchEvent(new dom.window.Event('scroll'));});
+  const row=pane.querySelector('tr[data-entry-id]');await act(()=>row.click());
+  model.local.status='loading';await render();
+  assert.equal(pane.querySelector('.pane-loading .codicon-loading'),null,'short requests show no spinner');
+  assert.equal(pane.querySelector('.loading-message'),null,'refresh adds no row above the table');
+  await act(()=>new Promise(resolve=>setTimeout(resolve,340)));
+  assert.ok(pane.querySelector('.pane-title .codicon-loading'));
+  assert.equal(pane.querySelector('.loading-message'),null);
+  assert.equal(pane.querySelector('tr[data-entry-id]'),row);
+  assert.equal(row.getAttribute('aria-selected'),'true');assert.equal(scroll.scrollTop,720);
+  model.local.status='ready';model.local.entries=model.local.entries.map(e=>({...e,size:2}));await render();
+  assert.equal(pane.querySelector('.pane-loading .codicon-loading'),null);
+  assert.equal(pane.querySelector('tr[data-entry-id]'),row);assert.equal(scroll.scrollTop,720);assert.equal(row.getAttribute('aria-selected'),'true');
+  model.local.status='loading';await render();model.local.status='ready';await render();
+  await act(()=>new Promise(resolve=>setTimeout(resolve,340)));
+  assert.equal(pane.querySelector('.pane-loading .codicon-loading'),null,'completed requests cancel delayed indicators');
+  model.remote={path:'/first-open',status:'loading',entries:[]};await render();
+  await act(()=>new Promise(resolve=>setTimeout(resolve,340)));
+  assert.ok(doc.querySelector('.pane:last-child .loading-message'),'first load of an empty pane retains explanatory text');
 });

@@ -63,6 +63,10 @@ strong { font-weight: 600; }
 .pane { flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; }
 .pane:first-child { flex: 0 0 var(--local-width, 50%); border-right: 1px solid var(--vscode-panel-border); }
 .pane-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 8px; background: var(--vscode-sideBar-background, var(--vscode-editor-background)); }
+.pane-loading { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; flex: 0 0 16px; color: var(--vscode-descriptionForeground); }
+.pane-loading .codicon-loading, .loading-message .codicon-loading { animation: directory-spin 1s linear infinite; }
+@keyframes directory-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .pane-loading .codicon-loading, .loading-message .codicon-loading { animation: none; } }
 .pane-title strong { display: inline-flex; align-items: center; gap: 6px; }
 .pane:focus-within > .pane-title { box-shadow: inset 0 -1px var(--vscode-focusBorder); }
 .pathbar { display: flex; gap: 4px; align-items: center; padding: 8px; border-bottom: 1px solid var(--vscode-panel-border); }

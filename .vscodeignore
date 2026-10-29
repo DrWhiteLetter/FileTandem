@@ -21,3 +21,6 @@ out/**
 coverage/**
 eslint.config.js
 **/*.vsix
+
+# Separate project website and its source repository
+sites/**

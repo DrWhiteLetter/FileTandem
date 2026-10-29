@@ -14,7 +14,7 @@ import { probeAuthentication } from './application/authentication-probe.js';
 import { registerEditorProvider } from './vscode/editor-provider.js';
 import { registerManager } from './vscode/manager-panel.js';
 import { connectSsh } from './adapters/ssh/connect.js';
-import { unknownHostKeyDialog } from './vscode/host-key-dialog.js';
+import { unknownHostKeyDialog, changedHostKeyDialog } from './vscode/host-key-dialog.js';
 import { registerHostKeyProof } from './vscode/host-key-proof.js';
 import { executionLocation, registerLocalProof, verifyLocalFile } from './vscode/local-proof.js';
 
@@ -25,7 +25,7 @@ export async function activate(context) {
   profileUI.credentials=credentialProvider(context,profileUI);
   registerLocalProof(context);
   const { trust } = registerHostKeyProof(context);
-  profileUI.sessions=new SessionManager({connect:connectSsh,credentials:profileUI.credentials,policy:{trust,confirmUnknown:unknownHostKeyDialog(vscode.window)},onChange:() => profileUI.changed.fire()});
+  profileUI.sessions=new SessionManager({connect:connectSsh,credentials:profileUI.credentials,policy:{trust,confirmUnknown:unknownHostKeyDialog(vscode.window),confirmChanged:changedHostKeyDialog(vscode.window)},onChange:() => profileUI.changed.fire()});
   context.subscriptions.push(profileUI.sessions);
   profileUI.connect=async profile => {
     profileUI.guard();
