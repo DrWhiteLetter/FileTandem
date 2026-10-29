@@ -27,7 +27,7 @@ Benötigt **VS Code Desktop ab 1.140.0**. Node.js ist für die Installation nich
 
 ## Erste Verbindung
 
-1. **Profil verbinden** wählen und ein Serverprofil mit Host, Benutzer und Anmeldeverfahren anlegen.
+1. Über die Befehlspalette **FileTandem: Profil anlegen** ein Serverprofil mit Host, Benutzer und Anmeldeverfahren erstellen. Danach im Dateimanager **Profil verbinden** wählen.
 2. Beim ersten Verbinden den angezeigten SSH-Fingerprint unabhängig beim Hoster oder Administrator prüfen und bestätigen.
 3. Links den lokalen Ordner, rechts den Serverordner öffnen. Dateien auswählen und mit **Hochladen →** oder **← Herunterladen** übertragen.
 
