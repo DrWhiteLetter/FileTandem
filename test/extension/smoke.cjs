@@ -33,7 +33,10 @@ exports.run = async () => {
   assert.equal(extension.packageJSON.dependencies.ssh2, '1.17.0');
   assert.equal(extension.packageJSON.capabilities.untrustedWorkspaces.supported, false);
   assert.ok(extension.packageJSON.contributes.views.filetandem.some(view => view.id === 'filetandem.connections'));
-  assert.equal(extension.packageJSON.contributes.keybindings, undefined, 'F5 is not globally overridden');
+  for (const binding of extension.packageJSON.contributes.keybindings ?? []) {
+    assert.equal(binding.when, 'activeWebviewPanelId == filetandem.browser && config.filetandem.commanderKeys', 'Commander keys only apply inside FileTandem when enabled');
+    assert.ok(['filetandem.consumeCommanderKey', 'filetandem.copySelection'].includes(binding.command));
+  }
   assert.ok(!extension.packageJSON.activationEvents.includes('*'));
   assert.equal(vscode.workspace.workspaceFolders?.length ?? 0, process.env.XSCP_EXPECT_REMOTE === 'ssh-remote' ? 1 : 0);
   assert.equal(vscode.workspace.getConfiguration('filetandem').get('showHiddenFiles'), false);
