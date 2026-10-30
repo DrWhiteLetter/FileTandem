@@ -1,16 +1,27 @@
 import { english } from './translations.js';
-let current=typeof document==='object' && document.documentElement.lang==='en' ? 'en':'de';
+import german from '../../l10n/bundle.l10n.de.json' with { type: 'json' };
+export const resolveLanguage=value => String(value).toLowerCase().startsWith('de') ? 'de':'en';
+let current=typeof document==='object' ? resolveLanguage(document.documentElement.lang):'de';
 export const getLanguage=() => current;
-export function setLanguage(value) {current=String(value).toLowerCase().startsWith('en') ? 'en':'de';}
+export function setLanguage(value) {current=resolveLanguage(value);}
 const escape=value => value.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-const templates=Object.entries(english).filter(([source]) => /\{\d+\}/.test(source)).sort((a,b) => b[0].length-a[0].length).map(([source,target]) => {
-  const indices=[];let cursor=0,pattern='';for (const match of source.matchAll(/\{(\d+)\}/g)) {pattern+=escape(source.slice(cursor,match.index))+'([\\s\\S]*?)';indices.push(Number(match[1]));cursor=match.index+match[0].length;}pattern+=escape(source.slice(cursor));return {regex:new RegExp('^'+pattern+'$'),target,indices};
-});
-export function translate(value,locale=current) {
-  if (typeof value!=='string' || !String(locale).toLowerCase().startsWith('en')) return value;
-  if (Object.hasOwn(english,value)) return english[value];
-  for (const {regex,target,indices} of templates) {const match=regex.exec(value);if (match) {const parts=new Map(indices.map((index,i) => [index,match[i+1]]));return target.replace(/\{(\d+)\}/g,(_,index) => parts.get(Number(index)) ?? '');}}
-  const prefix=/^(\$\([a-z-]+\)\s*|FileTandem:\s*)([\s\S]*)$/.exec(value);if (prefix) return prefix[1]+translate(prefix[2],locale);
-  if (value.includes('\n')) return value.split('\n').map(line => translate(line,locale)).join('\n');
+const templates=Object.entries(english).filter(([source]) => /\{\d+\}/.test(source)).flatMap(([source,target]) => [source,target].map(pattern => {
+  const indices=[];let cursor=0,regex='';
+  for (const match of pattern.matchAll(/\{(\d+)\}/g)) {regex+=escape(pattern.slice(cursor,match.index))+'([\\s\\S]*?)';indices.push(Number(match[1]));cursor=match.index+match[0].length;}
+  regex+=escape(pattern.slice(cursor));return {regex:new RegExp('^'+regex+'$'),target,source,indices,length:pattern.length};
+})).sort((a,b) => b.length-a.length);
+export const formatMessage=(message,args=[]) => message.replace(/\{(\d+)\}/g,(token,index) => args[index] ?? token);
+/** English keys are shared by VS Code l10n and the webview. Unknown paths/user data remain untouched. */
+export function translate(value,locale=current,resolve) {
+  if (typeof value!=='string') return value;
+  const render=(target,args,source) => resolve ? resolve(target,args):formatMessage(resolveLanguage(locale)==='de' ? source ?? german[target] ?? target:target,args);
+  if (Object.hasOwn(english,value)) return render(english[value],[],value);
+  if (Object.hasOwn(german,value)) return render(value,[],german[value]);
+  for (const {regex,target,source,indices} of templates) {
+    const match=regex.exec(value);if (match) {const args=[];indices.forEach((index,i) => {args[index]=match[i+1];});return render(target,args,source);}
+  }
+  const prefix=/^(\$\([a-z-]+\)\s*|FileTandem:\s*)([\s\S]*)$/.exec(value);
+  if (prefix) return prefix[1]+translate(prefix[2],locale,resolve);
+  if (value.includes('\n')) return value.split('\n').map(line => translate(line,locale,resolve)).join('\n');
   return value;
 }

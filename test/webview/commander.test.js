@@ -4,7 +4,7 @@ import { build } from 'esbuild';
 import { JSDOM } from 'jsdom';
 const result = await build({ entryPoints:['test/webview/harness.jsx'],bundle:true,outdir:'out/webview-test',write:false,format:'iife',jsx:'automatic',platform:'browser' });
 test('Rendered Commander: selection, folders, filter, safe names, queue and all demo states', async () => {
-  const dom = new JSDOM('<meta name="filetandem-session" content="demo-session"><div id="root"></div>',{runScripts:'outside-only',url:'https://filetandem.test'});
+  const dom = new JSDOM('<html lang="de"><meta name="filetandem-session" content="demo-session"><div id="root"></div>',{runScripts:'outside-only',url:'https://filetandem.test'});
   const messages=[]; let persisted;
   // jsdom lacks the browser MessageChannel used by React's act scheduler.
   dom.window.MessageChannel = class { constructor() { this.port1 = {onmessage:null}; this.port2 = {postMessage: () => setTimeout(() => this.port1.onmessage?.(),0)}; } };
@@ -35,7 +35,7 @@ test('Rendered Commander: selection, folders, filter, safe names, queue and all 
   dom.window.close();
 });
 test('Real browser selection survives refresh; per-pane filters, symlinks and preferences',async () => {
-  const dom=new JSDOM('<div id="root"></div>',{runScripts:'outside-only',url:'https://filetandem.test'});
+  const dom=new JSDOM('<html lang="de"><div id="root"></div></html>',{runScripts:'outside-only',url:'https://filetandem.test'});
   dom.window.MessageChannel=class {constructor() {this.port1={onmessage:null};this.port2={postMessage:() => setTimeout(() => this.port1.onmessage?.(),0)};}};
   dom.window.IS_REACT_ACT_ENVIRONMENT=true;dom.window.eval(result.outputFiles.find(f => f.path.endsWith('.js')).text);
   let saved;const messages=[];await dom.window.testMountBrowser({getState:() => undefined,setState:v => {saved=v;},postMessage:v => messages.push(v)},'browser-session');
@@ -99,14 +99,14 @@ test('Real browser selection survives refresh; per-pane filters, symlinks and pr
 });
 test('English Commander and switching back localize labels, menus, errors and accessibility names',async () => {
  const dom=new JSDOM('<html lang="en"><div id="root"></div></html>',{runScripts:'outside-only',url:'https://filetandem.test'});dom.window.MessageChannel=class {constructor(){this.port1={onmessage:null};this.port2={postMessage:()=>setTimeout(()=>this.port1.onmessage?.(),0)};}};dom.window.IS_REACT_ACT_ENVIRONMENT=true;dom.window.eval(result.outputFiles.find(f=>f.path.endsWith('.js')).text);const messages=[];await dom.window.testMountBrowser({postMessage:m=>messages.push(m)},'english-session');
- const act=action=>dom.window.testAct(action);const model={version:1,type:'browserModel',sessionId:'english-session',locale:'en',connection:{name:'Kein Server',state:'disconnected',protocol:'sftp'},local:{path:'/tmp',status:'error',error:'Keine Berechtigung für diesen Ordner.',entries:[]},remote:{path:'/',status:'disconnected',entries:[]},queue:[{id:'failed',source:'/a',target:'/b',state:'failed',direction:'upload',bytes:0,rate:0,error:'Transfer fehlgeschlagen; Quelle/Ziel und Verbindung prüfen.'}]};
+ const act=action=>dom.window.testAct(action);const model={version:1,type:'browserModel',sessionId:'english-session',locale:'en',connection:{state:'disconnected',protocol:'sftp'},local:{path:'/tmp',status:'error',error:'Keine Berechtigung für diesen Ordner.',entries:[]},remote:{path:'/',status:'disconnected',entries:[]},queue:[{id:'failed',source:'/a',target:'/b',state:'failed',direction:'upload',bytes:0,rate:0,error:'Transfer fehlgeschlagen; Quelle/Ziel und Verbindung prüfen.'}],autoUpload:{active:false,error:'Remote-Datei wurde geändert; keine automatische Löschung.'}};
  const render=()=>act(()=>dom.window.dispatchEvent(new dom.window.MessageEvent('message',{data:dom.window.JSON.parse(JSON.stringify(model))})));await render();const doc=dom.window.document;
- for (const text of ['Connect profile','New session','Hidden files','Permission denied for this folder.','Retry failed jobs','Transfer failed; check source/destination and connection.','No server']) assert.ok(doc.body.textContent.includes(text),text);
+ for (const text of ['Connect profile','New session','Hidden files','Permission denied for this folder.','Retry failed jobs','Transfer failed; check source/destination and connection.','No server','Remote file was changed; automatic deletion was prevented.']) assert.ok(doc.body.textContent.includes(text),text);
  assert.ok(doc.querySelector('input[aria-label="Local: Name filter"]'));assert.ok(doc.querySelector('table[aria-label="Local: File list"]'));assert.equal(doc.documentElement.lang,'en');assert.ok(!/Versteckte|Namensfilter|Herunterladen|Dateiliste|Nicht verbunden/.test(doc.body.textContent));
- model.locale='de';await render();assert.ok(doc.body.textContent.includes('Profil verbinden'));assert.ok(doc.body.textContent.includes('Fehlgeschlagen'));assert.equal(doc.documentElement.lang,'de');assert.equal(messages[0].type,'ready');dom.window.close();
+ model.locale='de';await render();assert.ok(doc.body.textContent.includes('Profil verbinden'));assert.ok(doc.body.textContent.includes('Fehlgeschlagen'));assert.equal(doc.documentElement.lang,'de');model.connection.name='Password';await render();assert.equal(doc.querySelector('.connection-status strong').textContent,'Password','user profile names are not translated');assert.equal(messages[0].type,'ready');dom.window.close();
 });
 test('automatic upload mode is visible, stops explicitly and blocks manual transfer paths',async () => {
-  const dom=new JSDOM('<div id="root"></div>',{runScripts:'outside-only',url:'https://filetandem.test'});
+  const dom=new JSDOM('<html lang="de"><div id="root"></div></html>',{runScripts:'outside-only',url:'https://filetandem.test'});
   dom.window.MessageChannel=class {constructor(){this.port1={onmessage:null};this.port2={postMessage:()=>setTimeout(()=>this.port1.onmessage?.(),0)};}};
   dom.window.IS_REACT_ACT_ENVIRONMENT=true;dom.window.eval(result.outputFiles.find(f=>f.path.endsWith('.js')).text);
   const messages=[];await dom.window.testMountBrowser({postMessage:value=>messages.push(value)},'watch-session');const act=action=>dom.window.testAct(action);
@@ -127,7 +127,7 @@ test('automatic upload mode is visible, stops explicitly and blocks manual trans
 });
 
 async function polishFixture(t,overrides={}) {
-  const dom=new JSDOM('<div id="root"></div>',{runScripts:'outside-only',url:'https://filetandem.test'});
+  const dom=new JSDOM('<html lang="de"><div id="root"></div></html>',{runScripts:'outside-only',url:'https://filetandem.test'});
   dom.window.MessageChannel=class {constructor(){this.port1={onmessage:null};this.port2={postMessage:()=>setTimeout(()=>this.port1.onmessage?.(),0)};}};
   dom.window.IS_REACT_ACT_ENVIRONMENT=true;dom.window.eval(result.outputFiles.find(f=>f.path.endsWith('.js')).text);
   const messages=[];let saved;await dom.window.testMountBrowser({getState:()=>overrides.saved,setState:v=>{saved=v;},postMessage:v=>messages.push(v)},'polish');

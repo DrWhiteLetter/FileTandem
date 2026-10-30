@@ -2,10 +2,13 @@
 export function unknownHostKeyDialog(window) {
   return async request => {
     const answer = await window.showWarningMessage(
-      `Unbekannter SSH-Host-Key: ${request.endpoint.label}`,
-      { modal: true, detail: `Algorithmus: ${request.algorithm}\nFingerprint: ${request.fingerprint}\n\nFingerprint über einen unabhängigen vertrauenswürdigen Weg mit dem Serverbetreiber vergleichen. Nur bei Übereinstimmung vertrauen. Die Entscheidung wird lokal für diesen Host und Port gespeichert.` },
-      'Ablehnen', 'Vertrauen und verbinden');
-    return answer === 'Vertrauen und verbinden';
+      `Unknown SSH host key: ${request.endpoint.label}`,
+      { modal: true, detail: `Algorithm: ${request.algorithm}
+Fingerprint: ${request.fingerprint}
+
+Verify the fingerprint independently with the server operator. Trust only a matching fingerprint. This decision is stored locally for this host and port.` },
+      "Reject", "Trust and connect");
+    return answer === "Trust and connect";
   };
 }
 
@@ -14,22 +17,22 @@ export function changedHostKeyDialog(window) {
   return async (request, signal) => {
     if (signal?.aborted) return false;
     const answer = await window.showWarningMessage(
-      `SSH-Host-Key geändert: ${request.endpoint.label}`,
-      { modal: true, detail: `Ein Serverumzug kann den Schlüsselwechsel erklären. Ein fremder Server oder ein Angriff ist ebenfalls möglich.
+      `SSH host key changed: ${request.endpoint.label}`,
+      { modal: true, detail: `A server migration may explain the key change. A different server or an attack is also possible.
 
-Bisher (${request.expected.algorithm}): ${request.expected.fingerprint}
-Neu (${request.received.algorithm}): ${request.received.fingerprint}
+Previous (${request.expected.algorithm}): ${request.expected.fingerprint}
+New (${request.received.algorithm}): ${request.received.fingerprint}
 
-Prüfe den neuen SHA256-Fingerprint über die Serverkonsole des Hosters oder mit dem Administrator. Alternativ kannst du ohne Prüfung vertrauen. Dabei besteht das Risiko, Zugangsdaten an einen fremden Server zu senden. Beide Möglichkeiten ersetzen den gespeicherten Schlüssel ausschließlich für diesen Host und Port.` },
-      'Neuen Schlüssel prüfen …', 'Ohne Prüfung vertrauen und verbinden');
+Verify the new SHA256 fingerprint using the hosting provider’s server console or with the administrator. Alternatively, you can trust without verification. This risks sending credentials to a different server. Both options replace the saved key only for this host and port.` },
+      "Verify new key …", "Trust without verification and connect");
     if (signal?.aborted) return false;
-    if (answer === 'Ohne Prüfung vertrauen und verbinden') return true;
-    if (answer !== 'Neuen Schlüssel prüfen …') return false;
+    if (answer === "Trust without verification and connect") return true;
+    if (answer !== "Verify new key …") return false;
     const fingerprint = await window.showInputBox({
-      title: `FileTandem: Neuen Host-Key für ${request.endpoint.label} bestätigen`,
-      prompt: 'Den unabhängig geprüften neuen SHA256-Fingerprint eingeben. Bestätigen ersetzt den bisherigen Host-Key und erlaubt die Verbindung.',
+      title: `FileTandem: Confirm new host key for ${request.endpoint.label}`,
+      prompt: "Enter the independently verified new SHA256 fingerprint. Confirming replaces the previous host key and allows the connection.",
       placeHolder: 'SHA256:…', ignoreFocusOut: true,
-      validateInput: value => value.trim() === request.received.fingerprint ? undefined : 'Der Fingerprint stimmt nicht mit dem neuen Server-Schlüssel überein.'
+      validateInput: value => value.trim() === request.received.fingerprint ? undefined : "The fingerprint does not match the new server key."
     });
     return !signal?.aborted && fingerprint?.trim() === request.received.fingerprint;
   };

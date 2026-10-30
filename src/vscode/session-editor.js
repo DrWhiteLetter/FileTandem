@@ -10,14 +10,14 @@ export function registerSessionEditor(context, ui) {
   const digest=data => createHash('sha256').update(data).digest('hex');let timer,polling=false,disposed=false;const reviews=new Map();const bindings=new Map();const changes=new vscode.EventEmitter();
   const resolve=uri => {
     ui.guard();const b=bindings.get(uri.authority);
-    if (uri.scheme!=='filetandem' || uri.query || uri.fragment || !b || !uri.path.startsWith('/') || uri.path.includes('\0') || posix.normalize(uri.path)!==uri.path) throw vscode.FileSystemError.Unavailable('Editor-Sitzung geschlossen. Datei erneut öffnen.');
-    if (!ui.sessions.matches(b.profile) || ui.sessions.snapshot(b.profile.id).state!=='connected' || ui.sessions.transport(b.profile.id)!==b.transport) throw vscode.FileSystemError.Unavailable('Verbindung ersetzt oder getrennt. Datei erneut öffnen.');
+    if (uri.scheme!=='filetandem' || uri.query || uri.fragment || !b || !uri.path.startsWith('/') || uri.path.includes('\0') || posix.normalize(uri.path)!==uri.path) throw vscode.FileSystemError.Unavailable("Editor session closed. Open the file again.");
+    if (!ui.sessions.matches(b.profile) || ui.sessions.snapshot(b.profile.id).state!=='connected' || ui.sessions.transport(b.profile.id)!==b.transport) throw vscode.FileSystemError.Unavailable("Connection replaced or disconnected. Open the file again.");
     return b;
   };
   const translated=async action => {try {return await action();} catch(e) {if (e.code==='EEXIST') throw vscode.FileSystemError.FileExists();if (e.code==='NOT_CONNECTED') throw vscode.FileSystemError.Unavailable();if (e.code===2 || e.code==='ENOENT') throw vscode.FileSystemError.FileNotFound();if (e.code===3 || e.code==='EACCES') throw vscode.FileSystemError.NoPermissions();e.message=t(e.message);throw e;}};
   const resource=async uri => {
     const b=resolve(uri);let file=b.files.get(uri.path);
-    if (!file) {if ([...bindings.values()].reduce((n,b) => n+b.files.size,0)>=32) throw vscode.FileSystemError.Unavailable('Maximal 32 Editor-Dateien gleichzeitig öffnen.');file=openEditorFile(b.transport,uri.path,{closeSession:false}).then(async value => {try {if (resolve(uri)!==b) throw vscode.FileSystemError.Unavailable();return value;} catch(e) {await value.close();throw e;}});b.files.set(uri.path,file);file.catch(() => {if (b.files.get(uri.path)===file) b.files.delete(uri.path);});}
+    if (!file) {if ([...bindings.values()].reduce((n,b) => n+b.files.size,0)>=32) throw vscode.FileSystemError.Unavailable("Open at most 32 editor files at once.");file=openEditorFile(b.transport,uri.path,{closeSession:false}).then(async value => {try {if (resolve(uri)!==b) throw vscode.FileSystemError.Unavailable();return value;} catch(e) {await value.close();throw e;}});b.files.set(uri.path,file);file.catch(() => {if (b.files.get(uri.path)===file) b.files.delete(uri.path);});}
     return file;
   };
   const provider={onDidChangeFile:changes.event,watch:() => new vscode.Disposable(() => {}),
@@ -25,11 +25,11 @@ export function registerSessionEditor(context, ui) {
     readDirectory:uri => translated(async () => (await resolve(uri).metadata.list(uri.path)).entries.map(e => [e.name,e.kind==='directory' ? vscode.FileType.Directory:e.kind==='symlink' ? vscode.FileType.SymbolicLink:vscode.FileType.File])),
     readFile:uri => translated(async () => {const file=await resource(uri);const data=await file.read();const doc=vscode.workspace.textDocuments.find(d => d.uri.toString()===uri.toString());const b=resolve(uri);b.loaded.set(uri.path,data);if (!doc || (!doc.isDirty && doc.getText()===data.toString('utf8'))) {await file.rebase(data);b.observed=digest(data);}return data;}),
     writeFile:(uri,data,options) => translated(async () => {
-      const b=resolve(uri);ui.transfers.engine.assertManual(b.profile.id);if (!b.grants.has(uri.path)) throw vscode.FileSystemError.NoPermissions('Bearbeitung zuerst ausdrücklich freigeben.');
+      const b=resolve(uri);ui.transfers.engine.assertManual(b.profile.id);if (!b.grants.has(uri.path)) throw vscode.FileSystemError.NoPermissions("Explicitly enable editing first.");
       const file=await resource(uri);const allowed=() => {try {ui.transfers.engine.assertManual(b.profile.id);return resolve(uri)===b && b.grants.has(uri.path);} catch {return false;}};
       const job={server:serverIdentity(b.profile.host,b.profile.port).id,direction:'upload'};
       await ui.transfers.engine.queue.maintain(ui.transfers.engine.key(job,uri.path),async () => {if (!allowed()) throw vscode.FileSystemError.NoPermissions();try {await file.write(Buffer.from(data),allowed,options);} catch(e) {
-        if (e.code==='EDITOR_CONFLICT' && !b.notice) {b.notice=true;void vscode.window.showWarningMessage('Remote-Datei geändert. Lokale Änderungen bleiben ungespeichert.','Änderungen vergleichen').then(async choice => {if (choice==='Änderungen vergleichen') await api.diff(uri);}).catch(() => {}).finally(() => {b.notice=false;});}throw e;
+        if (e.code==='EDITOR_CONFLICT' && !b.notice) {b.notice=true;void vscode.window.showWarningMessage("Remote file changed. Local changes remain unsaved.","Compare changes").then(async choice => {if (choice==="Compare changes") await api.diff(uri);}).catch(() => {}).finally(() => {b.notice=false;});}throw e;
       }});
       b.loaded.set(uri.path,Buffer.from(data));b.observed=digest(data);changes.fire([{type:vscode.FileChangeType.Changed,uri}]);refresh();
     }),
@@ -57,21 +57,23 @@ export function registerSessionEditor(context, ui) {
       const b=resolve(uri);const file=await resource(uri);const data=await file.read();const review=snapshot(uri,data,'remote');b.review=review;
       await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(review),{preview:false});return review;
     },
-    async acceptReview(uri,confirm=async detail => await vscode.window.showWarningMessage('Verglichenen Serverstand als neue Speicherbasis übernehmen?',{modal:true,detail},'Basis übernehmen')==='Basis übernehmen') {
-      const b=resolve(uri);const review=b.review && reviews.get(b.review.authority);if (!review) throw new Error('Zuerst den aktuellen Serverstand ansehen.');
-      if (await confirm(`${b.profile.name}: ${uri.path}\nLokale ungespeicherte Änderungen bleiben erhalten. Beim nächsten Speichern wird der verglichene Serverstand ersetzt.`)!==true) return false;
+    async acceptReview(uri,confirm=async detail => await vscode.window.showWarningMessage("Accept the reviewed server version as the new save baseline?",{modal:true,detail},"Accept baseline")==="Accept baseline") {
+      const b=resolve(uri);const review=b.review && reviews.get(b.review.authority);if (!review) throw new Error("Review the current server version first.");
+      if (await confirm(`${b.profile.name}: ${uri.path}
+Local unsaved changes are preserved. The next save replaces the reviewed server version.`)!==true) return false;
       resolve(uri);await (await resource(uri)).rebase(review.data);return true;
     },
     write:(uri,data,options) => provider.writeFile(uri,data,options),
     async open(profile,path,{create=false}={}) {
-      ui.guard();if (profile.protocol!=='sftp') throw vscode.FileSystemError.Unavailable('SCP-Dateien benötigen eine lokale Kopie mit ausdrücklichem Upload.');
-      const transport=ui.sessions.transport(profile.id);const metadata=await RemoteFiles.open(transport);if (bindings.size>=32) {metadata.close();throw vscode.FileSystemError.Unavailable('Maximal 32 Editor-Dateien gleichzeitig öffnen.');}const id=randomUUID();
+      ui.guard();if (profile.protocol!=='sftp') throw vscode.FileSystemError.Unavailable("SCP files require a local copy with an explicit upload.");
+      const transport=ui.sessions.transport(profile.id);const metadata=await RemoteFiles.open(transport);if (bindings.size>=32) {metadata.close();throw vscode.FileSystemError.Unavailable("Open at most 32 editor files at once.");}const id=randomUUID();
       bindings.set(id,{profile,transport,metadata,files:new Map(),grants:new Set(),loaded:new Map()});const uri=vscode.Uri.from({scheme:'filetandem',authority:id,path});
-      try {if (create) {const b=resolve(uri);b.files.set(uri.path,await openEditorFile(transport,path,{closeSession:false,allowCreate:true}));return uri;}const s=await provider.stat(uri);if (s.size>EDITOR_LIMIT) throw Object.assign(new Error('Editor-Limit: 10 MiB. Datei herunterladen.'),{code:'EDITOR_LIMIT'});await resource(uri);return uri;} catch(e) {await api.close(uri);throw e;}
+      try {if (create) {const b=resolve(uri);b.files.set(uri.path,await openEditorFile(transport,path,{closeSession:false,allowCreate:true}));return uri;}const s=await provider.stat(uri);if (s.size>EDITOR_LIMIT) throw Object.assign(new Error("Editor limit: 10 MiB. Download this file."),{code:'EDITOR_LIMIT'});await resource(uri);return uri;} catch(e) {await api.close(uri);throw e;}
     },
-    async show(profile,path,download) {if (profile.protocol==='scp') return ui.editorCopies.open(profile,path,download);let uri;try {uri=await api.open(profile,path);await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(uri));return uri;} catch(e) {if (uri) await api.close(uri);if (e.code==='EDITOR_LIMIT') {if (await vscode.window.showInformationMessage(e.message,'Herunterladen')==='Herunterladen') return download();return;}throw e;}},
-    async enable(uri,confirm=async detail => await vscode.window.showWarningMessage('Remote-Datei zum Bearbeiten freigeben?',{modal:true,detail},'Bearbeitung freigeben')==='Bearbeitung freigeben') {
-      const b=resolve(uri);if (await confirm(`${b.profile.name}: ${uri.path}\nSpeichern und Auto Save schreiben direkt auf den Server. Nur diese Datei in dieser Sitzung.`)!==true) return false;
+    async show(profile,path,download) {if (profile.protocol==='scp') return ui.editorCopies.open(profile,path,download);let uri;try {uri=await api.open(profile,path);await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(uri));return uri;} catch(e) {if (uri) await api.close(uri);if (e.code==='EDITOR_LIMIT') {if (await vscode.window.showInformationMessage(e.message,"Download")==="Download") return download();return;}throw e;}},
+    async enable(uri,confirm=async detail => await vscode.window.showWarningMessage("Enable editing of this remote file?",{modal:true,detail},"Enable editing")==="Enable editing") {
+      const b=resolve(uri);if (await confirm(`${b.profile.name}: ${uri.path}
+Save and Auto Save write directly to the server. Only this file in this session.`)!==true) return false;
       if (resolve(uri)!==b) return false;b.grants.add(uri.path);changes.fire([{type:vscode.FileChangeType.Changed,uri}]);refresh();return true;
     },
     lock(uri) {resolve(uri).grants.delete(uri.path);changes.fire([{type:vscode.FileChangeType.Changed,uri}]);refresh();},
@@ -79,11 +81,12 @@ export function registerSessionEditor(context, ui) {
     async close(uri) {const b=bindings.get(uri.authority);if (!b) return;bindings.delete(uri.authority);for (const [id,r] of reviews) if (r.source.authority===uri.authority) reviews.delete(id);b.grants.clear();b.loaded.clear();b.metadata.close();await Promise.allSettled([...b.files.values()].map(async f => (await f).close()));schedule();refresh();},
   };
   const status=vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right,21);
-  const refresh=() => {const uri=vscode.window.activeTextEditor?.document.uri;const b=uri?.scheme==='filetandem' && bindings.get(uri.authority);if (!b) return status.hide();status.text=b.grants.has(uri.path) ? '$(edit) FileTandem: Bearbeitung freigegeben':'$(lock) FileTandem: Schreibgeschützt';status.tooltip=`${b.profile.name}: ${uri.path}\nAuto Save schreibt nur nach Freigabe.`;status.command=b.grants.has(uri.path) ? 'filetandem.lockEditorFile':'filetandem.enableEditorEditing';status.show();};
-  const active=() => {const uri=vscode.window.activeTextEditor?.document.uri;if (uri?.scheme==='filetandem-review') {const source=reviews.get(uri.authority)?.source;if (source) return source;}if (uri?.scheme==='filetandem') return uri;throw new Error('Zuerst eine FileTandem-Datei öffnen.');};
+  const refresh=() => {const uri=vscode.window.activeTextEditor?.document.uri;const b=uri?.scheme==='filetandem' && bindings.get(uri.authority);if (!b) return status.hide();status.text=b.grants.has(uri.path) ? "$(edit) FileTandem: Editing enabled":"$(lock) FileTandem: Read-only";status.tooltip=`${b.profile.name}: ${uri.path}
+Auto Save writes only after explicit permission.`;status.command=b.grants.has(uri.path) ? 'filetandem.lockEditorFile':'filetandem.enableEditorEditing';status.show();};
+  const active=() => {const uri=vscode.window.activeTextEditor?.document.uri;if (uri?.scheme==='filetandem-review') {const source=reviews.get(uri.authority)?.source;if (source) return source;}if (uri?.scheme==='filetandem') return uri;throw new Error("Open a FileTandem file first.");};
   ui.command('filetandem.reviewRemoteFile',() => api.review(active()));ui.command('filetandem.diffRemoteFile',() => api.diff(active()));ui.command('filetandem.acceptEditorReview',() => api.acceptReview(active()));
   context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('filetandem-review',{provideTextDocumentContent:uri => {const review=reviews.get(uri.authority);if (!review) throw vscode.FileSystemError.Unavailable();return review.data.toString('utf8');}}));
-  ui.command('filetandem.newRemoteFile',async () => {const p=await ui.choose();if (!p) return;if (ui.sessions.snapshot(p.id).state!=='connected') await ui.connect(p);const path=await vscode.window.showInputBox({title:'Neue SFTP-Datei: absoluter Pfad',value:p.remotePath+'/neu.txt'});if (!path) return;const uri=await api.open(p,path,{create:true});try {if (!await api.enable(uri)) {await api.close(uri);return;}await provider.writeFile(uri,Buffer.alloc(0),{create:true,overwrite:false});await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(uri));return uri;} catch(e) {await api.close(uri);throw e;}});
+  ui.command('filetandem.newRemoteFile',async () => {const p=await ui.choose();if (!p) return;if (ui.sessions.snapshot(p.id).state!=='connected') await ui.connect(p);const path=await vscode.window.showInputBox({title:"New SFTP file: absolute path",value:p.remotePath+'/neu.txt'});if (!path) return;const uri=await api.open(p,path,{create:true});try {if (!await api.enable(uri)) {await api.close(uri);return;}await provider.writeFile(uri,Buffer.alloc(0),{create:true,overwrite:false});await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(uri));return uri;} catch(e) {await api.close(uri);throw e;}});
   context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(event => {const doc=event.document,b=doc.uri.scheme==='filetandem' && bindings.get(doc.uri.authority),data=b && b.loaded.get(doc.uri.path);if (data && !doc.isDirty && doc.getText()===data.toString('utf8')) void resource(doc.uri).then(file => file.rebase(data)).then(() => {b.observed=digest(data);}).catch(() => {});}),status,vscode.window.onDidChangeActiveTextEditor(() => {refresh();schedule();}),vscode.workspace.onDidChangeConfiguration(e => {if (e.affectsConfiguration('filetandem.editorPollInterval')) schedule();}),changes,vscode.workspace.registerFileSystemProvider('filetandem',provider,{isCaseSensitive:true}),vscode.workspace.onDidCloseTextDocument(doc => {if (doc.uri.scheme==='filetandem') void api.release(doc.uri).catch(() => {});else if (doc.uri.scheme==='filetandem-review') reviews.delete(doc.uri.authority);}),ui.changed.event(() => {for (const [id,b] of bindings) {if (!ui.sessions.matches(b.profile) || ui.sessions.snapshot(b.profile.id).state!=='connected') void api.close(vscode.Uri.from({scheme:'filetandem',authority:id,path:'/'}));}}),{dispose() {disposed=true;clearTimeout(timer);reviews.clear();for (const id of bindings.keys()) void api.close(vscode.Uri.from({scheme:'filetandem',authority:id,path:'/'}));}});
   return api;
 }

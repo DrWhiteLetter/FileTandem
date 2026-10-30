@@ -2,7 +2,7 @@
   "name": "xscp",
   "displayName": "FileTandem – SFTP & SCP File Manager",
   "description": "%description%",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "private": true,
   "publisher": "xscp-dev",
   "type": "module",
@@ -327,7 +327,12 @@
           "default": "auto",
           "scope": "application",
           "description": "%filetandem.language.description%",
-          "title": "%filetandem.language.title%"
+          "title": "%filetandem.language.title%",
+          "enumDescriptions": [
+            "%filetandem.language.auto%",
+            "%filetandem.language.de%",
+            "%filetandem.language.en%"
+          ]
         }
       },
       "id": "FileTandem"
@@ -400,7 +405,7 @@
     "test:editor": "node --test test/integration/editor.test.js && npm run build && node scripts/test-editor.mjs",
     "test:editor:remote": "npm run build && node scripts/test-editor.mjs --remote",
     "lint": "eslint .",
-    "quality": "npm run lint && npm run check && npm run test:unit && npm run test:webview && npm run build",
+    "quality": "npm run l10n:check && npm run lint && npm run check && npm run test:unit && npm run test:webview && npm run build",
     "test:webview": "node --test test/webview/*.test.js",
     "package": "node scripts/package.mjs",
     "test:installed": "node scripts/test-installed.mjs",
@@ -410,7 +415,10 @@
     "test:transfers": "node --test --test-concurrency=1 test/integration/transfers.test.js",
     "test:protocols": "node --test --test-concurrency=1 test/integration/host-keys.test.js test/integration/authentication.test.js test/integration/sftp-streaming.test.js test/integration/scp.test.js test/integration/scp-engine.test.js test/integration/transfers.test.js test/integration/resume.test.js test/integration/transfer-auth.test.js test/integration/browser.test.js",
     "test:native:f5": "node scripts/test-native-f5.mjs",
-    "preview:ui": "node scripts/preview-ui.mjs"
+    "preview:ui": "node scripts/preview-ui.mjs",
+    "l10n:sync": "node scripts/sync-localization.mjs",
+    "l10n:check": "node scripts/sync-localization.mjs --check",
+    "test:localization": "node scripts/test-localization-installed.mjs"
   },
   "dependencies": {
     "react": "19.3.0",
@@ -440,5 +448,6 @@
     "ssh",
     "file transfer",
     "dual pane"
-  ]
+  ],
+  "l10n": "./l10n"
 }

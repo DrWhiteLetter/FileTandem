@@ -11,16 +11,16 @@ export function registerEditorProvider(context, trust, currentEditor) {
   const entries = new Map();
   const changes = new vscode.EventEmitter();
   const guard = () => {
-    if (!hasDesktopAccess(executionLocation(context), vscode.workspace.isTrusted)) throw vscode.FileSystemError.NoPermissions('Lokaler, vertrauenswürdiger UI Extension Host erforderlich.');
+    if (!hasDesktopAccess(executionLocation(context), vscode.workspace.isTrusted)) throw vscode.FileSystemError.NoPermissions("A trusted local UI extension host is required.");
   };
   const entry = uri => {
     guard();
     const value = entries.get(uri.authority);
-    if (uri.scheme !== 'filetandem-remote' || uri.query || uri.fragment || !value || value.uri.path !== uri.path) throw vscode.FileSystemError.Unavailable('Editor-Sitzung geschlossen. Datei neu öffnen.');
+    if (uri.scheme !== 'filetandem-remote' || uri.query || uri.fragment || !value || value.uri.path !== uri.path) throw vscode.FileSystemError.Unavailable("Editor session closed. Open the file again.");
     return value;
   };
   const changed = uri => changes.fire([{ type: vscode.FileChangeType.Changed, uri }]);
-  const denied = () => { throw vscode.FileSystemError.NoPermissions('Nur die ausgewählte bestehende Datei kann bearbeitet werden.'); };
+  const denied = () => { throw vscode.FileSystemError.NoPermissions("Only the selected existing file can be edited."); };
   const provider = {
     onDidChangeFile: changes.event,
     watch: () => new vscode.Disposable(() => {}),
@@ -28,7 +28,7 @@ export function registerEditorProvider(context, trust, currentEditor) {
     readFile: async uri => {try {return await entry(uri).file.read();} catch(e) {e.message=t(e.message);throw e;}},
     async writeFile(uri, data, options) {
       const e = entry(uri);
-      if (!e.allowed) throw vscode.FileSystemError.NoPermissions('Bearbeitung zuerst ausdrücklich freigeben.');
+      if (!e.allowed) throw vscode.FileSystemError.NoPermissions("Explicitly enable editing first.");
       if (!options.overwrite) throw vscode.FileSystemError.FileExists(uri);
       try {await e.file.write(Buffer.from(data), () => entries.get(uri.authority) === e && e.allowed && hasDesktopAccess(executionLocation(context), vscode.workspace.isTrusted));} catch(e) {e.message=t(e.message);throw e;}
       e.modified = Math.max(Date.now(), e.modified + 1); changed(uri);
@@ -40,8 +40,9 @@ export function registerEditorProvider(context, trust, currentEditor) {
     const uri = vscode.window.activeTextEditor?.document.uri;
     const e = uri?.scheme === 'filetandem-remote' && entries.get(uri.authority);
     if (!e) return status.hide();
-    status.text = e.allowed ? '$(edit) FileTandem: Bearbeitung freigegeben' : '$(lock) FileTandem: Schreibgeschützt';
-    status.tooltip = `${e.endpoint}: ${uri.path}\nSpeichern und Auto Save schreiben nach Freigabe direkt auf den Server.`;
+    status.text = e.allowed ? "$(edit) FileTandem: Editing enabled" : "$(lock) FileTandem: Read-only";
+    status.tooltip = `${e.endpoint}: ${uri.path}
+Save and Auto Save write directly to the server after permission is granted.`;
     status.command = e.allowed ? 'filetandem.lockEditorFile' : 'filetandem.enableEditorEditing'; status.show();
   };
   const api = {
@@ -55,9 +56,11 @@ export function registerEditorProvider(context, trust, currentEditor) {
         return uri;
       } catch (error) { await session.close(); throw error; }
     },
-    async enable(uri, confirm = async detail => (await vscode.window.showWarningMessage('Remote-Datei zum Bearbeiten freigeben?', { modal: true, detail }, 'Bearbeitung freigeben')) === 'Bearbeitung freigeben') {
+    async enable(uri, confirm = async detail => (await vscode.window.showWarningMessage("Enable editing of this remote file?", { modal: true, detail }, "Enable editing")) === "Enable editing") {
       const e = entry(uri);
-      if (await confirm(`${e.endpoint}: ${uri.path}\n\nSpeichern und Auto Save schreiben direkt auf den Server. Die Freigabe gilt nur für diese Datei in dieser Sitzung.`) !== true) return false;
+      if (await confirm(`${e.endpoint}: ${uri.path}
+
+Save and Auto Save write directly to the server. Permission applies only to this file in this session.`) !== true) return false;
       guard();
       if (entries.get(uri.authority) !== e) return false;
       e.allowed = true; changed(uri); refresh(); return true;
@@ -70,18 +73,18 @@ export function registerEditorProvider(context, trust, currentEditor) {
   }));
   command('filetandem.openEditorProof', async () => {
     guard();
-    const host = await vscode.window.showInputBox({ title: 'SFTP-Editor: Host', value: '127.0.0.1' }); if (host === undefined) return;
-    const port = await vscode.window.showInputBox({ title: 'SSH-Port', value: '22221' }); if (port === undefined) return;
-    if (!/^\d+$/.test(port)) throw new Error('Numerischen Port eingeben.');
-    const username = await vscode.window.showInputBox({ title: 'SSH-Benutzer', value: 'fixture' }); if (username === undefined) return;
-    const path = await vscode.window.showInputBox({ title: 'Absoluter Remote-Dateipfad', value: '/data/server-marker.txt' }); if (path === undefined) return;
-    const keys = await vscode.window.showOpenDialog({ canSelectMany: false, canSelectFiles: true, canSelectFolders: false, openLabel: 'Lokalen privaten Schlüssel auswählen' }); if (!keys?.length) return;
-    const key = keys[0]; if (key.scheme !== 'file' || key.authority || key.query || key.fragment) throw new Error('Lokalen Schlüssel auswählen.');
-    const info = await stat(key.fsPath); if (!info.isFile() || info.size > 1024 * 1024) throw new Error('Ungültige Schlüsseldatei.');
+    const host = await vscode.window.showInputBox({ title: "SFTP editor: Host", value: '127.0.0.1' }); if (host === undefined) return;
+    const port = await vscode.window.showInputBox({ title: 'SSH port', value: '22221' }); if (port === undefined) return;
+    if (!/^\d+$/.test(port)) throw new Error("Enter a numeric port.");
+    const username = await vscode.window.showInputBox({ title: "SSH user", value: 'fixture' }); if (username === undefined) return;
+    const path = await vscode.window.showInputBox({ title: "Absolute remote file path", value: '/data/server-marker.txt' }); if (path === undefined) return;
+    const keys = await vscode.window.showOpenDialog({ canSelectMany: false, canSelectFiles: true, canSelectFolders: false, openLabel: "Select local private key" }); if (!keys?.length) return;
+    const key = keys[0]; if (key.scheme !== 'file' || key.authority || key.query || key.fragment) throw new Error("Select a local key.");
+    const info = await stat(key.fsPath); if (!info.isFile() || info.size > 1024 * 1024) throw new Error("Invalid key file.");
     const uri = await api.open({ host, port: Number(port), username, privateKey: await readFile(key.fsPath) }, path);
     try { await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(uri)); } catch (e) { await api.close(uri); throw e; }
   });
-  const active = () => { const uri = vscode.window.activeTextEditor?.document.uri; if (!uri || uri.scheme !== 'filetandem-remote') throw new Error('Zuerst eine FileTandem-Remote-Datei öffnen.'); return uri; };
+  const active = () => { const uri = vscode.window.activeTextEditor?.document.uri; if (!uri || uri.scheme !== 'filetandem-remote') throw new Error("Open a FileTandem remote file first."); return uri; };
   command('filetandem.enableEditorEditing', () => vscode.window.activeTextEditor?.document.uri.scheme==='filetandem' ? currentEditor.enable(vscode.window.activeTextEditor.document.uri):api.enable(active()));
   command('filetandem.lockEditorFile', () => vscode.window.activeTextEditor?.document.uri.scheme==='filetandem' ? currentEditor.lock(vscode.window.activeTextEditor.document.uri):api.lock(active()));
   context.subscriptions.push(changes, status, vscode.workspace.registerFileSystemProvider('filetandem-remote', provider, { isCaseSensitive: true }), vscode.window.onDidChangeActiveTextEditor(refresh), vscode.workspace.onDidCloseTextDocument(document => {

@@ -1,11 +1,13 @@
-import { translate } from '../shared/localization.js';
+import { translate, resolveLanguage } from '../shared/localization.js';
 export function localizeVSCode(raw) {
-const language=() => {const requested=raw.workspace.getConfiguration('filetandem').get('language','auto');return ['de','en'].includes(requested) ? requested:String(raw.env.language).startsWith('de') ? 'de':'en';};
-const t=value => translate(value,language());
+const requestedLanguage=() => raw.workspace.getConfiguration('filetandem').get('language','auto');
+const language=() => {const requested=requestedLanguage();return ['de','en'].includes(requested) ? requested:resolveLanguage(raw.env.language);};
+const t=value => translate(value,language(),requestedLanguage()==='auto' && raw.l10n ? (message,args) => raw.l10n.t(message,...args):undefined);
 const fields=new Set(['title','label','description','detail','prompt','placeHolder','openLabel','saveLabel','message','text','tooltip']);
 const options=value => {
   if (!value || typeof value!=='object' || Array.isArray(value)) return value;
-  return Object.fromEntries(Object.entries(value).map(([key,item]) => [key,key==='validateInput' && typeof item==='function' ? async input => {const result=await item(input);return typeof result==='string' ? t(result):options(result);}:fields.has(key) && typeof item==='string' ? t(item):item]));
+  const userLabel=['profile','operation','record'].some(key => Object.hasOwn(value,key));
+  return Object.fromEntries(Object.entries(value).map(([key,item]) => [key,userLabel && key==='label' ? item:key==='validateInput' && typeof item==='function' ? async input => {const result=await item(input);return typeof result==='string' ? t(result):options(result);}:fields.has(key) && typeof item==='string' ? t(item):item]));
 };
 const item=value => typeof value==='string' ? t(value):options(value);
 const editable=value => new Proxy(value,{set(target,key,value) {target[key]=fields.has(key) && typeof value==='string' ? t(value):value;return true;},get(target,key) {const value=target[key];return typeof value==='function' ? value.bind(target):value;}});

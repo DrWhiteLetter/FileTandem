@@ -15,7 +15,7 @@ Lokale Dateien und Serverdateien nebeneinander – direkt in Visual Studio Code.
 - Serverprofile speichern; Anmeldung per Passwort, SSH-Schlüssel oder SSH-Agent.
 - Remote-Dateien öffnen, Änderungen vergleichen und Bearbeitung gezielt freigeben.
 - Ordner mit Vorschau abgleichen oder lokale Änderungen automatisch hochladen.
-- Deutsche und englische Oberfläche, helle und dunkle VS-Code-Themes.
+- Deutsche und englische Oberfläche passend zur VS-Code-Anzeigesprache, helle und dunkle Themes.
 
 ## Installation
 
@@ -43,6 +43,8 @@ Mit Node.js ab 22.13.1 und npm:
 npm ci
 npm start
 ```
+
+[Hinweise zur Mehrsprachigkeit](docs/mehrsprachigkeit.md).
 
 `npm run quality` prüft den Code und baut die Erweiterung. `npm run package` erstellt die installierbare VSIX unter `out/`.
 

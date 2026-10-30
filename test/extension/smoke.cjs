@@ -7,6 +7,12 @@ exports.run = async () => {
   if (process.env.XSCP_INSTALLED_EXTENSIONS) assert.ok(extension.extensionPath.startsWith(process.env.XSCP_INSTALLED_EXTENSIONS), 'Test loads installed VSIX, not checkout');
   await extension.activate();
   assert.ok(extension.isActive, 'Host-Bundle aktiviert');
+  const extensionApi=require('node:module').createRequire(require('node:path').join(extension.extensionPath,'dist/extension.cjs'))('vscode');
+  if (process.env.XSCP_EXPECT_LOCALE) assert.equal(extensionApi.env.language,process.env.XSCP_EXPECT_LOCALE,'requested editor locale is actually active');
+  const german=extensionApi.env.language.toLowerCase().startsWith('de');
+  assert.equal(extensionApi.l10n.t('Password'),german ? 'Passwort':'Password','installed extension loads its native VS Code language bundle');
+  assert.equal(extensionApi.l10n.t('SSH host key changed: {0}','example.test:22'),german ? 'SSH-Host-Key geändert: example.test:22':'SSH host key changed: example.test:22','native localization preserves placeholders');
+  console.log('Native localization: '+extensionApi.env.language+'; bundle loaded: '+Boolean(extensionApi.l10n.bundle));
   console.log('M6 host: '+JSON.stringify({vscode:vscode.version,extension:extension.packageJSON.version,platform:process.platform,arch:process.arch,node:process.version}));
   assert.deepEqual(extension.packageJSON.extensionKind, ['ui']);
   assert.equal(extension.extensionKind, vscode.ExtensionKind.UI);
@@ -24,10 +30,10 @@ exports.run = async () => {
   assert.equal(proof.bytesRead, 128);
   assert.equal(proof.hostName, process.env.XSCP_PROOF_HOST, 'Host entspricht Desktop-Teststarter');
   assert.equal(proof.windowRemoteName ?? 'local', process.env.XSCP_EXPECT_REMOTE);
-  await assert.rejects(api.verifyLocalFile(vscode.Uri.parse('vscode-remote://ssh-remote+fixture/tmp/file')), /file:-URIs/);
-  await assert.rejects(api.verifyLocalFile(vscode.Uri.parse('file://other-host/tmp/file')), /file:-URIs/);
+  await assert.rejects(api.verifyLocalFile(vscode.Uri.parse('vscode-remote://ssh-remote+fixture/tmp/file')), /file:.*URIs/);
+  await assert.rejects(api.verifyLocalFile(vscode.Uri.parse('file://other-host/tmp/file')), /file:.*URIs/);
   await assert.rejects(api.verifyLocalFile(vscode.Uri.file('/xscp-nonexistent-test-file')), /ENOENT/);
-  await assert.rejects(api.verifyLocalFile(vscode.Uri.file(require('node:path').dirname(process.env.XSCP_PROOF_FILE))), /reguläre/);
+  await assert.rejects(api.verifyLocalFile(vscode.Uri.file(require('node:path').dirname(process.env.XSCP_PROOF_FILE))), /regular/);
   assert.ok((await vscode.commands.getCommands(true)).includes('filetandem.verifyLocalFile'));
   assert.ok((await vscode.commands.getCommands(true)).includes('filetandem.verifySshHostKey'));
   assert.equal(extension.packageJSON.dependencies.ssh2, '1.17.0');

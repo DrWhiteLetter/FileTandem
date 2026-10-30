@@ -42,5 +42,8 @@
   "filetandem.demoScenario.title": "Demo Scenario",
   "filetandem.editorPollInterval.title": "Editor Poll Interval",
   "filetandem.commanderKeys.title": "Commander Keys",
-  "filetandem.language.title": "Language"
+  "filetandem.language.title": "Language",
+  "filetandem.language.auto": "Use the VS Code display language (English fallback).",
+  "filetandem.language.de": "Use German for FileTandem dialogs and the file manager.",
+  "filetandem.language.en": "Use English for FileTandem dialogs and the file manager."
 }

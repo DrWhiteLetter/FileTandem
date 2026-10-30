@@ -8,7 +8,7 @@ export function registerTransfers(context,profileUI) {
   const changed=new vscode.EventEmitter();const ephemeral=new Map();
   const profiles={get:id => {try {return profileUI.profiles.get(id);} catch(error) {if (ephemeral.has(id)) return ephemeral.get(id);throw error;}}};
   let warned=false;const journal=new TransferJournal(join(context.globalStorageUri.fsPath,'transfers-v1.json'),message => {if (!warned) {warned=true;void vscode.window.showWarningMessage(message);}});
-  journal.ready=(async () => {let key=await context.secrets.get('filetandem.journal.integrity.v1');if (!key) {key=randomBytes(32).toString('hex');await context.secrets.store('filetandem.journal.integrity.v1',key);}if (!/^[a-f0-9]{64}$/.test(key)) throw new Error('Journal-Schlüssel ist ungültig.');journal.key=Buffer.from(key,'hex');})().catch(() => {journal.disabled=true;journal.onError('Transferjournal nicht verfügbar: VS-Code-SecretStorage prüfen. Keine gespeicherten Aufträge werden gestartet oder verändert.');});
+  journal.ready=(async () => {let key=await context.secrets.get('filetandem.journal.integrity.v1');if (!key) {key=randomBytes(32).toString('hex');await context.secrets.store('filetandem.journal.integrity.v1',key);}if (!/^[a-f0-9]{64}$/.test(key)) throw new Error("Invalid journal key.");journal.key=Buffer.from(key,'hex');})().catch(() => {journal.disabled=true;journal.onError("Transfer journal unavailable: Check VS Code SecretStorage. Stored jobs will not be started or modified.");});
   const engine=new TransferEngine({sessions:profileUI.sessions,profiles,choose:conflictDialog,guard:profileUI.guard,onChange:jobs => {journal.update(jobs);changed.fire();}});
   engine.ready=journal.load().then(jobs => engine.queue.restore(jobs));
   const autoUpload=new AutoUploadService({engine,sessions:profileUI.sessions,profiles,guard:profileUI.guard,onChange:() => changed.fire()});
@@ -18,7 +18,7 @@ export function registerTransfers(context,profileUI) {
     await engine.ready;profileUI.guard();const jobs=engine.queue.validateRetry(ids,{resume});
     for (const id of new Set(jobs.map(j => j.profileId))) {
       engine.assertManual(id);
-      const profile=profiles.get(id);if (jobs.some(j => j.profileId===id && (j.server!==serverIdentity(profile.host,profile.port).id || (j.profileKey && j.profileKey!==profileIdentity(profile)) || (j.attempt && j.attempt.identity!==profileIdentity(profile))))) throw new Error('Profil wurde geändert; neuen Auftrag anlegen.');
+      const profile=profiles.get(id);if (jobs.some(j => j.profileId===id && (j.server!==serverIdentity(profile.host,profile.port).id || (j.profileKey && j.profileKey!==profileIdentity(profile)) || (j.attempt && j.attempt.identity!==profileIdentity(profile))))) throw new Error("Profile changed; create a new job.");
       if (profileUI.sessions.snapshot(id).state!=='connected' || !profileUI.sessions.matches(profile)) await profileUI.connect(profile);
     }profileUI.guard();
   };
@@ -26,7 +26,7 @@ export function registerTransfers(context,profileUI) {
   const resume=async ids => {await prepare(ids,true);return engine.resume(ids);};
   profileUI.transfers={engine,changed,autoUpload,resume,retry,cleanup:id => engine.cleanup(id),remember:profile => {if (profile.ephemeral) ephemeral.set(profile.id,profile);}};
   profileUI.command('filetandem.uploadFromExplorer',async (uri,uris) => {
-    const list=Array.isArray(uris) && uris.length ? uris:[uri];if (!list.length || list.some(value => !value)) throw new Error('Bitte lokale Dateien/Ordner auswählen.');
+    const list=Array.isArray(uris) && uris.length ? uris:[uri];if (!list.length || list.some(value => !value)) throw new Error("Select local files or folders.");
     const paths=list.map(localFileUri);const profile=await profileUI.choose();if (!profile) return;
     if (profileUI.sessions.snapshot(profile.id).state !== 'connected') await profileUI.connect(profile);
     await engine.submit(profile.id,'upload',paths,profile.remotePath);profileUI.open(profile);

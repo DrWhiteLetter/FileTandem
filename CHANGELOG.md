@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.0.20 – 30.10.2026
+- Deutsch und Englisch durchgängig über zentrale Sprachressourcen anbieten; native Dialoge verwenden die VS-Code-l10n-API und englische Ausgangstexte. Die Editorsprache wird standardmäßig übernommen, nicht unterstützte Sprachen verwenden Englisch.
+- Fehlende Übersetzungen für Ordnerabgleich, SSH-/Transferfehler und Überwachungsstatus ergänzen; Dateisortierung verwendet die gewählte Sprache.
+- Sprachkataloge, Platzhalter, Dialogentscheidungen und deutsche/englische Oberflächen automatisch prüfen; Sprachbundles in die VSIX aufnehmen.
+
 ## 0.0.19 – 29.10.2026
 - Bei geändertem SSH-Host-Key zusätzlich „Ohne Prüfung vertrauen und verbinden“ anbieten. Der Dialog erklärt das Risiko; die Bestätigung durch exakte Fingerprint-Eingabe bleibt verfügbar.
 

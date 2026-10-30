@@ -26,16 +26,16 @@ export function executionLocation(context) {
 export async function verifyLocalFile(context, uri) {
   const location = executionLocation(context);
   if (!location.local) {
-    throw new Error('FileTandem muss auf dem Desktop im lokalen UI Extension Host laufen. Eine remote.extensionKind-Übersteuerung entfernen und FileTandem lokal installieren.');
+    throw new Error("FileTandem must run in the desktop's local UI extension host. Remove any remote.extensionKind override and install FileTandem locally.");
   }
   if (!(uri instanceof vscode.Uri) || uri.scheme !== 'file' || uri.authority
     || uri.query || uri.fragment) {
-    throw new Error('Nur lokale file:-URIs ohne Authority sind für diesen Nachweis erlaubt. Remote-Workspace-Pfade sind keine Desktop-Dateien.');
+    throw new Error("This check accepts only local file: URIs without an authority. Remote workspace paths are not desktop files.");
   }
   const handle = await open(uri.fsPath, 'r');
   try {
     const before = await handle.stat({ bigint: true });
-    if (!before.isFile()) throw new Error('Bitte eine reguläre lokale Testdatei auswählen.');
+    if (!before.isFile()) throw new Error("Select a regular local test file.");
     const hash = createHash('sha256');
     let bytesRead = 0;
     const buffer = Buffer.alloc(64 * 1024);
@@ -48,9 +48,9 @@ export async function verifyLocalFile(context, uri) {
     const after = await handle.stat({ bigint: true });
     if (before.size !== after.size || before.mtimeNs !== after.mtimeNs
       || before.ctimeNs !== after.ctimeNs || BigInt(bytesRead) !== after.size) {
-      throw new Error('Die Testdatei wurde während des Lesens verändert. Bitte erneut prüfen.');
+      throw new Error("The test file changed while reading. Check again.");
     }
-    return { ...location, source: 'Desktop-Dateisystem / Node.js',
+    return { ...location, source: "Desktop filesystem / Node.js",
       filePath: uri.fsPath, bytesRead, sha256: hash.digest('hex') };
   } finally {
     await handle.close();
@@ -59,16 +59,16 @@ export async function verifyLocalFile(context, uri) {
 
 /** @param {import('vscode').ExtensionContext} context */
 export function registerLocalProof(context) {
-  const output = vscode.window.createOutputChannel('FileTandem: Ausführungsort');
+  const output = vscode.window.createOutputChannel("FileTandem: Execution location");
   context.subscriptions.push(output, vscode.commands.registerCommand('filetandem.verifyLocalFile', async () => {
     try {
       if (!executionLocation(context).local) {
-        throw new Error('FileTandem läuft nicht im lokalen UI Extension Host. Bitte lokal installieren und remote.extensionKind prüfen.');
+        throw new Error("FileTandem is not running in the local UI extension host. Install locally and check remote.extensionKind.");
       }
       const selected = await vscode.window.showOpenDialog({
         defaultUri: vscode.Uri.file(homedir()),
         canSelectFiles: true, canSelectFolders: false, canSelectMany: false,
-        openLabel: 'Lokale Testdatei prüfen', title: 'FileTandem: Testdatei vom Desktop-Rechner',
+        openLabel: "Check local test file", title: "FileTandem: Test file from desktop computer",
       });
       if (!selected?.length) return;
       const proof = await verifyLocalFile(context, selected[0]);

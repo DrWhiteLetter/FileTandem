@@ -42,5 +42,8 @@
   "filetandem.demoScenario.title": "Demo-Szenario",
   "filetandem.editorPollInterval.title": "Editor-Prüfintervall",
   "filetandem.commanderKeys.title": "Commander-Tasten",
-  "filetandem.language.title": "Sprache"
+  "filetandem.language.title": "Sprache",
+  "filetandem.language.auto": "VS-Code-Anzeigesprache übernehmen (Englisch als Fallback).",
+  "filetandem.language.de": "Deutsch für FileTandem-Dialoge und den Dateimanager verwenden.",
+  "filetandem.language.en": "Englisch für FileTandem-Dialoge und den Dateimanager verwenden."
 }

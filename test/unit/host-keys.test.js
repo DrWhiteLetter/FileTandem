@@ -107,13 +107,13 @@ test('Connection factory refuses missing policy and verifier/algorithm/socket ov
 
 test('Native dialog shows endpoint and fingerprint and defaults to rejection', async () => {
   const request = { endpoint, ...describeHostKey(raw) };
-  for (const [choice, accepted] of [[undefined, false], ['Ablehnen', false], ['Vertrauen und verbinden', true]]) {
+  for (const [choice, accepted] of [[undefined, false], ['Reject', false], ['Trust and connect', true]]) {
     const window = { showWarningMessage: async (message, options, ...buttons) => {
       assert.ok(message.includes(endpoint.label));
       assert.ok(options.detail.includes(request.fingerprint));
       assert.ok(options.detail.includes(request.algorithm));
       assert.equal(options.modal, true);
-      assert.equal(buttons[0], 'Ablehnen');
+      assert.equal(buttons[0], 'Reject');
       return choice;
     } };
     assert.equal(await unknownHostKeyDialog(window)(request), accepted);
@@ -155,7 +155,7 @@ test('changed key dialog requires independent exact fingerprint entry and reject
   for (const input of [undefined,'wrong',request.received.fingerprint]) {
     const window={showWarningMessage:async(message,options,...buttons)=>{
       assert.ok(options.detail.includes(request.expected.fingerprint));assert.ok(options.detail.includes(request.received.fingerprint));
-      assert.deepEqual(buttons,['Neuen Schlüssel prüfen …','Ohne Prüfung vertrauen und verbinden']);return 'Neuen Schlüssel prüfen …';
+      assert.deepEqual(buttons,['Verify new key …','Trust without verification and connect']);return 'Verify new key …';
     },showInputBox:async options=>{assert.equal(options.value,undefined);assert.ok(options.validateInput('wrong'));assert.equal(options.validateInput(request.received.fingerprint),undefined);return input;}};
     assert.equal(await changedHostKeyDialog(window)(request),input===request.received.fingerprint);
   }
@@ -168,9 +168,9 @@ test('changed key dialog allows explicit unverified trust but rejects stale cons
   const {changedHostKeyDialog}=await import('../../src/vscode/host-key-dialog.js');
   const request={endpoint,expected:describeHostKey(raw),received:describeHostKey(other)};
   const controller=new AbortController();
-  const window={showWarningMessage:async()=> 'Ohne Prüfung vertrauen und verbinden',showInputBox:()=>{throw Error('must not prompt');}};
+  const window={showWarningMessage:async()=> 'Trust without verification and connect',showInputBox:()=>{throw Error('must not prompt');}};
   assert.equal(await changedHostKeyDialog(window)(request),true);
-  window.showWarningMessage=async()=>{controller.abort();return 'Ohne Prüfung vertrauen und verbinden';};
+  window.showWarningMessage=async()=>{controller.abort();return 'Trust without verification and connect';};
   assert.equal(await changedHostKeyDialog(window)(request,controller.signal),false);
 });
 
