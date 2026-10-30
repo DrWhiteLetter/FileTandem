@@ -28,3 +28,11 @@ test('Windows target rejects ambiguous and unrepresentable source names',async (
 test('unsafe names and inaccessible subtrees abort the whole preview',async () => {
   await assert.rejects(planDirectorySync({source:{stat:async () => directory,listNoFollow:async () => ({entries:[{name:'../escape'}]})},target:service({'/b':directory}),sourceRoot:'/a',targetRoot:'/b'}),/Ungültiger/);
 });
+
+test('comparison ignores excluded files on both sides and never traverses excluded folders',async()=>{
+ const {filePolicy}=await import('../../src/application/file-policy.js');
+ const source=service({'/local':{kind:'directory'},'/local/app.js':{kind:'file'},'/local/.git':{kind:'directory'},'/local/.git/config':{kind:'file'},'/local/debug.log':{kind:'file'}});
+ const target=service({'/remote':{kind:'directory'},'/remote/.env':{kind:'file'},'/remote/old.bak':{kind:'file'}});
+ const plan=await planDirectorySync({source,target,sourceRoot:'/local',targetRoot:'/remote',exclude:filePolicy({excludedExtensions:['log']}).excludes});
+ assert.deepEqual(plan.operations.map(operation=>operation.relative),['app.js']);
+});

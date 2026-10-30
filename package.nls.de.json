@@ -45,5 +45,10 @@
   "filetandem.language.title": "Sprache",
   "filetandem.language.auto": "VS-Code-Anzeigesprache übernehmen (Englisch als Fallback).",
   "filetandem.language.de": "Deutsch für FileTandem-Dialoge und den Dateimanager verwenden.",
-  "filetandem.language.en": "Englisch für FileTandem-Dialoge und den Dateimanager verwenden."
+  "filetandem.language.en": "Englisch für FileTandem-Dialoge und den Dateimanager verwenden.",
+  "filetandem.openSettings.title": "FileTandem: Einstellungen öffnen",
+  "filetandem.excludedExtensions.description": "Dateiendungen von Uploads, Downloads, Ordnerabgleich und automatischer Synchronisierung ausschließen, z. B. .log oder .tar.gz. Groß-/Kleinschreibung wird ignoriert. .bak-Sicherungen sind immer ausgeschlossen.",
+  "filetandem.excludedNames.description": "Datei- oder Ordnernamen einschließlich Unterordnern ausschließen. * und ? sind als Namensmuster erlaubt, z. B. .env* oder node_modules; keine Pfade. Ausgeschlossene Remote-Einträge bleiben bei automatischer Synchronisierung erhalten. Die Einträge bleiben im Dateimanager sichtbar.",
+  "filetandem.excludeHidden.description": "Alle Punktdateien und Punktordner von Transfers und automatischer Synchronisierung ausschließen. Unabhängig von der Anzeigeoption „Versteckte Dateien“.",
+  "filetandem.backupRemoteDeletes.description": "Remote-Löschungen durch Umbenennen in .bak sichern (bei Namenskollision nummeriert). Manuell ausgewählte Ordner werden als Ganzes umbenannt; automatische Synchronisierung erhält Ordner mit Sicherungen oder ausgeschlossenen Einträgen. ACHTUNG: Sicherungen neben Website-Dateien können öffentlich herunterladbar sein; den Zugriff im Webserver sperren. Deaktivieren bedeutet endgültiges Löschen. Lokal wird weiterhin der Papierkorb verwendet."
 }

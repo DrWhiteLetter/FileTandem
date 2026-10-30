@@ -116,7 +116,7 @@ test('automatic upload mode is visible, stops explicitly and blocks manual trans
   const doc=dom.window.document,button=text=>[...doc.querySelectorAll('button')].find(b=>b.textContent.trim()===text);await render();
   await act(()=>button('Remote-Ordner aktuell halten …').click());assert.equal(messages.at(-1).type,'autoUploadStart');
   model.autoUpload={active:true,starting:false,localRoot:'/local',remoteRoot:'/remote',uploaded:2,deleted:3};await render();
-  assert.ok(doc.body.textContent.includes('Gelöschte Einträge: 3'));assert.ok(doc.body.textContent.includes('Automatischer Upload aktiv'));assert.equal(doc.querySelector('.watch-paths > span[title]').title,'/local');assert.equal(doc.querySelectorAll('.watch-paths > span[title]')[1].title,'/remote');assert.equal([...doc.querySelectorAll('button')].filter(b=>b.textContent.trim()==='Überwachung stoppen').length,1);
+  assert.ok(doc.body.textContent.includes('Entfernte / gesicherte Einträge: 3'));assert.ok(doc.body.textContent.includes('Automatischer Upload aktiv'));assert.equal(doc.querySelector('.watch-paths > span[title]').title,'/local');assert.equal(doc.querySelectorAll('.watch-paths > span[title]')[1].title,'/remote');assert.equal([...doc.querySelectorAll('button')].filter(b=>b.textContent.trim()==='Überwachung stoppen').length,1);
   assert.equal(button('Ordner abgleichen …').disabled,true);assert.equal(button('Dateien/Ordner hochladen …').disabled,true);
   const row=doc.querySelector('tr[data-entry-id]');await act(()=>row.click());assert.equal(button('Hochladen →').disabled,true);assert.equal(button('← Herunterladen').disabled,true);assert.equal(row.draggable,false);
   assert.equal(doc.querySelector('.pathbar input').disabled,true);
@@ -198,4 +198,19 @@ test('directory refresh keeps rows, selection and scroll stable with a delayed h
   model.remote={path:'/first-open',status:'loading',entries:[]};await render();
   await act(()=>new Promise(resolve=>setTimeout(resolve,340)));
   assert.ok(doc.querySelector('.pane:last-child .loading-message'),'first load of an empty pane retains explanatory text');
+});
+
+test('excluded entries stay visible but cannot transfer; backups expose restore and settings actions',async t=>{
+ const f=await polishFixture(t),{doc,dom,act,model,messages,render}=f;
+ model.locale='en';model.local.entries=[{id:'/local/debug.log',path:'/local/debug.log',name:'debug.log',kind:'file',size:10,modified:0,mode:0o644,excluded:true}];
+ model.remote.entries=[{id:'/remote/main.js.bak',path:'/remote/main.js.bak',name:'main.js.bak',kind:'file',size:10,modified:0,mode:0o644,excluded:true,backup:true}];await render();
+ const local=doc.querySelector('.pane:first-child tr[data-entry-id]');await act(()=>local.click());
+ assert.ok(doc.body.textContent.includes('debug.log'));assert.ok(doc.querySelector('.excluded-badge').textContent.includes('Excluded'));assert.ok(local.getAttribute('aria-label').includes('Excluded'));
+ assert.equal([...doc.querySelectorAll('.pane:first-child button')].find(button=>button.textContent==='Upload →').disabled,true);
+ const count=messages.filter(message=>message.type==='transfer').length;
+ await act(()=>dom.window.dispatchEvent(new dom.window.CustomEvent('filetandem-copy',{detail:{side:'local'}})));assert.equal(messages.filter(message=>message.type==='transfer').length,count);
+ const drag=new dom.window.Event('dragstart',{bubbles:true,cancelable:true});await act(()=>local.dispatchEvent(drag));assert.equal(drag.defaultPrevented,true);
+ await act(()=>doc.querySelector('.pane:nth-child(2) tr[data-entry-id]').click());const restore=[...doc.querySelectorAll('button')].find(button=>button.textContent==='Restore backup');assert.ok(restore);await act(()=>restore.click());assert.equal(messages.at(-1).action,'restoreBackup');assert.deepEqual(JSON.parse(JSON.stringify(messages.at(-1).ids)),['/remote/main.js.bak']);
+ await act(()=>doc.querySelector('button[aria-label="Open FileTandem settings"]').click());assert.equal(messages.at(-1).type,'settings');
+ model.locale='de';await render();assert.ok(doc.body.textContent.includes('Ausgeschlossen'));assert.ok(doc.body.textContent.includes('Sicherung wiederherstellen'));
 });

@@ -23,3 +23,10 @@ test('automatic-upload requests cannot choose paths or inject persistent replace
     for (const extra of [{path:'/other'},{automatic:true},{replace:true}]) assert.equal(browserRequest({...request,...extra},'session-a'),false);
   }
 });
+
+test('settings and backup restoration cannot inject server destinations or approvals',()=>{
+ const request={version:1,type:'action',sessionId:'session-a',id:'restore',side:'remote',action:'restoreBackup',ids:['/site/file.bak']};
+ assert.equal(browserRequest(request,'session-a'),true);assert.equal(browserRequest({...request,target:'/outside'},'session-a'),false);
+ assert.equal(browserRequest({version:1,type:'settings',sessionId:'session-a',id:'settings'},'session-a'),true);
+ assert.equal(browserRequest({version:1,type:'settings',sessionId:'session-a',id:'settings',command:'arbitrary'},'session-a'),false);
+});

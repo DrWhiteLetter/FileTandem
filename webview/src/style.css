@@ -189,3 +189,7 @@ body.vscode-high-contrast .selected, body.vscode-high-contrast-light .selected {
   .pane tbody tr.selected { outline: 2px solid Highlight; }
   :where(button, input, select, summary, tr, [tabindex]):focus-visible { outline-color: Highlight; }
 }
+
+.excluded-badge { margin-left: 8px; font-size: 11px; color: var(--vscode-descriptionForeground); border: 1px solid var(--vscode-panel-border); border-radius: 3px; padding: 1px 4px; }
+.exclusion-note { color: var(--vscode-descriptionForeground); }
+.restore-backup { align-self: flex-start; margin: 0 16px 8px; }

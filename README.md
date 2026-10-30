@@ -15,6 +15,7 @@ Lokale Dateien und Serverdateien nebeneinander – direkt in Visual Studio Code.
 - Serverprofile speichern; Anmeldung per Passwort, SSH-Schlüssel oder SSH-Agent.
 - Remote-Dateien öffnen, Änderungen vergleichen und Bearbeitung gezielt freigeben.
 - Ordner mit Vorschau abgleichen oder lokale Änderungen automatisch hochladen.
+- Ausschlussregeln für Dateiendungen, Namen und Punktdateien; Remote-Löschsicherungen als `.bak`.
 - Deutsche und englische Oberfläche passend zur VS-Code-Anzeigesprache, helle und dunkle Themes.
 
 ## Installation
@@ -33,7 +34,7 @@ Benötigt **VS Code Desktop ab 1.140.0**. Node.js ist für die Installation nich
 
 Für SFTP genügt ein SFTP-Zugang; ein VS Code Server ist nicht erforderlich. SCP benötigt einen GNU/Linux-Server mit Shell und installiertem `scp`.
 
-**Bitte beachten:** Remote-Löschungen sind endgültig. **Remote-Ordner aktuell halten …** spiegelt den lokalen Ordner einschließlich Löschungen auf den Server. Prüfe die Zielordner vor dem Start. [Mehr zum automatischen Upload](docs/automatischer-upload.md).
+**Bitte beachten:** Remote-Löschungen werden standardmäßig als `.bak` gesichert. Bei Websites den Download solcher Sicherungen im Webserver sperren. **Remote-Ordner aktuell halten …** spiegelt den lokalen Ordner einschließlich Entfernungen; ausgeschlossene Dateien und Sicherungen bleiben erhalten. Prüfe die Zielordner vor dem Start. [Ausschlüsse und Sicherungen](docs/ausschlussregeln-und-sicherungen.md) · [Automatischer Upload](docs/automatischer-upload.md).
 
 ## Mitentwickeln
 

@@ -1,3 +1,4 @@
+import {filePolicy} from './file-policy.js';
 import { profileIdentity } from './transfer-resume.js';
 import { openRemoteFiles,targetFor,streamFor,pathFor } from './remote-files.js';
 import { randomUUID } from 'node:crypto';import { join,posix,resolve } from 'node:path';
@@ -6,8 +7,8 @@ import { localTarget } from '../adapters/local/transfer-target.js';
 import { TransferQueue } from './transfer-queue.js';import { discoverTree } from './transfer-tree.js';import { ConflictRules } from './transfer-conflicts.js';import { transferFile,targetSnapshot } from './transfer-file.js';
 import { serverIdentity } from '../adapters/ssh/host-keys.js';
 export class TransferEngine {
-  constructor({sessions,profiles,choose,guard=() => {},onChange=() => {}}) {
-    this.autoUploads=new Map();this.autoJobs=new Map();this.ready=Promise.resolve();this.sessions=sessions;this.profiles=profiles;this.guard=guard;this.local=new LocalFiles();this.conflicts=new ConflictRules(choose);
+  constructor({sessions,profiles,choose,guard=() => {},onChange=() => {},getPolicy=()=>filePolicy()}) {
+    this.getPolicy=getPolicy;this.autoUploads=new Map();this.autoJobs=new Map();this.ready=Promise.resolve();this.sessions=sessions;this.profiles=profiles;this.guard=guard;this.local=new LocalFiles();this.conflicts=new ConflictRules(choose);
     this.queue=new TransferQueue({run:(j,s,p) => this.run(j,s,p),onChange});
   }
   key(job,path) {if (job.direction === 'upload') return 'remote:'+job.server+':'+posix.normalize(path);const local=resolve(path).replaceAll('\\','/');return 'local:'+(process.platform === 'win32' ? local.toLowerCase():local);}
@@ -35,9 +36,13 @@ export class TransferEngine {
     const server=serverIdentity(profile.host,profile.port).id;const transport=this.sessions.transport(profileId);if (transport.endpoint?.id && transport.endpoint.id !== server) throw new Error('Profil wurde geändert; bitte erneut verbinden.');const files=await openRemoteFiles(transport,profile.protocol);const batchId=randomUUID(),ids=[];
     const source=direction === 'upload' ? {stat:path => this.local.stat({scheme:'file',fsPath:path}),listNoFollow:path => this.local.listNoFollow(path)}:files;
     const targetJoin=direction === 'upload' ? posix.join:join;const sourceBase=direction === 'upload' ? p => p.replaceAll('\\','/').split('/').at(-1):posix.basename;
-    try {for (const path of paths) {
+    try {
+      const policy=this.getPolicy();
+      if(policy.excludes(destination,'directory')) throw new Error('Selected destination is excluded by FileTandem settings.');
+      for(const path of paths) {if(policy.excludes(path,(await source.stat(path)).kind)) throw new Error('Selected entry is excluded by FileTandem settings.');}
+      for (const path of paths) {
       const parents=new Map();const root=targetJoin(destination,sourceBase(path));
-      try {for await (const node of discoverTree(source,path)) {
+      try {for await (const node of discoverTree(source,path,'',0,{count:0},policy.excludes)) {
         const id=randomUUID(),target=node.relative ? targetJoin(root,...node.relative.split('/')):root;
         if (profile.protocol === 'scp') pathFor(direction === 'upload' ? target:node.source,profile.protocol);
         const parent=node.relative ? parents.get(posix.dirname(node.relative) === '.' ? '':posix.dirname(node.relative)):undefined;
@@ -48,9 +53,12 @@ export class TransferEngine {
   }
   async run(job,signal,onProgress) {
     this.guard();signal.throwIfAborted();
+    const isExcluded=()=>this.getPolicy().excludes(job.source,job.kind) || this.getPolicy().excludes(job.target,job.kind);
+    if(isExcluded()) return {skipped:true,reason:'Excluded by FileTandem settings.'};
     const automatic=job.automatic && this.autoJobs.get(job.id);
     const validate=async () => {
       this.guard();signal.throwIfAborted();
+      if(isExcluded()) throw new Error('Exclusion rules changed; transfer stopped.');
       if (job.automatic) {if (!automatic || this.autoUploads.get(job.profileId)!==automatic) throw new Error('Überwachung wurde beendet.');await automatic.check(job);}
       else this.assertManual(job.profileId);
       signal.throwIfAborted();

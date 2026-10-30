@@ -1,3 +1,5 @@
+import {filePolicy} from './file-policy.js';
+import {backupRemoteEntry} from './remote-backup.js';
 import { serverIdentity } from '../adapters/ssh/host-keys.js';
 import { realpath,lstat } from 'node:fs/promises';
 import { relative,isAbsolute,posix,resolve } from 'node:path';
@@ -10,7 +12,7 @@ import { targetSnapshot,snapshotEqual } from './transfer-file.js';
 
 /** Owns ephemeral permissions; no monitoring mode resumes after a restart. */
 export class AutoUploadService {
-  constructor({engine,sessions,profiles,guard,onChange=() => {},openFiles=openRemoteFiles,remoteTarget=targetFor}) {Object.assign(this,{engine,sessions,profiles,guard,onChange,openFiles,remoteTarget});this.monitors=new Map();}
+  constructor({engine,sessions,profiles,guard,onChange=() => {},openFiles=openRemoteFiles,remoteTarget=targetFor,getPolicy=()=>filePolicy()}) {Object.assign(this,{engine,sessions,profiles,guard,onChange,openFiles,remoteTarget,getPolicy});this.monitors=new Map();}
   state(profileId) {return this.monitors.get(profileId)?.state ?? {active:false,starting:false,error:''};}
   stop(profileId,owner,error='') {const monitor=this.monitors.get(profileId);if (monitor && (!owner || monitor.owner===owner)) monitor.stop(error);}
   validate() {for (const monitor of this.monitors.values()) if (!monitor.stopped) {try {monitor.validate();} catch(error) {monitor.stop(error.message);}}}
@@ -18,11 +20,15 @@ export class AutoUploadService {
     await this.engine.ready;this.guard();
     const prior=this.monitors.get(profileId);if (prior && !prior.stopped) throw new Error('Automatischer Upload ist für dieses Profil bereits aktiv.');
     const profile=this.profiles.get(profileId),identity=profileIdentity(profile),transport=this.sessions.transport(profileId);
+    const policy=this.getPolicy();
+    if(policy.excludes(localRoot,'directory') || policy.excludes(remoteRoot,'directory')) throw new Error('Selected folder is excluded by FileTandem settings.');
     const requestedLocalRoot=localRoot;localRoot=await realpath(localRoot);remoteRoot=posix.normalize(remoteRoot);
+    if(policy.excludes(localRoot,'directory') || policy.excludes(remoteRoot,'directory')) throw new Error('Selected folder is excluded by FileTandem settings.');
     if (!remoteRoot.startsWith('/') || remoteRoot==='/' || remoteRoot.includes('\0')) throw new Error('Für die Spiegelung einen Remote-Unterordner auswählen.');
     const local=new LocalFiles();let remote;
     const permission={expected:new Map(),validate:() => {
       this.guard();allowed();
+      if(this.getPolicy().signature!==policy.signature) throw new Error('FileTandem file options changed; monitoring stopped.');
       if (monitor.stopped || this.sessions.snapshot(profileId).state!=='connected' || this.sessions.transport(profileId)!==transport || !this.sessions.matches(profile) || profileIdentity(this.profiles.get(profileId))!==identity) throw new Error('Verbindung oder Profil wurde geändert; Überwachung beendet.');
     }};
     const ensureParents=async (target,create=false) => {
@@ -46,11 +52,11 @@ export class AutoUploadService {
       await ensureParents(job.target);
       permission.validate();
     };
-    const scan=async () => {if (await realpath(requestedLocalRoot)!==localRoot) throw new Error('Überwachter Ordner wurde umgeleitet.');return scanUploadSource(localRoot);};
+    const scan=async () => {if (await realpath(requestedLocalRoot)!==localRoot) throw new Error('Überwachter Ordner wurde umgeleitet.');return scanUploadSource(localRoot,policy.excludes);};
     const waitReady=async () => {permission.validate();while (this.engine.queue.paused) {await new Promise(resolve => setTimeout(resolve,50));permission.validate();}};
     const remove=async (source,target,kind='file',replacement=false) => {
       await waitReady();
-      await this.engine.queue.maintain(this.engine.key({direction:'upload',server:serverIdentity(profile.host,profile.port).id},target),async () => {
+      return await this.engine.queue.maintain(this.engine.key({direction:'upload',server:serverIdentity(profile.host,profile.port).id},target),async () => {
         const check=async () => {
           permission.validate();
           if (await realpath(requestedLocalRoot)!==localRoot) throw new Error('Überwachter Ordner wurde umgeleitet.');
@@ -72,7 +78,11 @@ export class AutoUploadService {
         if (!expected || current.kind!==kind || (kind!=='directory' && !snapshotEqual(expected.info,current)) || (expected.hash && await this.remoteTarget(remote).hash(target)!==expected.hash)) throw new Error('Remote-Datei wurde geändert; keine automatische Löschung.');
         await check();
         if (!snapshotEqual(current,await targetSnapshot(remote,target))) throw new Error('Remote-Datei wurde während der Löschprüfung geändert.');
-        permission.validate();await remote.call(kind==='directory' ? 'rmdir':'unlink',target);permission.expected.delete(target);
+        permission.validate();
+        if(kind==='directory' && (await remote.listNoFollow(target)).entries.length) return {retained:true};
+        if(kind!=='directory' && policy.backupRemoteDeletes) await backupRemoteEntry(remote,target,()=>{permission.validate();return true;},current);
+        else await remote.call(kind==='directory' ? 'rmdir':'unlink',target);
+        permission.expected.delete(target);return {retained:false};
       });
     };
     const mkdir=async (source,target) => {
@@ -102,7 +112,7 @@ export class AutoUploadService {
       let count=0;
       const read=async (path,depth=0) => {
         permission.validate();if (++count>10000 || depth>100) throw new Error('Remote-Ordner überschreitet 10.000 Einträge/Tiefe 100.');
-        const info=await remote.stat(path);permission.expected.set(path,{info,...(info.kind==='file' ? {hash:await this.remoteTarget(remote).hash(path)}:{})});
+        const info=await remote.stat(path);if(path!==remoteRoot && policy.excludes(path,info.kind)) return;permission.expected.set(path,{info,...(info.kind==='file' ? {hash:await this.remoteTarget(remote).hash(path)}:{})});
         if (info.kind==='directory') {
           const list=await remote.listNoFollow(path);
           for (const entry of list.entries) {
@@ -116,6 +126,14 @@ export class AutoUploadService {
       // Local is authoritative on activation. Remove extras and type conflicts in postorder.
       const remoteEntries=[...permission.expected].filter(([path]) => path!==remoteRoot).sort((a,b) => b[0].split('/').length-a[0].split('/').length);
       const conflicts=[...baseline].filter(([rel,node]) => rel && permission.expected.has(posix.join(remoteRoot,rel)) && permission.expected.get(posix.join(remoteRoot,rel)).info.kind!==node.kind).map(([rel]) => rel);
+      for(const rel of conflicts) {
+        const target=posix.join(remoteRoot,rel),info=permission.expected.get(target).info;
+        if(info.kind==='directory') {
+          if(policy.backupRemoteDeletes) throw new Error('A folder/file type conflict requires manual resolution when deletion backups are enabled.');
+          let inspected=0;const inspect=async (path,depth=0)=>{if(++inspected>10000 || depth>100) throw new Error('Remote-Ordner überschreitet 10.000 Einträge/Tiefe 100.');for(const entry of (await remote.listNoFollow(path)).entries) {const item=await remote.stat(entry.path);if(policy.excludes(entry.path,item.kind)) throw new Error('A type conflict contains excluded entries; resolve it manually.');if(item.kind==='directory') await inspect(entry.path,depth+1);}};
+          await inspect(target);
+        }
+      }
       for (const [target,expected] of remoteEntries) {
         const rel=posix.relative(remoteRoot,target),node=baseline.get(rel),conflict=conflicts.some(path => rel===path || rel.startsWith(path+'/'));
         if (node && !conflict) continue;
@@ -123,8 +141,8 @@ export class AutoUploadService {
           const root=conflicts.find(path => rel===path || rel.startsWith(path+'/')),node=baseline.get(root),info=await lstat(node.path);
           if (await realpath(node.path)!==resolve(node.path) || (node.kind==='directory' ? !info.isDirectory():!info.isFile())) throw new Error('Lokaler Eintrag wurde während des Startabgleichs geändert.');
         }
-        await remove(resolve(localRoot,...rel.split('/')),target,expected.info.kind,conflict);
-        monitor.state.deleted++;this.onChange();
+        const result=await remove(resolve(localRoot,...rel.split('/')),target,expected.info.kind,conflict);
+        if(!result?.retained) monitor.state.deleted++;this.onChange();
       }
       for (const [rel,node] of baseline) {
         if (!rel) continue;

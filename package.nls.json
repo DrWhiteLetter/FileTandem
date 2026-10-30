@@ -45,5 +45,10 @@
   "filetandem.language.title": "Language",
   "filetandem.language.auto": "Use the VS Code display language (English fallback).",
   "filetandem.language.de": "Use German for FileTandem dialogs and the file manager.",
-  "filetandem.language.en": "Use English for FileTandem dialogs and the file manager."
+  "filetandem.language.en": "Use English for FileTandem dialogs and the file manager.",
+  "filetandem.openSettings.title": "FileTandem: Open settings",
+  "filetandem.excludedExtensions.description": "Exclude file extensions from uploads, downloads, folder comparison and automatic synchronization, e.g. .log or .tar.gz. Case-insensitive. .bak backups are always excluded.",
+  "filetandem.excludedNames.description": "Exclude file or folder names and their descendants. Use * and ? for name patterns, e.g. .env* or node_modules; paths are not supported. Excluded remote entries are preserved during automatic synchronization. Files remain visible in the file manager.",
+  "filetandem.excludeHidden.description": "Exclude all dotfiles and dotfolders from transfers and automatic synchronization. This is independent of the Show Hidden Files display setting.",
+  "filetandem.backupRemoteDeletes.description": "Back up remote deletions by renaming to .bak (numbered if occupied). Manual folder deletion renames the whole folder; automatic synchronization retains folders containing backups or excluded entries. WARNING: Backups beside website files may be publicly downloadable; block access on the web server. Disable to permanently delete. Local deletions still use Trash."
 }

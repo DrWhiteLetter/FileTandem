@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { randomUUID,createHash } from 'node:crypto';
 import { releaseFixture,fixturePort } from '../helpers/release-fixture.mjs';
 import { AutoUploadService } from '../../src/application/auto-upload-service.js';
+import {filePolicy} from '../../src/application/file-policy.js';
 import { TransferEngine } from '../../src/application/transfer-engine.js';
 import { openRemoteFiles,targetFor,streamFor } from '../../src/application/remote-files.js';
 import { transferFile } from '../../src/application/transfer-file.js';
@@ -16,7 +17,7 @@ for (const protocol of ['sftp','scp']) test(`${protocol}: automatic external sav
   const session=await releaseFixture(protocol),files=await openRemoteFiles(session,protocol),directory=await realpath(await mkdtemp(join(tmpdir(),'filetandem-auto-'))),root=join(directory,'local'),remote='/data/auto-'+randomUUID();
   const profile={id:'auto',host:'127.0.0.1',port:fixturePort(protocol),username:'fixture',protocol};let connected=true,dialogs=0,stopOnProgress=false;
   const sessions={transport:() => session,snapshot:() => ({state:connected ? 'connected':'disconnected'}),matches:() => true},profiles={get:() => profile};
-  const engine=new TransferEngine({sessions,profiles,choose:async () => {dialogs++;return {choice:'replace'};},onChange:jobs => {if (stopOnProgress && jobs.some(job => job.automatic && job.state==='running' && job.bytes>0)) {stopOnProgress=false;service.stop(profile.id);}}}),service=new AutoUploadService({engine,sessions,profiles,guard:() => {}});
+  const engine=new TransferEngine({sessions,profiles,choose:async () => {dialogs++;return {choice:'replace'};},onChange:jobs => {if (stopOnProgress && jobs.some(job => job.automatic && job.state==='running' && job.bytes>0)) {stopOnProgress=false;service.stop(profile.id);}}}),service=new AutoUploadService({getPolicy:()=>filePolicy({backupRemoteDeletes:false}),engine,sessions,profiles,guard:() => {}});
   const activate=async () => {const monitor=await service.start({profileId:profile.id,localRoot:root,remoteRoot:remote,owner:'test'});clearTimeout(monitor.timer);monitor.interval=25;monitor.schedule();return monitor;};
   try {
     await mkdir(root);await files.mkdir(remote);await writeFile(join(root,'existing'),'1111');await engine.submit(profile.id,'upload',[join(root,'existing')],remote);await engine.queue.idle();

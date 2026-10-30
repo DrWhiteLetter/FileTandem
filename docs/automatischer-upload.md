@@ -1,5 +1,7 @@
 # Remote-Ordner aktuell halten
 
+Ab Version 0.0.21 gelten die [Ausschlussregeln und Löschsicherungen](ausschlussregeln-und-sicherungen.md): ausgeschlossene Remote-Einträge bleiben erhalten, entfernte Dateien werden standardmäßig als `.bak` aufbewahrt. Die folgenden Hinweise zu endgültigen Löschungen gelten nur bei deaktivierten Löschsicherungen.
+
 Ab Version 0.0.15 ergänzt die automatische Überwachung den weiterhin verfügbaren manuellen Befehl **Ordner abgleichen …**.
 
 1. Profil verbinden und links den lokalen Quellordner, rechts den entfernten Zielordner öffnen.

@@ -5,14 +5,16 @@ import { join,basename } from 'node:path';
 import { tmpdir } from 'node:os';
 import { AutoUploadService } from '../../src/application/auto-upload-service.js';
 import { localTarget } from '../../src/adapters/local/transfer-target.js';
+import { filePolicy } from '../../src/application/file-policy.js';
+import { rename } from 'node:fs/promises';
 import { TransferQueue } from '../../src/application/transfer-queue.js';
 
 // Exercise the service against two actual filesystem trees, without Docker or a production server.
-async function fixture(t) {
+async function fixture(t,options={backupRemoteDeletes:false}) {
   const base=await realpath(await mkdtemp(join(tmpdir(),'filetandem-mirror-'))),local=join(base,'local'),remote=join(base,'remote');
   await mkdir(local);await mkdir(remote);
   const transport={},profile={id:'test',host:'localhost',port:22,username:'fixture',protocol:'sftp'},sessions={transport:() => transport,snapshot:() => ({state:'connected'}),matches:() => true},profiles={get:() => profile};
-  const files={stat:localTarget.stat,mkdir,close() {},listNoFollow:async path => ({entries:(await readdir(path)).map(name => ({name,path:join(path,name)}))}),call:(method,path) => method==='unlink' ? unlink(path):rmdir(path)};
+  const files={rename,stat:localTarget.stat,mkdir,close() {},listNoFollow:async path => ({entries:(await readdir(path)).map(name => ({name,path:join(path,name)}))}),call:(method,path) => method==='unlink' ? unlink(path):rmdir(path)};
   let permission,sequence=0,changes=0;
   const engine={ready:Promise.resolve(),autoJobs:new Map(),key:(_job,path) => path,beginAutoUpload(_id,value) {permission=value;},endAutoUpload() {permission=undefined;},async submit(_id,_direction,[source],destination,{automatic}) {
     assert.equal(automatic,permission);const id=String(++sequence),target=join(destination,basename(source));this.autoJobs.set(id,automatic);
@@ -21,10 +23,10 @@ async function fixture(t) {
   engine.queue=new TransferQueue({run:async job => {
     await permission.check(job);await copyFile(job.source,job.target);return {sha256:await localTarget.hash(job.target)};
   }});
-  const service=new AutoUploadService({engine,sessions,profiles,guard:() => {},openFiles:async () => files,remoteTarget:() => localTarget,onChange:() => changes++});
+  const service=new AutoUploadService({getPolicy:()=>filePolicy(options),engine,sessions,profiles,guard:() => {},openFiles:async () => files,remoteTarget:() => localTarget,onChange:() => changes++});
   const start=async () => {const monitor=await service.start({profileId:profile.id,localRoot:local,remoteRoot:remote});clearTimeout(monitor.timer);return monitor;};
   t.after(async () => {service.dispose();engine.queue.dispose();await rm(base,{recursive:true,force:true});});
-  return {local,remote,base,service,engine,start,changes:() => changes};
+  return {local,remote,base,service,engine,start,options,changes:() => changes};
 }
 const missing=path => assert.rejects(stat(path),{code:'ENOENT'});
 
@@ -68,4 +70,35 @@ test('pause also pauses deletions; stop revokes a pending deletion',async t => {
   const f=await fixture(t);await writeFile(join(f.local,'file'),'keep');const monitor=await f.start();f.engine.queue.pause();
   await rm(join(f.local,'file'));await monitor.tick();const pending=monitor.tick();await new Promise(resolve => setTimeout(resolve,10));
   assert.equal(await readFile(join(f.remote,'file'),'utf8'),'keep');f.service.stop('test');await pending;assert.equal(await readFile(join(f.remote,'file'),'utf8'),'keep');
+});
+
+test('mirror exclusions preserve remote-only secrets and ignored folders; backup deletions survive restarts',async t=>{
+ const f=await fixture(t,{backupRemoteDeletes:true,excludedExtensions:['log'],excludedNames:['.env*','cache']});
+ await writeFile(join(f.local,'public.txt'),'local');await writeFile(join(f.local,'local.log'),'do not upload');await mkdir(join(f.local,'cache'));await writeFile(join(f.local,'cache','item'),'ignored');
+ await writeFile(join(f.remote,'.env'),'secret');await writeFile(join(f.remote,'remote.log'),'preserve');await writeFile(join(f.remote,'old.txt'),'old');await writeFile(join(f.remote,'old.txt.bak'),'older');await mkdir(join(f.remote,'protected'));await writeFile(join(f.remote,'protected','nested.log'),'keep');
+ const monitor=await f.start();assert.equal(monitor.state.error,'');
+ assert.equal(await readFile(join(f.remote,'old.txt.bak'),'utf8'),'older');assert.equal(await readFile(join(f.remote,'old.txt.bak.1'),'utf8'),'old');await missing(join(f.remote,'old.txt'));
+ assert.equal(await readFile(join(f.remote,'.env'),'utf8'),'secret');assert.equal(await readFile(join(f.remote,'remote.log'),'utf8'),'preserve');assert.equal(await readFile(join(f.remote,'protected','nested.log'),'utf8'),'keep');await missing(join(f.remote,'local.log'));await missing(join(f.remote,'cache'));
+ await rm(join(f.local,'public.txt'));await monitor.tick();await monitor.tick();assert.equal(monitor.state.error,'');assert.equal(await readFile(join(f.remote,'public.txt.bak'),'utf8'),'local');
+ f.service.stop('test');const next=await f.start();assert.equal(next.state.error,'');assert.equal(await readFile(join(f.remote,'old.txt.bak.1'),'utf8'),'old');assert.equal(await readFile(join(f.remote,'public.txt.bak'),'utf8'),'local');
+});
+
+test('automatic folder deletion retains backups, excluded entries and their parent folders',async t=>{
+ const f=await fixture(t,{backupRemoteDeletes:true});await mkdir(join(f.local,'nested'));await writeFile(join(f.local,'nested','file'),'content');const monitor=await f.start();
+ await rm(join(f.local,'nested'),{recursive:true});await monitor.tick();await monitor.tick();assert.equal(monitor.state.error,'');assert.equal(await readFile(join(f.remote,'nested','file.bak'),'utf8'),'content');assert.equal(monitor.state.deleted,1);
+});
+
+test('settings changes stop monitoring before excluded files could be treated as local deletions',async t=>{
+ const options={backupRemoteDeletes:true,excludedNames:[]};const f=await fixture(t,options);await writeFile(join(f.local,'file'),'keep');const monitor=await f.start();
+ options.excludedNames=['file'];f.service.validate();assert.equal(monitor.stopped,true);assert.match(monitor.state.error,/options changed/);assert.equal(await readFile(join(f.remote,'file'),'utf8'),'keep');
+});
+
+test('type conflicts containing protected children stop before removing any remote contents',async t=>{
+ const f=await fixture(t,{backupRemoteDeletes:false,excludedNames:['secret']});await writeFile(join(f.local,'same'),'file');await mkdir(join(f.remote,'same'));await writeFile(join(f.remote,'same','secret'),'keep');
+ await assert.rejects(f.start(),/excluded entries/);assert.equal(await readFile(join(f.remote,'same','secret'),'utf8'),'keep');
+});
+
+test('a local root resolving into an excluded directory cannot turn a mirror into an empty source',async t=>{
+ const f=await fixture(t,{backupRemoteDeletes:true});await mkdir(join(f.base,'.git'));await writeFile(join(f.base,'.git','file'),'ignored');await symlink(join(f.base,'.git'),join(f.base,'alias'));await writeFile(join(f.remote,'keep'),'remote');
+ await assert.rejects(f.service.start({profileId:'test',localRoot:join(f.base,'alias'),remoteRoot:f.remote}),/excluded/);assert.equal(await readFile(join(f.remote,'keep'),'utf8'),'remote');
 });

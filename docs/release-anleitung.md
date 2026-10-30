@@ -1,5 +1,7 @@
 # FileTandem installieren, verwenden und warten
 
+Ab 0.0.21: [Ausschlussregeln und Löschsicherungen](ausschlussregeln-und-sicherungen.md) beachten. Remote-Löschungen werden standardmäßig als `.bak` aufbewahrt; Aussagen über endgültige Löschungen gelten nur bei deaktivierter Sicherungsoption.
+
 Stand: 08.10.2026, private Vorabversion 0.0.11. macOS Apple Silicon ist das lokal geprüfte System. Windows/Linux, macOS Intel und weitere Remote-Fensterkombinationen sind nicht freigegeben. Die vollständige 1.0-Abnahme und Marketplace-Veröffentlichung bleiben an [M6](meilensteine/M6.md) gebunden.
 
 ## Installation und erster Transfer

@@ -1,12 +1,13 @@
 import { posix } from 'node:path';
 
 /** Read-only, bounded comparison. Links are never followed. */
-export async function planDirectorySync({source,target,sourceRoot,targetRoot,sourcePath=posix,targetPath=posix,windowsTarget=false}) {
+export async function planDirectorySync({source,target,sourceRoot,targetRoot,sourcePath=posix,targetPath=posix,windowsTarget=false,exclude=()=>false}) {
   const scan=async (service,root,paths) => {
     const nodes=new Map();let count=0;
     const visit=async (path,relative,depth) => {
       if (++count>10000 || depth>100) throw new Error('Abgleich überschreitet 10.000 Einträge/Tiefe 100.');
       const info=await service.stat(path);
+      if(relative && exclude(path,info.kind)) return;
       nodes.set(relative,{kind:info.kind,size:info.size,modified:info.modified,path});
       if (info.kind!=='directory') return;
       const listing=await service.listNoFollow(path);const names=new Set();

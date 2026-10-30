@@ -2,7 +2,7 @@ import { lstat,readdir,realpath } from 'node:fs/promises';
 import { join,posix,resolve } from 'node:path';
 
 /** Poll the actual local disk, including writes made outside VS Code. Never follow links. */
-export async function scanUploadSource(root) {
+export async function scanUploadSource(root,exclude=()=>false) {
   if (await realpath(root)!==resolve(root)) throw new Error('Überwachter Ordner wurde umgeleitet.');
   const result=new Map();let count=0;
   const visit=async (path,relative,depth) => {
@@ -10,6 +10,7 @@ export async function scanUploadSource(root) {
     let info;try {info=await lstat(path);} catch(error) {if (relative && error.code==='ENOENT') return;throw error;}
     if (info.isSymbolicLink() || (!info.isFile() && !info.isDirectory())) return;
     const kind=info.isDirectory() ? 'directory':'file';
+    if(relative && exclude(path,kind)) return;
     result.set(relative,{path,kind,stamp:JSON.stringify([kind,info.size,info.mtimeMs,info.ctimeMs,info.ino,info.dev])});
     let names=[];if (kind==='directory') {try {names=await readdir(path);} catch(error) {if (relative && error.code==='ENOENT') {result.delete(relative);return;}throw error;}}
     for (const name of names) {
@@ -44,9 +45,9 @@ export class AutoUpload {
         if (!relative || current.has(relative) || this.previous.has(relative)) continue;
         if (node.kind==='file' || (node.kind==='directory' && this.mkdir)) {
           this.validate();if (this.stopped) return;
-          await this.remove(node.path,posix.join(this.remoteRoot,...relative.split('/')),relative,node.kind);
+          const result=await this.remove(node.path,posix.join(this.remoteRoot,...relative.split('/')),relative,node.kind);
           if (this.stopped) return;
-          this.state.deleted++;this.onChange();
+          if(!result?.retained) this.state.deleted++;this.onChange();
         }
         this.baseline.delete(relative);
       }

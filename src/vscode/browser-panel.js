@@ -1,3 +1,7 @@
+import {currentFilePolicy} from './file-options.js';
+import {isBackupPath} from '../application/file-policy.js';
+import {planRemoteBackup,executeRemoteBackup,restoreRemoteBackup} from '../application/remote-backup.js';
+import {serverIdentity} from '../adapters/ssh/host-keys.js';
 import { coalescedRefresh } from '../application/coalesced-refresh.js';
 import { browserSettings } from '../shared/browser-settings.js';
 import { vscode,language,t } from './localized-vscode.js';
@@ -19,6 +23,9 @@ import { browserRequest } from '../shared/browser-messages.js';
 export function registerBrowser(context,profileUI) {
   // The workbench must consume forwarded Commander keys instead of debugging.
   profileUI.command('filetandem.consumeCommanderKey',() => {});
+  profileUI.command('filetandem.openSettings',()=>vscode.commands.executeCommand('workbench.action.openSettings','@ext:xscp-dev.xscp'));
+  const annotations=new WeakMap();
+  const annotate=(state,policy)=>{let cached=annotations.get(state.entries);if(!cached || cached.signature!==policy.signature) {cached={signature:policy.signature,entries:state.entries.map(entry=>({...entry,excluded:policy.excludes(entry.path,entry.kind),backup:isBackupPath(entry.path)}))};annotations.set(state.entries,cached);}return {...state,entries:cached.entries};};
   const favorites=pathFavorites(context.globalState);
   const files=new LocalFiles();let handshakes=0,diagnostics=false;const views=new Set();
   profileUI.command('filetandem.copySelection',() => {
@@ -32,7 +39,7 @@ export function registerBrowser(context,profileUI) {
     panel ??= vscode.window.createWebviewPanel('filetandem.browser','FileTandem',vscode.ViewColumn.One,{});
     panel.webview.options={enableScripts:true,localResourceRoots:[assets]};
     let alive=true;const recent=new Set();
-    const model=() => ({version:1,type:'browserModel',sessionId,diagnostics,autoUpload:profileUI.transfers.autoUpload.state(profile?.id),pathFavorites:favorites.get(profile?.id),locale:language(),profileId:profile?.ephemeral ? undefined:profile?.id,queue:profileUI.transfers.engine.queue.list(profile?.id),queuePaused:profileUI.transfers.engine.queue.paused,local:{...local.state,canBack:local.index>0,canForward:local.index+1<local.history.length},remote:{...remote.state,canBack:remote.index>0,canForward:remote.index+1<remote.history.length},...browserSettings(key => vscode.workspace.getConfiguration('filetandem').get(key)),connection:profile ? {...profileUI.sessions.snapshot(profile.id),name:profile.name} : {state:'disconnected'}});
+    const model=() => {const policy=currentFilePolicy();return ({version:1,type:'browserModel',sessionId,diagnostics,autoUpload:profileUI.transfers.autoUpload.state(profile?.id),pathFavorites:favorites.get(profile?.id),locale:language(),profileId:profile?.ephemeral ? undefined:profile?.id,queue:profileUI.transfers.engine.queue.list(profile?.id),queuePaused:profileUI.transfers.engine.queue.paused,local:{...annotate(local.state,policy),canBack:local.index>0,canForward:local.index+1<local.history.length},remote:{...annotate(remote.state,policy),canBack:remote.index>0,canForward:remote.index+1<remote.history.length},...browserSettings(key => vscode.workspace.getConfiguration('filetandem').get(key)),connection:profile ? {...profileUI.sessions.snapshot(profile.id),name:profile.name} : {state:'disconnected'}});};
     const publish=() => {if (alive) {panel.title=profile ? `FileTandem · ${profile.name}`:'FileTandem';void panel.webview.postMessage(model());}};
     let start;try {start=localStart(restored.paths?.local ?? profile?.localPath);} catch {start=localStart();}
     const local=new DirectoryBrowser({start,parent:localParent,list:path => files.list(vscode.Uri.file(localPath(path))),onChange:publish});
@@ -91,12 +98,14 @@ export function registerBrowser(context,profileUI) {
         if (!profile || profileUI.sessions.snapshot(profile.id).state!=='connected' || local.state.status!=='ready' || remote.state.status!=='ready') throw new Error("Connect and load both folders first.");
         const direction=await vscode.window.showQuickPick([{label:"Local → Remote",value:'upload'},{label:"Remote → Local",value:'download'}],{title:'FileTandem: Synchronization direction'});
         if (!direction || !alive) return;
+        const policy=currentFilePolicy();
+        if(policy.excludes(local.state.path,'directory') || policy.excludes(remote.state.path,'directory')) throw new Error('Selected folder is excluded by FileTandem settings.');
         const roots={local:local.state.path,remote:remote.state.path},owner=profile,transport=profileUI.sessions.transport(profile.id);
-        const valid=() => {profileUI.guard();if (!alive || profile!==owner || local.state.path!==roots.local || remote.state.path!==roots.remote || profileUI.sessions.transport(owner.id)!==transport || !profileUI.sessions.matches(owner)) throw new Error("Synchronization destination changed; recreate the preview.");};
+        const valid=() => {profileUI.guard();if (currentFilePolicy().signature!==policy.signature || !alive || profile!==owner || local.state.path!==roots.local || remote.state.path!==roots.remote || profileUI.sessions.transport(owner.id)!==transport || !profileUI.sessions.matches(owner)) throw new Error("Synchronization destination changed; recreate the preview.");};
         const remoteAdapter=await service();
         const localAdapter={stat:p => files.stat(vscode.Uri.file(p)),listNoFollow:p => files.listNoFollow(p)};
         const upload=direction.value==='upload';
-        const options={source:upload ? localAdapter:remoteAdapter,target:upload ? remoteAdapter:localAdapter,sourceRoot:upload ? roots.local:roots.remote,targetRoot:upload ? roots.remote:roots.local,sourcePath:upload ? path:posix,targetPath:upload ? posix:path,windowsTarget:!upload && process.platform==='win32'};
+        const options={exclude:policy.excludes,source:upload ? localAdapter:remoteAdapter,target:upload ? remoteAdapter:localAdapter,sourceRoot:upload ? roots.local:roots.remote,targetRoot:upload ? roots.remote:roots.local,sourcePath:upload ? path:posix,targetPath:upload ? posix:path,windowsTarget:!upload && process.platform==='win32'};
         const plan=await planDirectorySync(options);valid();
         if (!plan.operations.length) {await vscode.window.showInformationMessage(`Synchronization: no transfers required. Skipped: ${plan.skipped.length}. Comparison uses size and modification time.`);return;}
         const selected=await vscode.window.showQuickPick(plan.operations.map(operation => ({label:operation.relative,description:operation.kind==='directory' ? "Folder including subfolders":"File",picked:true,operation})),{title:`Synchronization: ${direction.label} · ${plan.skipped.length} skipped`,placeHolder:"Size and modification time; no deletions. Select transfers.",canPickMany:true,ignoreFocusOut:true});
@@ -121,7 +130,8 @@ ${selected.length} selections; folders are recursive. Comparison uses size and m
         const allowed=() => {if (!alive || profile?.id!==owner || local.state.path!==roots.local || remote.state.path!==roots.remote) throw new Error("Monitored folder or session changed.");};
         const confirmed=await vscode.window.showWarningMessage("Keep the remote folder up to date automatically?",{modal:true,detail:`Local: ${roots.local}
 Remote: ${roots.remote}
-New and changed local files are uploaded automatically after saving, replacing existing destination files. Monitoring includes subfolders and changes from other applications. On activation, the remote folder is fully synchronized to match the local folder: missing and different files are uploaded, and remote-only files and folders are permanently deleted. The local folder is authoritative. Locally deleted files are permanently deleted remotely as well. Manual transfers and folder navigation are disabled while monitoring is active. Stopping, disconnecting or closing this session ends monitoring.`},"Start monitoring");
+${t('New and changed local files are uploaded automatically after saving, replacing existing destination files. The local folder is authoritative, including removals. Excluded entries and existing .bak backups are preserved. Manual transfers and folder navigation are disabled while monitoring is active. Stopping, disconnecting or closing this session ends monitoring.')}
+${currentFilePolicy().backupRemoteDeletes ? t('Removed remote files are renamed to .bak backups. Folders containing backups or excluded entries are retained. Backups beside website files may be publicly downloadable; block access on the web server.'):t('Deletion backups are disabled: removed remote entries are permanently deleted.')}`},"Start monitoring");
         if (confirmed!=="Start monitoring") return;allowed();if (busy || syncing) throw new Error("A folder operation is already in progress.");
         await profileUI.transfers.autoUpload.start({profileId:owner,localRoot:roots.local,remoteRoot:roots.remote,owner:sessionId,allowed});
       } finally {startingAuto=false;}
@@ -143,9 +153,18 @@ New and changed local files are uploaded automatically after saving, replacing e
           chmod:(path,mode) => files.chmod(path,mode),
           rename:(source,target) => vscode.workspace.fs.rename(vscode.Uri.file(localPath(source)),vscode.Uri.file(localPath(target)),{overwrite:false}),
         } : await service();
-        if (['delete','properties','chmod'].includes(message.action)) {
+        if (['delete','properties','chmod','restoreBackup'].includes(message.action)) {
           if (!selected.length || (message.action !== 'delete' && selected.length !== 1)) throw new Error("Select suitable entries.");
-          const allowed=() => !profileUI.transfers.engine.autoUploads.has(profile?.id) && alive && browser.state.path === parent && hasDesktopAccess(executionLocation(context),vscode.workspace.isTrusted);
+          const actionProfile=profile,actionTransport=message.side==='remote' ? profileUI.sessions.transport(profile.id):undefined;
+          const sameConnection=()=>message.side==='local' || profile===actionProfile && profileUI.sessions.snapshot(actionProfile.id).state==='connected' && profileUI.sessions.matches(actionProfile) && profileUI.sessions.transport(actionProfile.id)===actionTransport;
+          const allowed=() => sameConnection() && !profileUI.transfers.engine.autoUploads.has(profile?.id) && alive && browser.state.path === parent && hasDesktopAccess(executionLocation(context),vscode.workspace.isTrusted);
+          if(message.action==='restoreBackup') {
+            if(message.side!=='remote' || !isBackupPath(selected[0].path)) throw new Error('Select a remote .bak backup to restore.');
+            const original=selected[0].path.replace(/\.bak(?:\.\d+)?$/i,'');
+            if(await vscode.window.showWarningMessage('Restore this backup?',{modal:true,detail:original},'Restore backup')!=='Restore backup') return;
+            const key=profileUI.transfers.engine.key({direction:'upload',server:serverIdentity(profile.host,profile.port).id},original);
+            await profileUI.transfers.engine.queue.maintain(key,()=>restoreRemoteBackup(adapter,selected[0].path,allowed));await browser.refresh();return;
+          }
           if (message.action === 'properties') {
             const info=await adapter.stat(selected[0].path);
             await vscode.window.showInformationMessage(`Properties: ${info.name}`,{modal:true,detail:`Path: ${info.path}
@@ -159,15 +178,26 @@ Permissions: ${info.mode.toString(8).padStart(3,'0')}${info.kind === 'symlink' ?
             const mode=await vscode.window.showInputBox({title:`FileTandem: Permissions for ${selected[0].name} (octal, e.g. 644)`,value:selected[0].mode.toString(8).padStart(3,'0'),validateInput:value => /^[0-7]{3}$/.test(value) ? undefined:"Enter three octal digits 000–777."});
             if (mode === undefined) return;if (!allowed()) throw new Error("Permission is no longer valid.");if (!/^[0-7]{3}$/.test(mode)) throw new Error("Invalid permissions.");await adapter.chmod(selected[0].path,parseInt(mode,8));
           } else {
-            const plan=message.side === 'remote' ? await planRemoteDelete(adapter,selected.map(e => e.path)) : undefined;
-            const choice=message.side === 'remote' ? "Delete permanently":"Move to Trash";
-            const count=plan?.length ?? selected.length;
-            const confirmed=await vscode.window.showWarningMessage(message.side === 'remote' ? `Remote: Permanently delete ${count} entries?`:`Local: Move ${count} selected entries to Trash?`,{modal:true,detail:`Folder: ${parent}
-${selected.slice(0,10).map(e => e.name).join('\n')}${selected.length > 10 ? '\n…':''}
-${message.side === 'remote' ? 'Includes subfolders; symlink targets are not deleted.':'Includes subfolders. Trash errors do not trigger permanent deletion.'}`},choice);
-            if (confirmed !== choice) return;if (!allowed()) throw new Error("Permission is no longer valid.");
-            try {if (plan) await executeRemoteDelete(adapter,plan,allowed);else await trashLocal(selected.map(e => e.path),allowed);}
-            finally {if (alive) await browser.refresh();}
+            const policy=currentFilePolicy(),paths=selected.map(entry=>entry.path),owner=profile;
+            const backupSelections=selected.filter(entry=>isBackupPath(entry.path));
+            if(message.side==='remote' && backupSelections.length && backupSelections.length!==selected.length) throw new Error('Delete backup files separately to remove them permanently.');
+            const backup=message.side==='remote' && policy.backupRemoteDeletes && !backupSelections.length;
+            const plan=message.side==='remote' ? backup ? await planRemoteBackup(adapter,paths):await planRemoteDelete(adapter,paths):undefined;
+            const choice=message.side==='local' ? 'Move to Trash':backup ? 'Create .bak backups':'Delete permanently';
+            const count=backup ? plan.length:plan?.length ?? selected.length;
+            const detail=backup ? t('Selected files and folders are renamed beside the originals. Existing backups are kept with numbered names. Backups are excluded from transfers and automatic deletion. Backups beside website files may be publicly downloadable; block access on the web server.'):message.side==='remote' ? t('Includes subfolders; symlink targets are not deleted.'):t('Includes subfolders. Trash errors do not trigger permanent deletion.');
+            const title=message.side==='local' ? `Local: Move ${count} selected entries to Trash?`:backup ? `Remote: Back up ${count} selected entries instead of deleting them?`:`Remote: Permanently delete ${count} entries?`;
+            const confirmed=await vscode.window.showWarningMessage(title,{modal:true,detail:`${parent}\n${selected.slice(0,10).map(entry=>entry.name).join('\n')}\n${detail}`},choice);
+            const permitted=()=>allowed() && profile===owner && currentFilePolicy().signature===policy.signature;
+            if(confirmed!==choice) return;if(!permitted()) throw new Error('Permission is no longer valid.');
+            try {
+              if(message.side==='local') await trashLocal(paths,permitted);
+              else {
+                const roots=paths.slice().sort().filter((path,index,all)=>!all.slice(0,index).some(parent=>path.startsWith(parent+'/')));
+                const locked=async index=>index===roots.length ? backup ? executeRemoteBackup(adapter,plan,permitted):executeRemoteDelete(adapter,plan,permitted):profileUI.transfers.engine.queue.maintain(profileUI.transfers.engine.key({direction:'upload',server:serverIdentity(profile.host,profile.port).id},roots[index]),()=>locked(index+1));
+                await locked(0);
+              }
+            } finally {if(alive) await browser.refresh();}
           }
           await browser.refresh();return;
         }
@@ -190,7 +220,8 @@ ${message.side === 'remote' ? 'Includes subfolders; symlink targets are not dele
         if (watching.active || watching.starting) {
           if (['transfer','selectUpload','synchronize','connect','reconnect','navigate','history'].includes(message.type) || (message.type==='action' && (message.action!=='properties' && !(message.action==='open' && message.side==='local')))) throw new Error("Automatic upload is active; stop monitoring first.");
         }
-        if (message.type === 'autoUploadStart') await startAutoUpload();
+        if(message.type==='settings') await vscode.commands.executeCommand('filetandem.openSettings');
+        else if (message.type === 'autoUploadStart') await startAutoUpload();
         else if (message.type === 'autoUploadStop') profileUI.transfers.autoUpload.stop(profile?.id);
         else if (message.type === 'ready') {handshakes++;await Promise.all([local.refresh(),...(profile && profileUI.sessions.snapshot(profile.id).state === 'connected' ? [remote.refresh()] : [])]);publish();}
         else if (message.type === 'pathFavorite') {await favorites.set(message.side,profile?.id,message.path,message.favorite);for (const view of views) view.publish();}

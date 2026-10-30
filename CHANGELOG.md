@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.21 – 30.10.2026
+- Ausschlussregeln für Dateiendungen, Namensmuster und versteckte Dateien in den VS-Code-Einstellungen ergänzen; ausgeschlossene Einträge im Dateimanager kennzeichnen und bei Transfers, Ordnerabgleich und Überwachung schützen.
+- Remote-Löschungen standardmäßig durch Umbenennen in `.bak` sichern; vorhandene Sicherungen nummerieren, automatisch ausschließen und ohne Überschreiben wiederherstellen. Lokale Löschungen verwenden weiterhin den Papierkorb.
+- Einstellungen direkt über das Zahnrad öffnen; Änderungen beenden eine laufende Überwachung. Deutsche und englische Texte sowie Hinweise zu öffentlich erreichbaren Sicherungsdateien ergänzen.
+- Regeln, Namenskollisionen, Wiederherstellung und geänderte Einstellungen mit Diensttests, gerenderter Oberfläche und echten SFTP-/SCP-Verbindungen prüfen.
+
 ## 0.0.20 – 30.10.2026
 - Deutsch und Englisch durchgängig über zentrale Sprachressourcen anbieten; native Dialoge verwenden die VS-Code-l10n-API und englische Ausgangstexte. Die Editorsprache wird standardmäßig übernommen, nicht unterstützte Sprachen verwenden Englisch.
 - Fehlende Übersetzungen für Ordnerabgleich, SSH-/Transferfehler und Überwachungsstatus ergänzen; Dateisortierung verwendet die gewählte Sprache.

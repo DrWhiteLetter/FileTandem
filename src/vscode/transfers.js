@@ -1,3 +1,4 @@
+import {currentFilePolicy} from './file-options.js';
 import { AutoUploadService } from '../application/auto-upload-service.js';
 import { serverIdentity } from '../adapters/ssh/host-keys.js';
 import { profileIdentity } from '../application/transfer-resume.js';
@@ -9,10 +10,11 @@ export function registerTransfers(context,profileUI) {
   const profiles={get:id => {try {return profileUI.profiles.get(id);} catch(error) {if (ephemeral.has(id)) return ephemeral.get(id);throw error;}}};
   let warned=false;const journal=new TransferJournal(join(context.globalStorageUri.fsPath,'transfers-v1.json'),message => {if (!warned) {warned=true;void vscode.window.showWarningMessage(message);}});
   journal.ready=(async () => {let key=await context.secrets.get('filetandem.journal.integrity.v1');if (!key) {key=randomBytes(32).toString('hex');await context.secrets.store('filetandem.journal.integrity.v1',key);}if (!/^[a-f0-9]{64}$/.test(key)) throw new Error("Invalid journal key.");journal.key=Buffer.from(key,'hex');})().catch(() => {journal.disabled=true;journal.onError("Transfer journal unavailable: Check VS Code SecretStorage. Stored jobs will not be started or modified.");});
-  const engine=new TransferEngine({sessions:profileUI.sessions,profiles,choose:conflictDialog,guard:profileUI.guard,onChange:jobs => {journal.update(jobs);changed.fire();}});
+  const engine=new TransferEngine({sessions:profileUI.sessions,profiles,choose:conflictDialog,getPolicy:currentFilePolicy,guard:profileUI.guard,onChange:jobs => {journal.update(jobs);changed.fire();}});
   engine.ready=journal.load().then(jobs => engine.queue.restore(jobs));
-  const autoUpload=new AutoUploadService({engine,sessions:profileUI.sessions,profiles,guard:profileUI.guard,onChange:() => changed.fire()});
+  const autoUpload=new AutoUploadService({getPolicy:currentFilePolicy,engine,sessions:profileUI.sessions,profiles,guard:profileUI.guard,onChange:() => changed.fire()});
   const autoChanges=profileUI.changed.event(() => autoUpload.validate());
+  context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event=>{if(['excludedExtensions','excludedNames','excludeHidden','backupRemoteDeletes'].some(key=>event.affectsConfiguration('filetandem.'+key))) autoUpload.validate();}));
   context.subscriptions.push(autoUpload,autoChanges,engine,changed);
   const prepare=async (ids,resume=false) => {
     await engine.ready;profileUI.guard();const jobs=engine.queue.validateRetry(ids,{resume});
