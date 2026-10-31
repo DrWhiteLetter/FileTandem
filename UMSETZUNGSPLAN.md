@@ -6,6 +6,8 @@ Stand: 8. Oktober 2026, nach lokaler M6-Härtung und Erstellung der privaten VSI
 
 Die konkrete Arbeitsliste mit einzelnen abhakbaren Aufgaben steht unter [Meilensteine zum Abarbeiten](docs/meilensteine/README.md).
 
+Für die Zeit nach der ersten öffentlichen Veröffentlichung ist [POST-01: SSH-Konfigurationen und Sprungserver](docs/meilensteine/nach-veroeffentlichung.md) auf Benutzerwunsch vorgemerkt: vorhandene SSH-Verbindungen übernehmen und Zielserver über eine oder mehrere Zwischenstationen erreichen.
+
 ## 1. Ziel und Produktentscheidungen
 
 Ein WinSCP-vertrauter Dateimanager innerhalb von VS Code: links das lokale Dateisystem, rechts der SSH-Server, darunter Transferaufträge. VS-Code-Themes, Befehle und Editorintegration bestimmen die Gestaltung. Die Erweiterung soll auch ohne geöffneten Projektordner funktionieren.

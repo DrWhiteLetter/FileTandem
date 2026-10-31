@@ -6,6 +6,8 @@ Dieser Backlog konkretisiert den [Umsetzungsplan](../../UMSETZUNGSPLAN.md). Er b
 
 ## Reihenfolge
 
+Geplante Erweiterungen nach der ersten öffentlichen Veröffentlichung stehen in [Funktionen nach der Veröffentlichung](nach-veroeffentlichung.md), beginnend mit **POST-01: SSH-Konfigurationen und Sprungserver**.
+
 | Meilenstein | Ergebnis | Items | Aufwand |
 | --- | --- | ---: | --- |
 | [M0: Technische Nachweise](M0.md) | Abgeschlossen; Entscheidungen und Risiken dokumentiert | 9/9 erledigt | 0 Resttage |

@@ -10,7 +10,7 @@ test('Agent paths are explicit; Windows pipe syntax accepted, Pageant/Cygwin rej
 });
 
 test('Auth credentials are typed, agent forwarding stays disabled and keyboard is opt-in', () => {
-  const options = authenticationOptions({ password: 'test', agent: '/tmp/agent', keyboardInteractive: () => [] });
+  const options = authenticationOptions({ password: 'test', agent: process.platform === 'win32' ? '\\\\.\\pipe\\openssh-ssh-agent' : '/tmp/agent', keyboardInteractive: () => [] });
   assert.equal(options.agentForward, false); assert.equal(options.tryKeyboard, true);
   assert.equal(authenticationOptions({}).tryKeyboard, false);
   for (const config of [{ password: 1 }, { passphrase: {} }, { privateKey: [] }, { keyboardInteractive: true }]) assert.throws(() => authenticationOptions(config), { code: 'INVALID_AUTH_CONFIG' });

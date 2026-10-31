@@ -114,9 +114,9 @@ export function BrowserApp({bridge,sessionId}) {
       </div>
       <div className="toolbar-group connection-actions" role="group" aria-label={t("Connection")}>
         <button disabled={watching} onClick={() => send('connect')}>{t("Connect profile")}</button>
-        <button className="icon-button" title={t('Open FileTandem settings')} aria-label={t('Open FileTandem settings')} onClick={()=>send('settings')}><Icon name="gear" /></button>
         <button onClick={() => send('newSession')}>{t("New session")}</button>
         {model?.connection.state==='connected' ? <button onClick={() => send('disconnect')}>{t("Disconnect")}</button>:<button disabled={watching || !model?.connection.id} onClick={() => send('reconnect')}>{t("Reconnect")}</button>}
+        <button className="icon-button" title={t('Open FileTandem settings')} aria-label={t('Open FileTandem settings')} onClick={()=>send('settings')}><Icon name="gear" /></button>
       </div>
     </div>
     {watching && <section className="auto-upload-status" aria-labelledby="watch-title">

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp,mkdir,writeFile,readFile,copyFile,rm,rmdir,unlink,readdir,realpath,symlink,utimes,stat } from 'node:fs/promises';
-import { join,basename } from 'node:path';
+import { join,basename,posix } from 'node:path';
 import { tmpdir } from 'node:os';
 import { AutoUploadService } from '../../src/application/auto-upload-service.js';
 import { localTarget } from '../../src/adapters/local/transfer-target.js';
@@ -14,19 +14,26 @@ async function fixture(t,options={backupRemoteDeletes:false}) {
   const base=await realpath(await mkdtemp(join(tmpdir(),'filetandem-mirror-'))),local=join(base,'local'),remote=join(base,'remote');
   await mkdir(local);await mkdir(remote);
   const transport={},profile={id:'test',host:'localhost',port:22,username:'fixture',protocol:'sftp'},sessions={transport:() => transport,snapshot:() => ({state:'connected'}),matches:() => true},profiles={get:() => profile};
-  const files={rename,stat:localTarget.stat,mkdir,close() {},listNoFollow:async path => ({entries:(await readdir(path)).map(name => ({name,path:join(path,name)}))}),call:(method,path) => method==='unlink' ? unlink(path):rmdir(path)};
+  // The remote API always uses POSIX paths, even when the fixture runs on Windows.
+  const remoteRoot='/remote';
+  const native=path => {
+    assert.ok(path==='/' || path===remoteRoot || path.startsWith(remoteRoot+'/'));
+    return path==='/' ? base:join(remote,...posix.relative(remoteRoot,path).split('/'));
+  };
+  const target={stat:path => localTarget.stat(native(path)),hash:path => localTarget.hash(native(path))};
+  const files={rename:(source,destination) => rename(native(source),native(destination)),stat:target.stat,mkdir:path => mkdir(native(path)),close() {},listNoFollow:async path => ({entries:(await readdir(native(path))).map(name => ({name,path:posix.join(path,name)}))}),call:(method,path) => method==='unlink' ? unlink(native(path)):rmdir(native(path))};
   let permission,sequence=0,changes=0;
   const engine={ready:Promise.resolve(),autoJobs:new Map(),key:(_job,path) => path,beginAutoUpload(_id,value) {permission=value;},endAutoUpload() {permission=undefined;},async submit(_id,_direction,[source],destination,{automatic}) {
-    assert.equal(automatic,permission);const id=String(++sequence),target=join(destination,basename(source));this.autoJobs.set(id,automatic);
+    assert.equal(automatic,permission);const id=String(++sequence),target=posix.join(destination,basename(source));this.autoJobs.set(id,automatic);
     this.queue.add({id,batchId:id,profileId:profile.id,server:'fixture',source,target,lockKey:target,direction:'upload',automatic:true});return {ids:[id]};
   }};
   engine.queue=new TransferQueue({run:async job => {
-    await permission.check(job);await copyFile(job.source,job.target);return {sha256:await localTarget.hash(job.target)};
+    await permission.check(job);await copyFile(job.source,native(job.target));return {sha256:await target.hash(job.target)};
   }});
-  const service=new AutoUploadService({getPolicy:()=>filePolicy(options),engine,sessions,profiles,guard:() => {},openFiles:async () => files,remoteTarget:() => localTarget,onChange:() => changes++});
-  const start=async () => {const monitor=await service.start({profileId:profile.id,localRoot:local,remoteRoot:remote});clearTimeout(monitor.timer);return monitor;};
+  const service=new AutoUploadService({getPolicy:()=>filePolicy(options),engine,sessions,profiles,guard:() => {},openFiles:async () => files,remoteTarget:() => target,onChange:() => changes++});
+  const start=async () => {const monitor=await service.start({profileId:profile.id,localRoot:local,remoteRoot});clearTimeout(monitor.timer);return monitor;};
   t.after(async () => {service.dispose();engine.queue.dispose();await rm(base,{recursive:true,force:true});});
-  return {local,remote,base,service,engine,start,options,changes:() => changes};
+  return {local,remote,remoteRoot,base,service,engine,start,options,changes:() => changes};
 }
 const missing=path => assert.rejects(stat(path),{code:'ENOENT'});
 
@@ -62,7 +69,7 @@ test('recursive local deletion removes children before their parent directory',a
 
 test('replacing a local directory with a symlink never deletes the remote subtree',async t => {
   const f=await fixture(t);await mkdir(join(f.local,'nested'));await writeFile(join(f.local,'nested','file'),'keep');const monitor=await f.start();
-  await rm(join(f.local,'nested'),{recursive:true});await mkdir(join(f.base,'elsewhere'));await symlink(join(f.base,'elsewhere'),join(f.local,'nested'));
+  await rm(join(f.local,'nested'),{recursive:true});await mkdir(join(f.base,'elsewhere'));await symlink(join(f.base,'elsewhere'),join(f.local,'nested'),'junction');
   await monitor.tick();await monitor.tick();assert.equal(monitor.stopped,true);assert.equal(await readFile(join(f.remote,'nested','file'),'utf8'),'keep');
 });
 
@@ -99,6 +106,6 @@ test('type conflicts containing protected children stop before removing any remo
 });
 
 test('a local root resolving into an excluded directory cannot turn a mirror into an empty source',async t=>{
- const f=await fixture(t,{backupRemoteDeletes:true});await mkdir(join(f.base,'.git'));await writeFile(join(f.base,'.git','file'),'ignored');await symlink(join(f.base,'.git'),join(f.base,'alias'));await writeFile(join(f.remote,'keep'),'remote');
- await assert.rejects(f.service.start({profileId:'test',localRoot:join(f.base,'alias'),remoteRoot:f.remote}),/excluded/);assert.equal(await readFile(join(f.remote,'keep'),'utf8'),'remote');
+ const f=await fixture(t,{backupRemoteDeletes:true});await mkdir(join(f.base,'.git'));await writeFile(join(f.base,'.git','file'),'ignored');await symlink(join(f.base,'.git'),join(f.base,'alias'),'junction');await writeFile(join(f.remote,'keep'),'remote');
+ await assert.rejects(f.service.start({profileId:'test',localRoot:join(f.base,'alias'),remoteRoot:f.remoteRoot}),/excluded/);assert.equal(await readFile(join(f.remote,'keep'),'utf8'),'remote');
 });

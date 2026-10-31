@@ -10,6 +10,6 @@ for (const [source,target] of Object.entries(aliases)) {
 for (const [name,values] of [['bundle.l10n.json',en],['bundle.l10n.de.json',de]]) {
   const url=new URL(name,root),content=JSON.stringify(values,null,2)+'\n';
   if (process.argv.includes('--check')) {
-    if (await readFile(url,'utf8')!==content) throw new Error(`Outdated localization bundle: ${name}. Run npm run l10n:sync.`);
+    if ((await readFile(url,'utf8')).replace(/\r\n/g,'\n')!==content) throw new Error(`Outdated localization bundle: ${name}. Run npm run l10n:sync.`);
   } else await writeFile(url,content);
 }

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.22 – 31.10.2026
+
+- Windows-Qualitätsprüfung korrigiert: einheitliche Zeilenumbrüche, toleranter Übersetzungscheck sowie plattformgerechte SSH-Agent- und Spiegelungstests; Regressionstest für CRLF ergänzt.
+- Einstellungs-Zahnrad ganz rechts in der oberen Aktionsleiste platziert.
+- Aktuelles Installationspaket einschließlich Ausschlussregeln, optionaler `.bak`-Löschsicherungen und Wiederherstellung bereitgestellt.
+
 ## 0.0.21 – 30.10.2026
 - Ausschlussregeln für Dateiendungen, Namensmuster und versteckte Dateien in den VS-Code-Einstellungen ergänzen; ausgeschlossene Einträge im Dateimanager kennzeichnen und bei Transfers, Ordnerabgleich und Überwachung schützen.
 - Remote-Löschungen standardmäßig durch Umbenennen in `.bak` sichern; vorhandene Sicherungen nummerieren, automatisch ausschließen und ohne Überschreiben wiederherstellen. Lokale Löschungen verwenden weiterhin den Papierkorb.
