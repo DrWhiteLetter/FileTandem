@@ -2,7 +2,7 @@
   "name": "xscp",
   "displayName": "FileTandem – SFTP & SCP File Manager",
   "description": "%description%",
-  "version": "0.0.22",
+  "version": "0.0.23",
   "private": true,
   "publisher": "xscp-dev",
   "type": "module",

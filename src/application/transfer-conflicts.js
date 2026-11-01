@@ -1,7 +1,25 @@
 import { targetSnapshot } from './transfer-file.js';
 export class ConflictRules {
-  constructor(choose) {this.choose=choose;this.rules=new Map();}
+  constructor(choose) {this.choose=choose;this.rules=new Map();this.pending=new Map();}
   async resolve(job,target,signal) {
+    // The queue runs files in parallel. Serialize conflict decisions within each
+    // batch so a second file sees the first dialog's apply-to-all choice.
+    const previous=this.pending.get(job.batchId) ?? Promise.resolve();
+    let release;const turn=new Promise(resolve => {release=resolve;});
+    const tail=previous.then(() => turn);this.pending.set(job.batchId,tail);
+    void tail.then(() => {if (this.pending.get(job.batchId)===tail) this.pending.delete(job.batchId);});
+    let abort;
+    try {
+      signal?.throwIfAborted();
+      if (signal) await Promise.race([previous,new Promise((_,reject) => {
+        abort=() => reject(signal.reason);signal.addEventListener('abort',abort,{once:true});
+      })]);
+      else await previous;
+      signal?.throwIfAborted();
+      return await this.resolveConflict(job,target,signal);
+    } finally {if (abort) signal.removeEventListener('abort',abort);release();}
+  }
+  async resolveConflict(job,target,signal) {
     const existing=await targetSnapshot(target,job.target);if (!existing) return {path:job.target,replace:false};
     const safeReplace=target.atomicReplace && existing.kind === 'file';
     let choice=this.rules.get(job.batchId);

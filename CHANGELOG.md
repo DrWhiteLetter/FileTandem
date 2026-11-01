@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.23 – 01.11.2026
+
+- Konfliktentscheidungen paralleler Dateien desselben Sammelauftrags koordinieren: „Alle weiteren ersetzen“ verhindert zusätzliche, bereits parallel angeforderte Ersetzen-Dialoge. Einzelentscheidungen, Abbruch und der Schutz vor unsicheren Ersetzungen bleiben erhalten.
+
 ## 0.0.22 – 31.10.2026
 
 - Windows-Qualitätsprüfung korrigiert: einheitliche Zeilenumbrüche, toleranter Übersetzungscheck sowie plattformgerechte SSH-Agent- und Spiegelungstests; Regressionstest für CRLF ergänzt.
