@@ -1,3 +1,4 @@
+import { isPreviewImage,registerImagePreviews } from './image-preview.js';
 import {currentFilePolicy} from './file-options.js';
 import {isBackupPath} from '../application/file-policy.js';
 import {planRemoteBackup,executeRemoteBackup,restoreRemoteBackup} from '../application/remote-backup.js';
@@ -24,6 +25,7 @@ export function registerBrowser(context,profileUI) {
   // The workbench must consume forwarded Commander keys instead of debugging.
   profileUI.command('filetandem.consumeCommanderKey',() => {});
   profileUI.command('filetandem.openSettings',()=>vscode.commands.executeCommand('workbench.action.openSettings','@ext:xscp-dev.xscp'));
+  const images=registerImagePreviews(context,profileUI,{vscode,openRemoteFiles});
   const annotations=new WeakMap();
   const annotate=(state,policy)=>{let cached=annotations.get(state.entries);if(!cached || cached.signature!==policy.signature) {cached={signature:policy.signature,entries:state.entries.map(entry=>({...entry,excluded:policy.excludes(entry.path,entry.kind),backup:isBackupPath(entry.path)}))};annotations.set(state.entries,cached);}return {...state,entries:cached.entries};};
   const favorites=pathFavorites(context.globalState);
@@ -144,7 +146,7 @@ ${currentFilePolicy().backupRemoteDeletes ? t('Removed remote files are renamed 
         if (browser.state.status !== 'ready') throw new Error("Load a folder first.");
         const selected=message.ids.map(id => browser.state.entries.find(entry => entry.id === id));
         if (selected.some(entry => !entry)) throw new Error("Selection is outdated; refresh first.");
-        if (['open','edit'].includes(message.action)) {if (selected.length!==1 || selected[0].kind!=='file') throw new Error("Select a regular file.");if (message.side==='local') await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(vscode.Uri.file(selected[0].path)));else {const uri=await profileUI.editor.show(profile,selected[0].path,() => transfer({side:'remote',ids:message.ids,destination:'choose'}));if (message.action==='edit' && uri?.scheme==='filetandem') await profileUI.editor.enable(uri);}return;}
+        if (['open','edit'].includes(message.action)) {if (selected.length!==1 || selected[0].kind!=='file') throw new Error("Select a regular file.");if (isPreviewImage(selected[0].path)) {if (message.side==='local') await images.openLocal(selected[0].path);else await images.openRemote(profile,selected[0].path,() => transfer({side:'remote',ids:message.ids,destination:'choose'}));return;}if (message.side==='local') await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(vscode.Uri.file(selected[0].path)));else {const uri=await profileUI.editor.show(profile,selected[0].path,() => transfer({side:'remote',ids:message.ids,destination:'choose'}));if (message.action==='edit' && uri?.scheme==='filetandem') await profileUI.editor.enable(uri);}return;}
         const parent=browser.state.path;const windows=message.side === 'local' && process.platform === 'win32';
         const options={windows,join:message.side === 'local' ? join:posix.join};
         const adapter=message.side === 'local' ? {

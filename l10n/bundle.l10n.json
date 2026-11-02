@@ -628,5 +628,8 @@
   "Selection contains excluded entries.": "Selection contains excluded entries.",
   "Open FileTandem settings": "Open FileTandem settings",
   "Removed / backed up entries:": "Removed / backed up entries:",
-  "Local: {0}": "Local: {0}"
+  "Local: {0}": "Local: {0}",
+  "Image preview closed.": "Image preview closed.",
+  "Image preview limit: 10 MiB. Download this file.": "Image preview limit: 10 MiB. Download this file.",
+  "Image download did not complete. Check the queue.": "Image download did not complete. Check the queue."
 }

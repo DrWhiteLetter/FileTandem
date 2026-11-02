@@ -631,5 +631,8 @@
   "Die Auswahl enthält ausgeschlossene Einträge.": "Selection contains excluded entries.",
   "FileTandem-Einstellungen öffnen": "Open FileTandem settings",
   "Entfernte / gesicherte Einträge:": "Removed / backed up entries:",
-  "Lokal: {0}": "Local: {0}"
+  "Lokal: {0}": "Local: {0}",
+  "Bildvorschau geschlossen.": "Image preview closed.",
+  "Bildvorschau-Limit: 10 MiB. Bitte die Datei herunterladen.": "Image preview limit: 10 MiB. Download this file.",
+  "Bild konnte nicht heruntergeladen werden. Bitte die Warteschlange prüfen.": "Image download did not complete. Check the queue."
 }

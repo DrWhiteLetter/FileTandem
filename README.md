@@ -54,3 +54,12 @@ npm start
 FileTandem hilft dir? [Unterstütze die Weiterentwicklung über PayPal](https://paypal.me/TobiasKohlhepp).
 
 [MIT-Lizenz](LICENSE) · [Drittanbieterhinweise](THIRD_PARTY_NOTICES.md)
+
+Bilder (JPG/JPEG, PNG, GIF, WebP, BMP und ICO) öffnet FileTandem in der
+Bildvorschau von VS Code. Lokale Bilder werden direkt gelesen. Remote-Bilder
+werden über SFTP oder SCP in einen privaten System-Tempordner
+(`filetandem-preview-*`) heruntergeladen und schreibgeschützt angezeigt.
+Die Kopie wird beim Schließen des Bild-Tabs oder beim regulären Beenden der
+Erweiterung entfernt. Nach einem Absturz können temporäre Dateien verbleiben.
+Es erfolgt kein automatischer Rückupload. Oberhalb von 10 MiB wird stattdessen
+ein normaler Download angeboten.
