@@ -1,10 +1,10 @@
 # Kompatibilität und technische Freigaben
 
-## Aktueller Stand: private Version 0.0.9, 8. Oktober 2026
+## Aktueller Plattformstand: 2. November 2026
 
 macOS 26.6.2 auf Apple M1 (arm64) ist mit VS Code **1.140.0 und 1.141.0** geprüft: installierte VSIX, SFTP/SCP, Neustart, lokaler und echter Remote-SSH-Editor, Webview-Bediengeometrie, Restricted Mode, Reload und zwei gleichzeitige Fenster. Die lokale Regression für 0.0.9 umfasst 24 erfolgreiche Schritte einschließlich Migration; [Nachweis](nachweise/FileTandem-Migration.md). Große Transfers über 4 GiB, 1.000 kleine Dateien und 10.000 Verzeichniseinträge sind gemessen; das Ziel unter 128 MiB zusätzlichem Node-RSS wurde für beide Protokolle eingehalten. [M6-Nachweis mit Messbedingungen und Grenzen](nachweise/M6-Lokal.md).
 
-Windows/Linux sind laut Benutzer derzeit nicht testbar und bleiben ohne Desktop-Freigabe. macOS Intel, WSL/Dev Containers/Desktop-Codespaces, manuelle Screenreader-Abnahme bleiben offen. Automatisierte Webview-Prüfungen ersetzen diese Bedienabnahme nicht. Der Linux-Testserver ist kein Linux-Desktop-Nachweis. Die private VSIX ist noch keine vollständige 1.0-Freigabe.
+Windows wurde am **02.11.2026** durch Tobias Kohlhepp erfolgreich im Desktop-Einsatz getestet und als abgeschlossen bestätigt. Die verwendete FileTandem-/Windows-/VS-Code-Version und einzelne Spezialfälle wurden dabei nicht gesondert dokumentiert; daraus wird keine zusätzliche Einzelabnahme etwa für UNC-Pfade, WSL oder den OpenSSH-Agenten abgeleitet. [Windows-Nachweis](nachweise/Windows-Desktop.md). Linux Desktop bleibt ohne Desktop-Freigabe. macOS Intel, WSL/Dev Containers/Desktop-Codespaces, manuelle Screenreader-Abnahme bleiben offen. Automatisierte Webview-Prüfungen ersetzen diese Bedienabnahme nicht. Der Linux-Testserver ist kein Linux-Desktop-Nachweis. Die private VSIX ist noch keine vollständige 1.0-Freigabe.
 
 ## Historischer M0-Stand
 

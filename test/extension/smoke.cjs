@@ -65,6 +65,16 @@ exports.run = async () => {
   const readyDeadline = Date.now() + 10000;
   while (api.manager.status().handshakes === 0 && Date.now() < readyDeadline) await new Promise(resolve => setTimeout(resolve,50));
   assert.ok(api.manager.status().handshakes > 0, 'Actual nonce-protected webview script sends a validated ready handshake');
+  const localDeadline=Date.now()+10000;
+  while (!api.manager.status().views.some(v=>v.mode==='local' && v.local.status==='ready' && v.remote.status==='ready') && Date.now()<localDeadline) await new Promise(resolve=>setTimeout(resolve,50));
+  const localView=api.manager.status().views.find(v=>v.mode==='local' && v.local.status==='ready' && v.remote.status==='ready');
+  assert.ok(localView,'Local manager loads both local panes without an SSH profile');
+  const markerFolder=require('node:path').dirname(process.env.XSCP_PROOF_FILE),leftPath=localView.local.path;
+  await api.manager.navigate(localView.sessionId,'remote',markerFolder);
+  const navigated=api.manager.status().views.find(v=>v.sessionId===localView.sessionId);
+  assert.equal(navigated.local.path,leftPath,'Navigating the right local pane leaves the left path unchanged');
+  assert.equal(navigated.remote.path,markerFolder);assert.equal(navigated.remote.status,'ready');assert.ok(navigated.remote.count>0);
+  console.log('Local manager: both panes loaded; right local navigation is independent.');
   if (process.env.XSCP_M2_PHASE) await require('./browser.cjs').run(api);
   console.log('M1-03: tatsächlicher Webview-Handshake und Hostaktivierung erfolgreich.');
 };

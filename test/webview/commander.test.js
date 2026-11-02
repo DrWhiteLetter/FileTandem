@@ -43,6 +43,13 @@ test('Real browser selection survives refresh; per-pane filters, symlinks and pr
   const model={version:1,type:'browserModel',sessionId:'browser-session',connection:{name:'Test',state:'connected',protocol:'sftp'},showHiddenFiles:false,local:{path:'/tmp',status:'ready',entries:[entry('a.txt'),entry('link','symlink'),entry('.hidden')]},remote:{path:'/',status:'ready',entries:[entry('remote')]}};
   const render=() => act(() => dom.window.dispatchEvent(new dom.window.MessageEvent('message',{data:dom.window.JSON.parse(JSON.stringify(model))})));
   await render();const doc=dom.window.document;assert.ok(doc.body.textContent.includes('Symlink → target'));assert.ok(!doc.body.textContent.includes('.hidden'));
+  model.remote.entries[0].previewStatus='Preparing preview …';await render();
+  assert.equal(doc.querySelector('.preview-status').textContent.trim(),'Vorschau wird vorbereitet …');
+  assert.equal(doc.querySelector('.preview-status').getAttribute('role'),'status');
+  const beforePreviewClick=messages.length;
+  await act(()=>doc.querySelector('.pane:last-child tbody tr').dispatchEvent(new dom.window.MouseEvent('dblclick',{bubbles:true})));
+  assert.equal(messages.length,beforePreviewClick,'opening a pending preview does not send another request');
+  delete model.remote.entries[0].previewStatus;await render();assert.equal(doc.querySelector('.preview-status'),null);
   const row=doc.querySelector('.pane tbody tr');await act(() => row.click());assert.equal(row.getAttribute('aria-selected'),'true');
   await render();assert.equal(doc.querySelector('.pane tbody tr').getAttribute('aria-selected'),'true');
   const button=text => [...doc.querySelectorAll('button')].find(b => b.textContent.trim()===text);
@@ -213,4 +220,24 @@ test('excluded entries stay visible but cannot transfer; backups expose restore 
  await act(()=>doc.querySelector('.pane:nth-child(2) tr[data-entry-id]').click());const restore=[...doc.querySelectorAll('button')].find(button=>button.textContent==='Restore backup');assert.ok(restore);await act(()=>restore.click());assert.equal(messages.at(-1).action,'restoreBackup');assert.deepEqual(JSON.parse(JSON.stringify(messages.at(-1).ids)),['/remote/main.js.bak']);
  await act(()=>doc.querySelector('button[aria-label="Open FileTandem settings"]').click());assert.equal(messages.at(-1).type,'settings');
  model.locale='de';await render();assert.ok(doc.body.textContent.includes('Ausgeschlossen'));assert.ok(doc.body.textContent.includes('Sicherung wiederherstellen'));
+});
+
+test('local Commander renders two local panes and copies in both directions without a connection',async()=>{
+ const dom=new JSDOM('<html lang="en"><div id="root"></div></html>',{runScripts:'outside-only',url:'https://filetandem.test'});
+ dom.window.MessageChannel=class {constructor(){this.port1={onmessage:null};this.port2={postMessage:()=>setTimeout(()=>this.port1.onmessage?.(),0)};}};
+ dom.window.IS_REACT_ACT_ENVIRONMENT=true;dom.window.eval(result.outputFiles.find(f=>f.path.endsWith('.js')).text);
+ const messages=[];await dom.window.testMountBrowser({postMessage:m=>messages.push(m)},'local-session');const act=fn=>dom.window.testAct(fn);
+ const entry=path=>({id:path,path,name:path.split('/').at(-1),kind:'file',size:10,modified:0,mode:420});
+ const model={version:1,type:'browserModel',sessionId:'local-session',mode:'local',locale:'en',connection:{state:'disconnected'},commanderKeys:true,local:{path:'/left',status:'ready',entries:[entry('/left/a.txt')]},remote:{path:'/right',status:'ready',entries:[entry('/right/b.txt')]}};
+ await act(()=>dom.window.dispatchEvent(new dom.window.MessageEvent('message',{data:dom.window.JSON.parse(JSON.stringify(model))})));
+ const doc=dom.window.document,panes=doc.querySelectorAll('.pane');assert.equal(panes[0].getAttribute('aria-label'),'Local · Left');assert.equal(panes[1].getAttribute('aria-label'),'Local · Right');assert.ok(!doc.body.textContent.includes('Connect a profile to view remote files.'));
+ for(const [index,text,side] of [[0,'Copy →','local'],[1,'← Copy','remote']]) {
+  await act(()=>panes[index].querySelector('tbody tr').click());const button=[...panes[index].querySelectorAll('button')].find(b=>b.textContent.trim()===text);assert.equal(button.disabled,false);await act(()=>button.click());assert.equal(messages.at(-1).type,'transfer');assert.equal(messages.at(-1).side,side);
+ }
+ panes[1].querySelector('tbody tr').focus();
+ await act(()=>dom.window.dispatchEvent(new dom.window.MessageEvent('message',{data:{version:1,type:'commanderCopy',sessionId:'local-session',id:'local-copy-key'}})));
+ assert.equal(messages.at(-1).type,'transfer');assert.equal(messages.at(-1).side,'remote');assert.equal(messages.at(-1).destinationPath,'/left');
+ const rightInput=panes[1].querySelector('.pathbar input');assert.equal(rightInput.value,'/right');await act(()=>panes[1].querySelector('.pathbar').dispatchEvent(new dom.window.Event('submit',{bubbles:true,cancelable:true})));assert.equal(messages.at(-1).side,'remote');assert.equal(messages.at(-1).path,'/right');
+ await act(()=>panes[1].querySelector('tbody tr').dispatchEvent(new dom.window.MouseEvent('dblclick',{bubbles:true})));assert.equal(messages.at(-1).action,'open');assert.equal(messages.at(-1).side,'remote');
+ dom.window.close();
 });

@@ -8,19 +8,19 @@ export function registerLocalEditorCopies(context,ui) {
   for (const r of (Array.isArray(context.globalState.get(key)) ? context.globalState.get(key):[]).slice(0,64)) if (valid(r)) records.set(vscode.Uri.file(r.local).toString(),r);
   let saving=Promise.resolve();const persist=() => {const pending=saving.then(() => context.globalState.update(key,[...records.values()]));saving=pending.catch(() => {});return pending;};
   const lookup=uri => {ui.guard();const r=records.get(uri?.toString());if (!r || uri.scheme!=='file' || !valid(r)) throw new Error("Open an owned SCP editor copy first.");return r;};
-  const wait=async batch => {
+  const wait=async (batch,report=()=>{}) => {
     const check=() => ui.transfers.engine.queue.list().filter(j => batch.ids.includes(j.id));
-    return new Promise((resolve,reject) => {let listener;const done=() => {const jobs=check();if (jobs.length!==batch.ids.length || jobs.some(j => ['queued','running'].includes(j.state))) return;listener?.dispose();if (jobs.some(j => j.state!=='completed')) reject(new Error("Editor copy transfer did not complete. Check the queue."));else resolve(jobs[0]);};listener=ui.transfers.changed.event(done);done();});
+    return new Promise((resolve,reject) => {let listener;const done=() => {const jobs=check();report(jobs.some(j=>j.state==='running') ? 'Loading file …':jobs.some(j=>j.state==='queued') ? ui.transfers.engine.queue.paused ? 'File waiting – transfers paused':'Waiting for transfer …':'Opening file …');if (jobs.length!==batch.ids.length || jobs.some(j => ['queued','running'].includes(j.state))) return;listener?.dispose();if (jobs.some(j => j.state!=='completed')) reject(new Error("Editor copy transfer did not complete. Check the queue."));else resolve(jobs[0]);};listener=ui.transfers.changed.event(done);done();});
   };
   const status=vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right,22);
   const refresh=() => {const r=records.get(vscode.window.activeTextEditor?.document.uri.toString());void vscode.commands.executeCommand('setContext','filetandem.editorCopyActive',!!r);if (!r) return status.hide();status.text="$(cloud-upload) FileTandem: Local SCP copy";status.tooltip=`${r.remote}
 Auto Save saves locally only. Upload using this command explicitly.`;status.command='filetandem.uploadEditorCopy';status.show();};
   const api={
-    async open(profile,path,download) {
+    async open(profile,path,download,report=()=>{}) {
       ui.guard();if (profile.protocol!=='scp' || records.size>=64) throw new Error("SCP editor copy unavailable; clean up saved copies.");
       const files=await openRemoteFiles(ui.sessions.transport(profile.id),'scp');try {const info=await files.stat(path);if (info.kind!=='file') throw new Error("Select a regular file.");if (info.size>EDITOR_LIMIT) {if (download) {if (await vscode.window.showInformationMessage("Editor limit: 10 MiB. Download this file.","Download")==="Download") return download();return;}throw new Error("Editor limit: 10 MiB. Transfer this file.");}} finally {files.close();}
       const folder=join(root,randomUUID());await mkdir(folder,{recursive:true,mode:0o700});
-      try {const job=await wait(await ui.transfers.engine.submit(profile.id,'download',[path],folder));const uri=vscode.Uri.file(job.finalTarget);const record={version:1,profileId:profile.id,identity:profileIdentity(profile),baseline:job.sha256,remote:path,local:uri.fsPath};if (!valid(record)) throw new Error("Invalid local editor copy.");records.set(uri.toString(),record);await persist();await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(uri),{preview:false});refresh();return uri;} catch(e) {await rm(folder,{recursive:true,force:true});throw e;}
+      try {const job=await wait(await ui.transfers.engine.submit(profile.id,'download',[path],folder),report);const uri=vscode.Uri.file(job.finalTarget);const record={version:1,profileId:profile.id,identity:profileIdentity(profile),baseline:job.sha256,remote:path,local:uri.fsPath};if (!valid(record)) throw new Error("Invalid local editor copy.");records.set(uri.toString(),record);await persist();await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(uri),{preview:false});refresh();return uri;} catch(e) {await rm(folder,{recursive:true,force:true});throw e;}
     },
     async upload(uri,confirm=async detail => await vscode.window.showWarningMessage("Explicitly upload the local SCP copy?",{modal:true,detail},"Upload copy")==="Upload copy") {
       const r=lookup(uri);const p=ui.profiles.get(r.profileId);if (p.protocol!=='scp' || profileIdentity(p)!==r.identity) throw new Error("Profile destination changed; download the copy again.");

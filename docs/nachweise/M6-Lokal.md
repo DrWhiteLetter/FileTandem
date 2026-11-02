@@ -1,5 +1,7 @@
 # M6 – Lokale Release-Härtung
 
+**Nachtrag vom 02.11.2026:** Die Windows-Desktop-Abnahme wurde durch erfolgreichen Test und ausdrückliche Abschlussbestätigung von Tobias Kohlhepp erledigt. [Windows-Nachweis](Windows-Desktop.md). Die unten genannten offenen Windows-Punkte beschreiben den historischen Stand vom Oktober; zusätzliche Spezialfälle bleiben ohne gesonderten Nachweis offen.
+
 Stand: **08.10.2026**, private Kandidatenversion **0.0.8**. Benutzerauftrag: alle hier selbst durchführbaren M6-Arbeiten erledigen; Windows-/Linux-Systeme aktuell nicht verfügbar. Juristisches Okay für FileTandem laut Benutzer dokumentiert. Der Marketplace-Publisher ist weiterhin ein Entwicklungsplatzhalter.
 
 Nachfolgekandidat **0.0.9** stellt die Kennungen auf `filetandem` um und prüft zusätzlich die Migration im installierten Paket. [Aktueller Nachweis](FileTandem-Migration.md). Die folgenden Messwerte bleiben historische Ergebnisse des ursprünglichen 0.0.8-Kandidaten.

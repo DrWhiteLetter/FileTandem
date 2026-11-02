@@ -1,4 +1,6 @@
+import { registerFileOpeningProgress } from './file-opening-progress.js';
 import { isPreviewImage,registerImagePreviews } from './image-preview.js';
+import {LOCAL_PROFILE_ID} from '../application/local-transfer.js';
 import {currentFilePolicy} from './file-options.js';
 import {isBackupPath} from '../application/file-policy.js';
 import {planRemoteBackup,executeRemoteBackup,restoreRemoteBackup} from '../application/remote-backup.js';
@@ -25,7 +27,8 @@ export function registerBrowser(context,profileUI) {
   // The workbench must consume forwarded Commander keys instead of debugging.
   profileUI.command('filetandem.consumeCommanderKey',() => {});
   profileUI.command('filetandem.openSettings',()=>vscode.commands.executeCommand('workbench.action.openSettings','@ext:xscp-dev.xscp'));
-  const images=registerImagePreviews(context,profileUI,{vscode,openRemoteFiles});
+  const openingProgress=registerFileOpeningProgress(context,{vscode,t,onChange:()=>{for (const view of views) view.publish();}});
+  const images=registerImagePreviews(context,profileUI,{vscode,openRemoteFiles,progress:openingProgress});
   const annotations=new WeakMap();
   const annotate=(state,policy)=>{let cached=annotations.get(state.entries);if(!cached || cached.signature!==policy.signature) {cached={signature:policy.signature,entries:state.entries.map(entry=>({...entry,excluded:policy.excludes(entry.path,entry.kind),backup:isBackupPath(entry.path)}))};annotations.set(state.entries,cached);}return {...state,entries:cached.entries};};
   const favorites=pathFavorites(context.globalState);
@@ -41,7 +44,9 @@ export function registerBrowser(context,profileUI) {
     panel ??= vscode.window.createWebviewPanel('filetandem.browser','FileTandem',vscode.ViewColumn.One,{});
     panel.webview.options={enableScripts:true,localResourceRoots:[assets]};
     let alive=true;const recent=new Set();
-    const model=() => {const policy=currentFilePolicy();return ({version:1,type:'browserModel',sessionId,diagnostics,autoUpload:profileUI.transfers.autoUpload.state(profile?.id),pathFavorites:favorites.get(profile?.id),locale:language(),profileId:profile?.ephemeral ? undefined:profile?.id,queue:profileUI.transfers.engine.queue.list(profile?.id),queuePaused:profileUI.transfers.engine.queue.paused,local:{...annotate(local.state,policy),canBack:local.index>0,canForward:local.index+1<local.history.length},remote:{...annotate(remote.state,policy),canBack:remote.index>0,canForward:remote.index+1<remote.history.length},...browserSettings(key => vscode.workspace.getConfiguration('filetandem').get(key)),connection:profile ? {...profileUI.sessions.snapshot(profile.id),name:profile.name} : {state:'disconnected'}});};
+    const localSide=side => side==='local' || !profile;
+    const queueOwner=()=>profile?.id ?? LOCAL_PROFILE_ID;
+    const model=() => {const policy=currentFilePolicy();return ({version:1,type:'browserModel',mode:profile ? 'remote':'local',sessionId,diagnostics,autoUpload:profileUI.transfers.autoUpload.state(profile?.id),pathFavorites:favorites.get(profile?.id),locale:language(),profileId:profile?.ephemeral ? undefined:profile?.id,queue:profileUI.transfers.engine.queue.list(queueOwner()),queuePaused:profileUI.transfers.engine.queue.paused,local:{...annotate(local.state,policy),canBack:local.index>0,canForward:local.index+1<local.history.length},remote:{...annotate(remote.state,policy),entries:annotate(remote.state,policy).entries.map(entry=>({...entry,previewStatus:profile ? openingProgress.state(profile,entry.path):undefined})),canBack:remote.index>0,canForward:remote.index+1<remote.history.length},...browserSettings(key => vscode.workspace.getConfiguration('filetandem').get(key)),connection:profile ? {...profileUI.sessions.snapshot(profile.id),name:profile.name} : {state:'disconnected'}});};
     const publish=() => {if (alive) {panel.title=profile ? `FileTandem · ${profile.name}`:'FileTandem';void panel.webview.postMessage(model());}};
     let start;try {start=localStart(restored.paths?.local ?? profile?.localPath);} catch {start=localStart();}
     const local=new DirectoryBrowser({start,parent:localParent,list:path => files.list(vscode.Uri.file(localPath(path))),onChange:publish});
@@ -59,37 +64,42 @@ export function registerBrowser(context,profileUI) {
       }
       return remoteFiles;
     };
-    const remote=new DirectoryBrowser({start:restored.paths.remote ?? profile?.remotePath ?? '/',parent:path => posix.dirname(path),list:async path => (await service()).list(path),onChange:publish});
-    remote.state.status='disconnected';
+    let rightStart;try {rightStart=profile ? restored.paths.remote ?? profile.remotePath:localStart(restored.paths.remote);} catch {rightStart=localStart();}
+    const remote=new DirectoryBrowser({start:rightStart,parent:value => profile ? posix.dirname(value):localParent(value),list:async value => profile ? (await service()).list(value):files.list(vscode.Uri.file(localPath(value))),onChange:publish});
+    if (profile) remote.state.status='disconnected';
     const view={model,panel,publish,navigate:async (side,path) => {profileUI.guard();if (!alive || !['local','remote'].includes(side)) throw new Error("Session closed.");profileUI.transfers.engine.assertManual(profile?.id);await (side==='local' ? local:remote).navigate(path);}};views.add(view);
     const changes=profileUI.changed.event(() => {
       if (!alive) return;
       if (profile && !profile.ephemeral) {try {profile=profileUI.profiles.get(profile.id);} catch { /* deleted profile keeps disconnected view */ }}
-      if (profileUI.sessions.snapshot(profile?.id).state !== 'connected') remote.invalidate();
+      if (!profile) {publish();return;}
+      if (profileUI.sessions.snapshot(profile.id).state !== 'connected') remote.invalidate();
       else if (remote.state.status === 'disconnected') void remote.refresh();
       publish();
     });
     const observedTerminal=new Set();let observedAuto='';
     const transferRefresh=coalescedRefresh(() => Promise.allSettled([
-      local.refresh(),...(profileUI.sessions.snapshot(profile?.id).state==='connected' ? [remote.refresh()]:[])
+      local.refresh(),...(!profile || profileUI.sessions.snapshot(profile.id).state==='connected' ? [remote.refresh()]:[])
     ]));
     const configuration=vscode.workspace.onDidChangeConfiguration(e => {if (e.affectsConfiguration('filetandem')) publish();});
     const transferChanges=profileUI.transfers.changed.event(() => {
       publish();
-      const newly=profileUI.transfers.engine.queue.list(profile?.id).filter(j => ['completed','failed','cancelled','skipped'].includes(j.state) && !observedTerminal.has(j.id));for (const job of newly) observedTerminal.add(job.id);
+      const newly=profileUI.transfers.engine.queue.list(queueOwner()).filter(j => ['completed','failed','cancelled','skipped'].includes(j.state) && !observedTerminal.has(j.id));for (const job of newly) observedTerminal.add(job.id);
       const auto=profileUI.transfers.autoUpload.state(profile?.id),autoKey=JSON.stringify([auto.localRoot,auto.remoteRoot,auto.starting,auto.uploaded,auto.deleted,auto.directories]),autoChanged=autoKey!==observedAuto;observedAuto=autoKey;
       if (newly.length || autoChanged) transferRefresh.request();
     });
     const transfer=async message => {
+      const owner=profile;
       profileUI.transfers.engine.assertManual(profile?.id);
-      if (!profile || profileUI.sessions.snapshot(profile.id).state !== 'connected') throw new Error("Connect a profile first.");
+      if (profile && profileUI.sessions.snapshot(profile.id).state !== 'connected') throw new Error("Connect a profile first.");
       const browser=message.side === 'local' ? local:remote;
       if (browser.state.status !== 'ready') throw new Error("Load the source folder first.");
       const selected=message.ids.map(id => browser.state.entries.find(e => e.id === id));if (!selected.length || selected.some(e => !e)) throw new Error("Selection is outdated.");
+      const opposite=message.side==='local' ? remote:local;if (opposite.state.status!=='ready' && message.destination!=='choose') throw new Error('Load the destination folder first.');
       let destination=message.side === 'local' ? remote.state.path:local.state.path;if (message.destinationPath && message.destinationPath!==destination) throw new Error("Transfer destination changed; select again.");
       if (message.destination === 'choose') {const folders=await vscode.window.showOpenDialog({title:"Download to",canSelectFolders:true,canSelectFiles:false,canSelectMany:false});if (!folders?.length) return;destination=localFileUri(folders[0]);}
-      profileUI.guard();if (!alive) return;if (message.destination==='opposite' && destination!==(message.side==='local' ? remote.state.path:local.state.path)) throw new Error("Transfer destination changed.");
-      await profileUI.transfers.engine.submit(profile.id,message.side === 'local' ? 'upload':'download',selected.map(e => e.path),destination);
+      profileUI.guard();if (!alive) return;if (profile!==owner) throw new Error("Transfer destination changed.");if (message.destination==='opposite' && destination!==(message.side==='local' ? remote.state.path:local.state.path)) throw new Error("Transfer destination changed.");
+      if (!profile) await profileUI.transfers.engine.submitLocal(message.side==='local' ? 'upload':'download',selected.map(e=>e.path),destination);
+      else await profileUI.transfers.engine.submit(profile.id,message.side === 'local' ? 'upload':'download',selected.map(e => e.path),destination);
     };
     let syncing=false;
     const synchronize=async () => {
@@ -140,16 +150,17 @@ ${currentFilePolicy().backupRemoteDeletes ? t('Removed remote files are renamed 
     };
     let busy=false;
     const action=async message => {
+      if (message.side==='remote' && profile && ['open','edit'].includes(message.action) && message.ids.length===1) {const entry=remote.state.entries.find(entry=>entry.id===message.ids[0]);if (entry && openingProgress.state(profile,entry.path)) return;}
       if (busy) throw new Error("A file action is already running."); busy=true;
       try {
-        const browser=message.side === 'local' ? local:remote;
+        const browser=message.side==='local' ? local:remote;
         if (browser.state.status !== 'ready') throw new Error("Load a folder first.");
         const selected=message.ids.map(id => browser.state.entries.find(entry => entry.id === id));
         if (selected.some(entry => !entry)) throw new Error("Selection is outdated; refresh first.");
-        if (['open','edit'].includes(message.action)) {if (selected.length!==1 || selected[0].kind!=='file') throw new Error("Select a regular file.");if (isPreviewImage(selected[0].path)) {if (message.side==='local') await images.openLocal(selected[0].path);else await images.openRemote(profile,selected[0].path,() => transfer({side:'remote',ids:message.ids,destination:'choose'}));return;}if (message.side==='local') await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(vscode.Uri.file(selected[0].path)));else {const uri=await profileUI.editor.show(profile,selected[0].path,() => transfer({side:'remote',ids:message.ids,destination:'choose'}));if (message.action==='edit' && uri?.scheme==='filetandem') await profileUI.editor.enable(uri);}return;}
-        const parent=browser.state.path;const windows=message.side === 'local' && process.platform === 'win32';
-        const options={windows,join:message.side === 'local' ? join:posix.join};
-        const adapter=message.side === 'local' ? {
+        if (['open','edit'].includes(message.action)) {if (selected.length!==1 || selected[0].kind!=='file') throw new Error("Select a regular file.");if (isPreviewImage(selected[0].path)) {if (localSide(message.side)) await images.openLocal(selected[0].path);else await images.openRemote(profile,selected[0].path,() => transfer({side:'remote',ids:message.ids,destination:'choose'}));return;}if (localSide(message.side)) await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(vscode.Uri.file(selected[0].path)));else {const uri=await openingProgress.run(profile,selected[0].path,report=>profileUI.editor.show(profile,selected[0].path,() => transfer({side:'remote',ids:message.ids,destination:'choose'}),report));if (message.action==='edit' && uri?.scheme==='filetandem') await profileUI.editor.enable(uri);}return;}
+        const parent=browser.state.path;const windows=localSide(message.side) && process.platform === 'win32';
+        const options={windows,join:localSide(message.side) ? join:posix.join};
+        const adapter=localSide(message.side) ? {
           stat:path => files.stat(vscode.Uri.file(localPath(path))),
           mkdir:path => files.mkdir(path),
           chmod:(path,mode) => files.chmod(path,mode),
@@ -157,11 +168,11 @@ ${currentFilePolicy().backupRemoteDeletes ? t('Removed remote files are renamed 
         } : await service();
         if (['delete','properties','chmod','restoreBackup'].includes(message.action)) {
           if (!selected.length || (message.action !== 'delete' && selected.length !== 1)) throw new Error("Select suitable entries.");
-          const actionProfile=profile,actionTransport=message.side==='remote' ? profileUI.sessions.transport(profile.id):undefined;
-          const sameConnection=()=>message.side==='local' || profile===actionProfile && profileUI.sessions.snapshot(actionProfile.id).state==='connected' && profileUI.sessions.matches(actionProfile) && profileUI.sessions.transport(actionProfile.id)===actionTransport;
+          const actionProfile=profile,actionTransport=!localSide(message.side) ? profileUI.sessions.transport(profile.id):undefined;
+          const sameConnection=()=>localSide(message.side) || profile===actionProfile && profileUI.sessions.snapshot(actionProfile.id).state==='connected' && profileUI.sessions.matches(actionProfile) && profileUI.sessions.transport(actionProfile.id)===actionTransport;
           const allowed=() => sameConnection() && !profileUI.transfers.engine.autoUploads.has(profile?.id) && alive && browser.state.path === parent && hasDesktopAccess(executionLocation(context),vscode.workspace.isTrusted);
           if(message.action==='restoreBackup') {
-            if(message.side!=='remote' || !isBackupPath(selected[0].path)) throw new Error('Select a remote .bak backup to restore.');
+            if(localSide(message.side) || !isBackupPath(selected[0].path)) throw new Error('Select a remote .bak backup to restore.');
             const original=selected[0].path.replace(/\.bak(?:\.\d+)?$/i,'');
             if(await vscode.window.showWarningMessage('Restore this backup?',{modal:true,detail:original},'Restore backup')!=='Restore backup') return;
             const key=profileUI.transfers.engine.key({direction:'upload',server:serverIdentity(profile.host,profile.port).id},original);
@@ -182,18 +193,18 @@ Permissions: ${info.mode.toString(8).padStart(3,'0')}${info.kind === 'symlink' ?
           } else {
             const policy=currentFilePolicy(),paths=selected.map(entry=>entry.path),owner=profile;
             const backupSelections=selected.filter(entry=>isBackupPath(entry.path));
-            if(message.side==='remote' && backupSelections.length && backupSelections.length!==selected.length) throw new Error('Delete backup files separately to remove them permanently.');
-            const backup=message.side==='remote' && policy.backupRemoteDeletes && !backupSelections.length;
-            const plan=message.side==='remote' ? backup ? await planRemoteBackup(adapter,paths):await planRemoteDelete(adapter,paths):undefined;
-            const choice=message.side==='local' ? 'Move to Trash':backup ? 'Create .bak backups':'Delete permanently';
+            if(!localSide(message.side) && backupSelections.length && backupSelections.length!==selected.length) throw new Error('Delete backup files separately to remove them permanently.');
+            const backup=!localSide(message.side) && policy.backupRemoteDeletes && !backupSelections.length;
+            const plan=!localSide(message.side) ? backup ? await planRemoteBackup(adapter,paths):await planRemoteDelete(adapter,paths):undefined;
+            const choice=localSide(message.side) ? 'Move to Trash':backup ? 'Create .bak backups':'Delete permanently';
             const count=backup ? plan.length:plan?.length ?? selected.length;
-            const detail=backup ? t('Selected files and folders are renamed beside the originals. Existing backups are kept with numbered names. Backups are excluded from transfers and automatic deletion. Backups beside website files may be publicly downloadable; block access on the web server.'):message.side==='remote' ? t('Includes subfolders; symlink targets are not deleted.'):t('Includes subfolders. Trash errors do not trigger permanent deletion.');
-            const title=message.side==='local' ? `Local: Move ${count} selected entries to Trash?`:backup ? `Remote: Back up ${count} selected entries instead of deleting them?`:`Remote: Permanently delete ${count} entries?`;
+            const detail=backup ? t('Selected files and folders are renamed beside the originals. Existing backups are kept with numbered names. Backups are excluded from transfers and automatic deletion. Backups beside website files may be publicly downloadable; block access on the web server.'):!localSide(message.side) ? t('Includes subfolders; symlink targets are not deleted.'):t('Includes subfolders. Trash errors do not trigger permanent deletion.');
+            const title=localSide(message.side) ? `Local: Move ${count} selected entries to Trash?`:backup ? `Remote: Back up ${count} selected entries instead of deleting them?`:`Remote: Permanently delete ${count} entries?`;
             const confirmed=await vscode.window.showWarningMessage(title,{modal:true,detail:`${parent}\n${selected.slice(0,10).map(entry=>entry.name).join('\n')}\n${detail}`},choice);
             const permitted=()=>allowed() && profile===owner && currentFilePolicy().signature===policy.signature;
             if(confirmed!==choice) return;if(!permitted()) throw new Error('Permission is no longer valid.');
             try {
-              if(message.side==='local') await trashLocal(paths,permitted);
+              if(localSide(message.side)) await trashLocal(paths,permitted);
               else {
                 const roots=paths.slice().sort().filter((path,index,all)=>!all.slice(0,index).some(parent=>path.startsWith(parent+'/')));
                 const locked=async index=>index===roots.length ? backup ? executeRemoteBackup(adapter,plan,permitted):executeRemoteDelete(adapter,plan,permitted):profileUI.transfers.engine.queue.maintain(profileUI.transfers.engine.key({direction:'upload',server:serverIdentity(profile.host,profile.port).id},roots[index]),()=>locked(index+1));
@@ -225,7 +236,7 @@ Permissions: ${info.mode.toString(8).padStart(3,'0')}${info.kind === 'symlink' ?
         if(message.type==='settings') await vscode.commands.executeCommand('filetandem.openSettings');
         else if (message.type === 'autoUploadStart') await startAutoUpload();
         else if (message.type === 'autoUploadStop') profileUI.transfers.autoUpload.stop(profile?.id);
-        else if (message.type === 'ready') {handshakes++;await Promise.all([local.refresh(),...(profile && profileUI.sessions.snapshot(profile.id).state === 'connected' ? [remote.refresh()] : [])]);publish();}
+        else if (message.type === 'ready') {handshakes++;await Promise.all([local.refresh(),...(!profile || profileUI.sessions.snapshot(profile.id).state === 'connected' ? [remote.refresh()] : [])]);publish();}
         else if (message.type === 'pathFavorite') {await favorites.set(message.side,profile?.id,message.path,message.favorite);for (const view of views) view.publish();}
         else if (message.type === 'connect') {
           const chosen=await profileUI.choose();if (chosen && alive) {await profileUI.connect(chosen);if (!alive) return;profile=chosen;remoteFiles?.close();remoteTransport=undefined;opening=undefined;remote.history=[chosen.remotePath];remote.index=0;await remote.navigate(chosen.remotePath,{history:false});}
@@ -235,7 +246,7 @@ Permissions: ${info.mode.toString(8).padStart(3,'0')}${info.kind === 'symlink' ?
         else if (message.type === 'reconnect') {if (profile) {await profileUI.connect(profile);remoteFiles?.close();remoteTransport=undefined;opening=undefined;await remote.refresh();}}
         else if (message.type === 'queuePause') profileUI.transfers.engine.queue.pause(message.paused);
         else if (message.type === 'queueAction') {
-          const owned=profileUI.transfers.engine.queue.list(profile?.id);if (message.ids.some(id => !owned.some(j => j.id === id))) throw new Error("Queue job belongs to another profile.");
+          const owned=profileUI.transfers.engine.queue.list(queueOwner());if (message.ids.some(id => !owned.some(j => j.id === id))) throw new Error("Queue job belongs to another profile.");
           if (message.action === 'cancel') for (const id of message.ids) profileUI.transfers.engine.queue.cancel(id);
           else if (message.action==='retry') await profileUI.transfers.retry(message.ids);
           else if (message.action==='resume') await profileUI.transfers.resume(message.ids);
@@ -243,9 +254,10 @@ Permissions: ${info.mode.toString(8).padStart(3,'0')}${info.kind === 'symlink' ?
         }
         else if (message.type === 'selectUpload') {
           profileUI.transfers.engine.assertManual(profile?.id);
-          if (!profile) throw new Error("Connect a profile first.");
-          const uris=await vscode.window.showOpenDialog({defaultUri:vscode.Uri.file(localStart()),canSelectFiles:true,canSelectFolders:true,canSelectMany:true,title:"Upload files/folders"});
-          if (uris?.length && alive) await profileUI.transfers.engine.submit(profile.id,'upload',uris.map(localFileUri),remote.state.path);
+          const owner=profile,destination=remote.state.path;
+          const uris=await vscode.window.showOpenDialog({defaultUri:vscode.Uri.file(localStart()),canSelectFiles:true,canSelectFolders:true,canSelectMany:true,title:profile ? "Upload files/folders":"Copy files/folders …"});
+          if (profile!==owner || remote.state.path!==destination) throw new Error('Transfer destination changed.');
+          if (uris?.length && alive) {if (!profile) await profileUI.transfers.engine.submitLocal('upload',uris.map(localFileUri),remote.state.path);else await profileUI.transfers.engine.submit(profile.id,'upload',uris.map(localFileUri),remote.state.path);}
         }
         else if (message.type === 'synchronize') await synchronize();
         else if (message.type === 'transfer') await transfer(message);
@@ -274,5 +286,5 @@ Permissions: ${info.mode.toString(8).padStart(3,'0')}${info.kind === 'symlink' ?
   profileUI.command('filetandem.favoriteProfile',async arg => {const id=typeof arg === 'string' ? arg:arg?.profileId;const p=id ? profileUI.profiles.get(id):await profileUI.choose();if (p) {await profileUI.profiles.save({...p,favorite:!p.favorite});profileUI.changed.fire();}});
   profileUI.command('filetandem.reconnectProfile',async arg => {const id=typeof arg === 'string' ? arg:arg?.profileId;const p=id ? profileUI.profiles.get(id):await profileUI.choose();if (p) {await profileUI.connect(p);return open(p);}});
   context.subscriptions.push(vscode.window.registerWebviewPanelSerializer('filetandem.browser',{async deserializeWebviewPanel(panel,state) {try {const restored=browserViewState(state);let profile;if (restored.profileId) {try {profile=profileUI.profiles.get(restored.profileId);} catch { /* removed profile */ }}open(profile,restored,panel);} catch {panel.dispose();}}}));
-  return {open,diagnostics:value => {profileUI.guard();diagnostics=value===true;for (const v of views) v.publish();},navigate:async (sessionId,side,path) => {const view=[...views].find(v => v.model().sessionId===sessionId);if (!view) throw new Error("Session closed.");return view.navigate(side,path);},status:() => ({handshakes,views:[...views].map(v => {const m=v.model();return {sessionId:m.sessionId,renderProof:v.renderProof,connection:m.connection,local:{path:m.local.path,status:m.local.status,count:m.local.entries.length},remote:{path:m.remote.path,status:m.remote.status,count:m.remote.entries.length}};})})};
+  return {open,diagnostics:value => {profileUI.guard();diagnostics=value===true;for (const v of views) v.publish();},navigate:async (sessionId,side,path) => {const view=[...views].find(v => v.model().sessionId===sessionId);if (!view) throw new Error("Session closed.");return view.navigate(side,path);},status:() => ({handshakes,views:[...views].map(v => {const m=v.model();return {sessionId:m.sessionId,mode:m.mode,renderProof:v.renderProof,connection:m.connection,local:{path:m.local.path,status:m.local.status,count:m.local.entries.length},remote:{path:m.remote.path,status:m.remote.status,count:m.remote.entries.length}};})})};
 }

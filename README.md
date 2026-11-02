@@ -11,6 +11,7 @@ Lokale Dateien und Serverdateien nebeneinander – direkt in Visual Studio Code.
 ## Was kann FileTandem?
 
 - Zwei Dateibereiche mit Filtern, Sortierung, Mehrfachauswahl und Pfadfavoriten.
+- Ohne Serverprofil zwei lokale Ordner unabhängig öffnen und Dateien oder Ordner in beide Richtungen kopieren.
 - Dateien und Ordner hoch- und herunterladen, mit Transferqueue und SFTP-Fortsetzung.
 - Serverprofile speichern; Anmeldung per Passwort, SSH-Schlüssel oder SSH-Agent.
 - Remote-Dateien öffnen, Änderungen vergleichen und Bearbeitung gezielt freigeben.
@@ -24,7 +25,11 @@ Lokale Dateien und Serverdateien nebeneinander – direkt in Visual Studio Code.
 2. In VS Code die **Erweiterungen** öffnen und im Menü **… → Aus VSIX installieren …** die Datei auswählen.
 3. Über die Befehlspalette **FileTandem: Dateimanager öffnen** starten.
 
-Benötigt **VS Code Desktop ab 1.140.0**. Node.js ist für die Installation nicht nötig. FileTandem ist eine frühe Version; macOS mit Apple Silicon ist geprüft, Windows und Linux sind noch nicht vollständig getestet.
+Benötigt **VS Code Desktop ab 1.140.0**. Node.js ist für die Installation nicht nötig. FileTandem ist eine frühe Version; macOS mit Apple Silicon und Windows sind erfolgreich im Desktop-Einsatz getestet. Die Linux-Desktop-Abnahme steht noch aus.
+
+## Lokal arbeiten
+
+**Lokalen Dateimanager öffnen** zeigt zwei lokale Ordner. Öffne links und rechts die gewünschten Pfade, markiere Dateien oder Ordner und wähle **Kopieren →** beziehungsweise **← Kopieren**. Kontextmenü und Drag-and-drop funktionieren ebenfalls; bei aktivierten Commander-Tasten kopiert F5 die Auswahl in den gegenüberliegenden Ordner. Bestehende Zieldateien verwenden die normalen Konfliktdialoge.
 
 ## Erste Verbindung
 

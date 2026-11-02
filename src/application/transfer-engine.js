@@ -1,3 +1,4 @@
+import {LOCAL_PROFILE_ID,localCopyPlan,copyLocalFile} from './local-transfer.js';
 import {filePolicy} from './file-policy.js';
 import { profileIdentity } from './transfer-resume.js';
 import { openRemoteFiles,targetFor,streamFor,pathFor } from './remote-files.js';
@@ -51,7 +52,36 @@ export class TransferEngine {
       }} catch(error) {if (automatic) throw error;authorized();const job={id:randomUUID(),batchId,profileId,server,direction,source:path,target:root,kind:'error'};job.lockKey=this.key(job,root);this.queue.add(job);ids.push(job.id);}
     }} finally {files.close();}return {batchId,ids};
   }
+  async submitLocal(direction,paths,destination) {
+    await this.ready;this.guard();
+    if (!['upload','download'].includes(direction)) throw new Error('Invalid transfer direction.');
+    const policy=this.getPolicy(),plan=await localCopyPlan(paths,destination,policy),batchId=randomUUID(),ids=[],parents=new Map();
+    this.guard();if (this.getPolicy().signature!==policy.signature) throw new Error('Exclusion rules changed; transfer stopped.');
+    for (const node of plan) {
+      const id=randomUUID(),parent=node.relative ? parents.get(node.root+':'+posix.dirname(node.relative)):undefined;
+      const job={id,batchId,profileId:LOCAL_PROFILE_ID,server:'local',protocol:'local',direction,source:node.source,target:node.target,kind:node.kind,metadata:node.metadata,parentId:parent,name:node.relative ? posix.basename(node.relative):node.target.split(/[\\/]/).at(-1)};
+      job.lockKey=this.key({...job,direction:'download'},job.target);this.queue.add(job);ids.push(id);
+      if (node.kind==='directory') parents.set(node.root+':'+(node.relative || '.'),id);
+    }
+    return {batchId,ids};
+  }
+  async runLocal(job,signal,onProgress) {
+    const validate=() => {this.guard();signal.throwIfAborted();if (this.getPolicy().excludes(job.source,job.kind) || this.getPolicy().excludes(job.target,job.kind)) throw new Error('Exclusion rules changed; transfer stopped.');};
+    validate();if (['symlink','other'].includes(job.kind)) return {skipped:true,reason:'Symlink/Spezialdatei übersprungen.'};
+    const parent=job.parentId && this.queue.list().find(j=>j.id===job.parentId),initial=parent?.finalTarget ? join(parent.finalTarget,job.name):job.target;
+    const existing=await targetSnapshot(localTarget,initial),source=await localTarget.stat(job.source);
+    if (resolve(job.source)===resolve(initial) || existing && source.ino===existing.ino && source.dev===existing.dev) throw new Error('Cannot copy an entry onto itself or into its own folder.');
+    const decision=job.kind==='directory' && existing?.kind==='directory' ? {path:initial,replace:false}:await this.conflicts.resolve({...job,direction:'local',target:initial},localTarget,signal);
+    if (decision.skipped) return decision;
+    return this.queue.withLock(job.id,this.key({...job,direction:'download'},decision.path),async () => {
+      validate();
+      if (job.kind==='directory') {const current=await targetSnapshot(localTarget,decision.path);if (!current) await this.local.mkdir(decision.path);else if (current.kind!=='directory') throw new Error('Destination is not a folder.');return {bytes:0,committed:true,finalTarget:decision.path};}
+      const result=await copyLocalFile({...job,target:decision.path,metadata:{mode:source.mode&0o777,modified:source.modified}},{replace:decision.replace,signal,onProgress,beforePublish:validate});
+      return {...result,finalTarget:decision.path};
+    },signal);
+  }
   async run(job,signal,onProgress) {
+    if (job.protocol==='local') return this.runLocal(job,signal,onProgress);
     this.guard();signal.throwIfAborted();
     const isExcluded=()=>this.getPolicy().excludes(job.source,job.kind) || this.getPolicy().excludes(job.target,job.kind);
     if(isExcluded()) return {skipped:true,reason:'Excluded by FileTandem settings.'};

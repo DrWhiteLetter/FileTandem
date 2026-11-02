@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.24 – 02.11.2026
+
+- Lokale Bilder direkt und entfernte Bilder als temporäre, schreibgeschützte Vorschau öffnen; Ladefortschritt für entfernte Bilder und Dateien anzeigen und doppelte Öffnungsversuche bündeln.
+- Lokalen Dateimanager mit zwei unabhängig navigierbaren lokalen Spalten öffnen. Dateien und Ordner in beide Richtungen über Kopieraktionen, Kontextmenü, Drag-and-drop und F5 übertragen.
+- Lokale Kopien über die Transferwarteschlange mit Fortschritt, Abbruch, Konfliktentscheidungen und geprüfter Veröffentlichung ausführen; Selbstkopien und Kopien in eigene Unterordner verhindern.
+- Dateiaktionen in beiden lokalen Spalten anbieten und lokale Kopien ohne SSH-Profil im Transferjournal speichern.
+
 ## 0.0.23 – 01.11.2026
 
 - Konfliktentscheidungen paralleler Dateien desselben Sammelauftrags koordinieren: „Alle weiteren ersetzen“ verhindert zusätzliche, bereits parallel angeforderte Ersetzen-Dialoge. Einzelentscheidungen, Abbruch und der Schutz vor unsicheren Ersetzungen bleiben erhalten.

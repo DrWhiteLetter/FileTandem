@@ -20,6 +20,7 @@ export function registerTransfers(context,profileUI) {
     await engine.ready;profileUI.guard();const jobs=engine.queue.validateRetry(ids,{resume});
     for (const id of new Set(jobs.map(j => j.profileId))) {
       engine.assertManual(id);
+      if (jobs.filter(j=>j.profileId===id).every(j=>j.protocol==='local')) continue;
       const profile=profiles.get(id);if (jobs.some(j => j.profileId===id && (j.server!==serverIdentity(profile.host,profile.port).id || (j.profileKey && j.profileKey!==profileIdentity(profile)) || (j.attempt && j.attempt.identity!==profileIdentity(profile))))) throw new Error("Profile changed; create a new job.");
       if (profileUI.sessions.snapshot(id).state!=='connected' || !profileUI.sessions.matches(profile)) await profileUI.connect(profile);
     }profileUI.guard();

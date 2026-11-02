@@ -2,7 +2,7 @@
 
 Stand: 8. Oktober 2026, nach lokaler M6-Härtung und Erstellung der privaten VSIX 0.0.9. Verbindliche Produktrichtung: VS-Code-Desktop-Erweiterung, SFTP als Standard und echtes SCP als zusätzliche Übertragungsart. Native macOS-Gestaltung und Swift/AppKit entfallen. M0 belegt die Adapter, Authentifizierung, Packaging sowie lokalen und echten Remote-Editor; die SFTP-Alpha bietet jetzt Dateiverwaltung, rekursive Transfers, Konfliktentscheidungen, Queue und Journal. Echtes SCP ist an die Oberfläche angebunden; SFTP-Teil-Dateien werden vor ausdrücklich gestarteter Fortsetzung geprüft. SFTP-Editor mit Freigabe/Diff, lokale SCP-Editorkopien, mehrere Sitzungen, interne Drag-and-drop-Aktionen, Virtualisierung und Deutsch/Englisch sind seit M5 implementiert und lokal/Remote-SSH nachgewiesen. Verbindliche technische Festlegungen stehen in [Entscheidungen](docs/entscheidungen.md), geprüfte Systeme und Release-Grenzen in [Kompatibilität](docs/kompatibilitaet.md). Der frühere native Plan unter `docs/archiv/UMSETZUNGSPLAN-native-macos.md` ist abgelöst. Produktname und Marketplace-Titel „FileTandem – SFTP & SCP File Manager“ sind gewählt; juristisches OK vom Benutzer bestätigt, Publisher-Nachweis offen. Interne xscp-Kennungen bleiben vorerst erhalten.
 
-24 lokale M6-Prüfschritte einschließlich Kennungs-Migration bestehen auf VS Code 1.140.0 und 1.141.0. Windows/Linux, manuelle Screenreader-Abnahme bleiben offen; [lokale M6-Ergebnisse](docs/nachweise/M6-Lokal.md). Version 1.0 ist noch nicht vollständig freigegeben.
+24 lokale M6-Prüfschritte einschließlich Kennungs-Migration bestehen auf VS Code 1.140.0 und 1.141.0. Windows wurde am 02.11.2026 durch den Benutzer erfolgreich im Desktop-Einsatz getestet und als abgeschlossen bestätigt. Linux-Desktop und manuelle Screenreader-Abnahme bleiben offen; [lokale M6-Ergebnisse](docs/nachweise/M6-Lokal.md). Version 1.0 ist noch nicht vollständig freigegeben.
 
 Die konkrete Arbeitsliste mit einzelnen abhakbaren Aufgaben steht unter [Meilensteine zum Abarbeiten](docs/meilensteine/README.md).
 
@@ -26,7 +26,7 @@ Die erste vollständige Version enthält SFTP und SCP. Eine vorgezogene SFTP-Alp
 | Veröffentlichung | Installierbare VSIX zuerst; Marketplace nach Produktnamen-/Publisher-Klärung |
 | Nicht Teil von 1.0 | Browser-Version, Synchronisierung, Terminal, Jump Hosts, automatischer Upload lokaler Projektdateien |
 
-M0 hat diese Festlegungen geprüft: VS Code mindestens 1.140.0, Entwicklungs-Node 22.13.1, gebündelte SSH-/UI-Versionen exakt fixiert. macOS arm64 ist nachgewiesen; Windows/Linux bleiben konkrete Release-Gates. [Versionen und Nachweise](docs/kompatibilitaet.md).
+M0 hat diese Festlegungen geprüft: VS Code mindestens 1.140.0, Entwicklungs-Node 22.13.1, gebündelte SSH-/UI-Versionen exakt fixiert. macOS arm64 ist nachgewiesen; die Windows-Desktop-Abnahme wurde am 02.11.2026 durch den Benutzer bestätigt. Linux-Desktop bleibt ein konkretes Release-Gate. [Versionen und Nachweise](docs/kompatibilitaet.md).
 
 ## 2. Recherche und Konsequenzen
 

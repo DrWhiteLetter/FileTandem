@@ -6,12 +6,13 @@ const fields=['automatic','id','batchId','profileId','profileKey','server','dire
 const states=['queued','running','completed','failed','cancelled','skipped','interrupted'];
 export function journalJob(raw) {
   if (!raw || typeof raw !== 'object' || Object.keys(raw).some(k => !fields.includes(k)) || !['id','batchId','profileId','server','source','target','lockKey'].every(k => typeof raw[k] === 'string' && raw[k].length > 0 && raw[k].length <= 32768) || !['upload','download'].includes(raw.direction) || !states.includes(raw.state) || !['file','directory','symlink','other','error'].includes(raw.kind)) throw new Error('Ungültiger Journaleintrag.');
-  (raw.direction === 'upload' ? localPath:remotePath)(raw.source);(raw.direction === 'upload' ? remotePath:localPath)(raw.target);
+  (raw.protocol==='local' || raw.direction === 'upload' ? localPath:remotePath)(raw.source);(raw.protocol==='local' || raw.direction !== 'upload' ? localPath:remotePath)(raw.target);
+  if (raw.protocol==='local' && (raw.profileId!=='local-files' || raw.server!=='local' || raw.attempt || raw.resumeFrom || raw.automatic)) throw new Error('Ungültiger lokaler Auftrag.');
   if (raw.automatic!==undefined && typeof raw.automatic!=='boolean') throw new Error('Ungültiger automatischer Auftrag.');
   if (raw.partialCleaned !== undefined && typeof raw.partialCleaned!=='boolean') throw new Error('Ungültiger Bereinigungszustand.');
   if (raw.committed !== undefined && typeof raw.committed !== 'boolean') throw new Error('Ungültiger Journalabschluss.');
   if (raw.profileKey !== undefined && !/^[a-f0-9]{64}$/.test(raw.profileKey)) throw new Error('Ungültige Profilidentität.');
-  if (raw.protocol !== undefined && !['scp','sftp'].includes(raw.protocol)) throw new Error('Ungültiges Journalprotokoll.');
+  if (raw.protocol !== undefined && !['scp','sftp','local'].includes(raw.protocol)) throw new Error('Ungültiges Journalprotokoll.');
   for (const key of ['bytes','started','rate']) if (!Number.isFinite(raw[key]) || raw[key] < 0) throw new Error('Ungültiger Journalfortschritt.');
   for (const key of ['parentId','name','errorCode','error','reason','sha256','finalTarget','partialPath','retryOf']) if (raw[key] !== undefined && (typeof raw[key] !== 'string' || raw[key].length > 32768)) throw new Error('Ungültige Journalmetadaten.');
   if (raw.metadata !== undefined && (!raw.metadata || Object.keys(raw.metadata).some(k => !['mode','modified'].includes(k)) || !Number.isInteger(raw.metadata.mode) || raw.metadata.mode < 0 || raw.metadata.mode > 511 || !Number.isFinite(raw.metadata.modified))) throw new Error('Ungültige Dateimetadaten.');
