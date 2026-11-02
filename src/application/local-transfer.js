@@ -46,7 +46,9 @@ export async function copyLocalFile(job,{replace,signal,onProgress,beforePublish
   };
   try {return await transferFile(undefined,job,{target:localTarget,source:localTarget,replace,signal,onProgress,stream,beforePublish});}
   catch(error) {
-    if (created) {const current=await targetSnapshot(localTarget,part).catch(()=>undefined);if (current?.ino===created.ino && current?.dev===created.dev) await unlink(part).catch(()=>{});}
+    // Windows fstat and lstat report different device IDs for the same file.
+    // The fixed absolute path supplies the volume; retain the handle inode check.
+    if (created) {const current=await targetSnapshot(localTarget,part).catch(()=>undefined);if (current?.kind==='file' && current.ino===created.ino && (process.platform==='win32' || current.dev===created.dev)) await unlink(part).catch(()=>{});}
     throw error;
   }
 }
