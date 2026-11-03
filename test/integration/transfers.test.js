@@ -58,3 +58,16 @@ test('password and encrypted-key authentication transfer exact binary bytes in b
  try {const upload=await transferFile(session,{id:randomUUID(),direction:'upload',source,target:remote},{target:remoteTarget(files)});const download=await transferFile(session,{id:randomUUID(),direction:'download',source:remote,target},{target:localTarget});assert.equal(upload.sha256,download.sha256);assert.deepEqual(await readFile(target),content);} finally {await files.call('unlink',remote).catch(() => {});files.close();await session.close();}
  }} finally {await rm(directory,{recursive:true,force:true});}
 });
+
+test('borrowed SFTP stream channels survive success and isolate cancellation from other transfers', {timeout:20000},async()=>{
+ const session=await fixture(),first=await RemoteFiles.open(session),second=await RemoteFiles.open(session),directory=await mkdtemp(join(tmpdir(),'xscp-borrowed-')),remote='/data/borrowed-'+randomUUID();
+ const source=join(directory,'source');await writeFile(source,Buffer.alloc(2*1024*1024,0x57));
+ try {
+  const upload=await streamFile(session,{direction:'upload',local:source,remote,files:first});
+  assert.equal(first.closed,false);assert.equal((await first.stat(remote)).size,upload.bytes);
+  const download=await streamFile(session,{direction:'download',local:join(directory,'copy'),remote,files:first});assert.equal(download.sha256,upload.sha256);
+  const controller=new AbortController();
+  await assert.rejects(streamFile(session,{direction:'upload',local:source,remote:remote+'-abort',files:first,signal:controller.signal,onProgress:()=>controller.abort()}));
+  assert.equal(first.closed,true);assert.equal(second.closed,false);assert.equal((await second.stat(remote)).size,upload.bytes);
+ } finally {for(const path of [remote,remote+'-abort']) await second.call('unlink',path).catch(()=>{});first.close();second.close();await session.close();await rm(directory,{recursive:true,force:true});}
+});

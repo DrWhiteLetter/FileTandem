@@ -5,7 +5,7 @@ export function remotePath(value) {
 }
 const entry=(path,attrs,target='') => ({id:path,path,name:posix.basename(path),kind:attrs.isSymbolicLink() ? 'symlink':attrs.isDirectory() ? 'directory':attrs.isFile() ? 'file':'other',size:attrs.size,modified:attrs.mtime*1000,mode:attrs.mode & 0o777,linkTarget:target});
 export class RemoteFiles {
-  #pending=new Set(); #closed=false;
+  #pending=new Set(); #closed=false; #ended=false;
   constructor(channel,session) {
     this.channel=channel;this.session=session;this.capabilities={browse:true,mkdir:true,rename:true,delete:true,chmod:true,symlinks:true};
     const close=() => {this.#closed=true;for (const reject of this.#pending) reject(Object.assign(new Error('SFTP-Verbindung geschlossen.'),{code:'NOT_CONNECTED'}));this.#pending.clear();};
@@ -23,6 +23,7 @@ export class RemoteFiles {
     });
     return new RemoteFiles(channel,session);
   }
+  get closed() {return this.#closed;}
   call(method,...args) {
     if (this.#closed) return Promise.reject(Object.assign(new Error('Nicht verbunden.'),{code:'NOT_CONNECTED'}));
     return new Promise((resolve,reject) => {
@@ -48,5 +49,5 @@ export class RemoteFiles {
   async chmod(path,mode) {if ((await this.stat(path)).kind === 'symlink') throw new Error('Symlink-Rechte werden nicht geändert.');return this.call('chmod',remotePath(path),mode);}
   mkdir(path) {return this.call('mkdir',remotePath(path),{mode:0o755});}
   rename(source,target) {return this.call('rename',remotePath(source),remotePath(target));}
-  close() {this.#closed=true;for (const reject of this.#pending) reject(Object.assign(new Error('SFTP-Kanal geschlossen.'),{code:'NOT_CONNECTED'}));this.#pending.clear();this.channel.end();}
+  close() {if(this.#ended) return;this.#ended=true;this.#closed=true;for (const reject of this.#pending) reject(Object.assign(new Error('SFTP-Kanal geschlossen.'),{code:'NOT_CONNECTED'}));this.#pending.clear();this.channel.end();}
 }

@@ -36,13 +36,14 @@ export class TransferJournal {
       if (invalid) this.onError(`${invalid} beschädigte Journaleinträge wurden verworfen.`);return jobs;
     } catch(error) {if (error.code === 'ENOENT') return [];await rename(this.path,this.path+'.corrupt-'+randomUUID()).catch(() => {});this.onError('Transferjournal konnte nicht gelesen werden; Sicherung behalten, keine Transfers automatisch gestartet.');return [];}
   }
-  update(jobs) {this.pending=jobs.map(job => Object.fromEntries(fields.filter(k => job[k] !== undefined).map(k => [k,job[k]])));if (!this.timer) this.timer=setTimeout(() => {this.timer=undefined;void this.flush();},250);}
+  // Queue snapshots are immutable; project persisted fields only at the write boundary.
+  update(jobs) {this.pending=jobs;if (!this.timer) this.timer=setTimeout(() => {this.timer=undefined;void this.flush();},250);}
   flush() {
     clearTimeout(this.timer);this.timer=undefined;const jobs=this.pending;
     this.tail=this.tail.then(async () => {
       await this.ready;if (this.disabled) return;const temporary=this.path+'.tmp-'+randomUUID();
       try {
-        if (jobs.length > 10000) throw new Error('Journalgrenze überschritten.');const payload={version:1,jobs};const data=JSON.stringify({...payload,...(this.key ? {mac:createHmac('sha256',this.key).update(JSON.stringify(payload)).digest('hex')}:{})});if (Buffer.byteLength(data) > 32*1024*1024) throw new Error('Journalgrenze überschritten.');
+        if (jobs.length > 10000) throw new Error('Journalgrenze überschritten.');const payload={version:1,jobs:jobs.map(job => Object.fromEntries(fields.filter(k => job[k] !== undefined).map(k => [k,job[k]])))};const data=JSON.stringify({...payload,...(this.key ? {mac:createHmac('sha256',this.key).update(JSON.stringify(payload)).digest('hex')}:{})});if (Buffer.byteLength(data) > 32*1024*1024) throw new Error('Journalgrenze überschritten.');
         await mkdir(dirname(this.path),{recursive:true});const file=await open(temporary,'wx',0o600);try {await file.writeFile(data);await file.sync();} finally {await file.close();}await rename(temporary,this.path);
       } catch {await unlink(temporary).catch(() => {});this.onError('Transferjournal konnte nicht gesichert werden (maximal 10.000 Aufträge / 32 MiB).');}
     });return this.tail;

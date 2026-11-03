@@ -1,0 +1,112 @@
+{
+  "date": "2026-11-03",
+  "baselineCommit": "35428d0",
+  "candidateVersion": "0.0.25",
+  "environment": "macOS arm64, Node 22.13.1, local Colima/OpenSSH SFTP-only fixture",
+  "measurements": [
+    {
+      "phase": "new",
+      "count": 1500,
+      "bytesEach": 4096,
+      "seconds": 60.461815458000004,
+      "filesPerSecond": 24.809046646010486,
+      "channels": 3032,
+      "rpcs": 21124,
+      "notifications": 6504,
+      "serializedBytes": 10669620283,
+      "rpcDelayMs": 0,
+      "variant": "before"
+    },
+    {
+      "phase": "replace",
+      "count": 1500,
+      "bytesEach": 4096,
+      "seconds": 154.82305766700003,
+      "filesPerSecond": 9.688479368662666,
+      "channels": 3032,
+      "rpcs": 21062,
+      "notifications": 6855,
+      "serializedBytes": 31399239467,
+      "rpcDelayMs": 0,
+      "variant": "before"
+    },
+    {
+      "phase": "new",
+      "count": 1500,
+      "bytesEach": 4096,
+      "seconds": 3.995966,
+      "filesPerSecond": 375.378569287126,
+      "channels": 4,
+      "rpcs": 19624,
+      "notifications": 41,
+      "serializedBytes": 78836868,
+      "rpcDelayMs": 0,
+      "variant": "after"
+    },
+    {
+      "phase": "replace",
+      "count": 1500,
+      "bytesEach": 4096,
+      "seconds": 4.671454833,
+      "filesPerSecond": 321.0991122944675,
+      "channels": 0,
+      "rpcs": 19562,
+      "notifications": 47,
+      "serializedBytes": 232663162,
+      "rpcDelayMs": 0,
+      "variant": "after"
+    },
+    {
+      "phase": "new",
+      "count": 200,
+      "bytesEach": 4096,
+      "seconds": 18.464127500000004,
+      "filesPerSecond": 10.831814284211369,
+      "channels": 406,
+      "rpcs": 2820,
+      "notifications": 915,
+      "serializedBytes": 202322211,
+      "rpcDelayMs": 10,
+      "variant": "latency-before"
+    },
+    {
+      "phase": "replace",
+      "count": 200,
+      "bytesEach": 4096,
+      "seconds": 19.505085542,
+      "filesPerSecond": 10.253736112530401,
+      "channels": 406,
+      "rpcs": 2810,
+      "notifications": 915,
+      "serializedBytes": 556330517,
+      "rpcDelayMs": 10,
+      "variant": "latency-before"
+    },
+    {
+      "phase": "new",
+      "count": 200,
+      "bytesEach": 4096,
+      "seconds": 8.432172167000001,
+      "filesPerSecond": 23.718680790546053,
+      "channels": 4,
+      "rpcs": 2620,
+      "notifications": 85,
+      "serializedBytes": 22180117,
+      "rpcDelayMs": 10,
+      "variant": "latency-after"
+    },
+    {
+      "phase": "replace",
+      "count": 200,
+      "bytesEach": 4096,
+      "seconds": 7.760226625,
+      "filesPerSecond": 25.772443211347582,
+      "channels": 0,
+      "rpcs": 2610,
+      "notifications": 78,
+      "serializedBytes": 51296322,
+      "rpcDelayMs": 10,
+      "variant": "latency-after"
+    }
+  ]
+}

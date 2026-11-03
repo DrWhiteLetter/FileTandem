@@ -1,3 +1,5 @@
+import {TransferChannels} from '../adapters/sftp/transfer-channels.js';
+import {streamFile} from '../adapters/sftp/pipeline.js';
 import {LOCAL_PROFILE_ID,localCopyPlan,copyLocalFile} from './local-transfer.js';
 import {filePolicy} from './file-policy.js';
 import { profileIdentity } from './transfer-resume.js';
@@ -8,9 +10,10 @@ import { localTarget } from '../adapters/local/transfer-target.js';
 import { TransferQueue } from './transfer-queue.js';import { discoverTree } from './transfer-tree.js';import { ConflictRules } from './transfer-conflicts.js';import { transferFile,targetSnapshot } from './transfer-file.js';
 import { serverIdentity } from '../adapters/ssh/host-keys.js';
 export class TransferEngine {
-  constructor({sessions,profiles,choose,guard=() => {},onChange=() => {},getPolicy=()=>filePolicy()}) {
+  constructor({sessions,profiles,choose,guard=() => {},onChange=() => {},notifyInterval=0,getPolicy=()=>filePolicy()}) {
     this.getPolicy=getPolicy;this.autoUploads=new Map();this.autoJobs=new Map();this.ready=Promise.resolve();this.sessions=sessions;this.profiles=profiles;this.guard=guard;this.local=new LocalFiles();this.conflicts=new ConflictRules(choose);
-    this.queue=new TransferQueue({run:(j,s,p) => this.run(j,s,p),onChange});
+    this.channels=new TransferChannels();
+    this.queue=new TransferQueue({limit:job=>job.protocol==='sftp' ? 4:2,notifyInterval,run:(j,s,p) => this.run(j,s,p),onChange});
   }
   key(job,path) {if (job.direction === 'upload') return 'remote:'+job.server+':'+posix.normalize(path);const local=resolve(path).replaceAll('\\','/');return 'local:'+(process.platform === 'win32' ? local.toLowerCase():local);}
   assertManual(profileId) {if (this.autoUploads.has(profileId)) throw new Error('Automatischer Upload aktiv; zuerst die Überwachung stoppen.');}
@@ -34,7 +37,7 @@ export class TransferEngine {
     const profile=this.profiles.get(profileId);
     paths=paths.map(direction === 'upload' ? localPath:p => pathFor(p,profile.protocol));destination=direction === 'upload' ? pathFor(destination,profile.protocol):localPath(destination);
     if (this.sessions.matches && !this.sessions.matches(profile)) throw new Error('Profil wurde geändert; bitte erneut verbinden.');
-    const server=serverIdentity(profile.host,profile.port).id;const transport=this.sessions.transport(profileId);if (transport.endpoint?.id && transport.endpoint.id !== server) throw new Error('Profil wurde geändert; bitte erneut verbinden.');const files=await openRemoteFiles(transport,profile.protocol);const batchId=randomUUID(),ids=[];
+    const server=serverIdentity(profile.host,profile.port).id;const transport=this.sessions.transport(profileId);if (transport.endpoint?.id && transport.endpoint.id !== server) throw new Error('Profil wurde geändert; bitte erneut verbinden.');const files=direction==='download' ? await openRemoteFiles(transport,profile.protocol):undefined;const batchId=randomUUID(),ids=[];
     const source=direction === 'upload' ? {stat:path => this.local.stat({scheme:'file',fsPath:path}),listNoFollow:path => this.local.listNoFollow(path)}:files;
     const targetJoin=direction === 'upload' ? posix.join:join;const sourceBase=direction === 'upload' ? p => p.replaceAll('\\','/').split('/').at(-1):posix.basename;
     try {
@@ -50,7 +53,7 @@ export class TransferEngine {
         const job={id,batchId,profileId,server,direction,source:node.source,target,kind:node.kind,metadata:node.metadata,profileKey:profileIdentity(profile),protocol:profile.protocol,...(reviewedReplacement && node.kind==='file' && !node.relative ? {reviewedReplacement}:{}),parentId:parent,name:node.relative ? posix.basename(node.relative):sourceBase(path)};
         authorized();if (automatic) {job.automatic=true;this.autoJobs.set(job.id,automatic);}job.lockKey=this.key(job,target);this.queue.add(job);ids.push(id);if (node.kind === 'directory') parents.set(node.relative,id);
       }} catch(error) {if (automatic) throw error;authorized();const job={id:randomUUID(),batchId,profileId,server,direction,source:path,target:root,kind:'error'};job.lockKey=this.key(job,root);this.queue.add(job);ids.push(job.id);}
-    }} finally {files.close();}return {batchId,ids};
+    }} finally {files?.close();}return {batchId,ids};
   }
   async submitLocal(direction,paths,destination) {
     await this.ready;this.guard();
@@ -68,7 +71,7 @@ export class TransferEngine {
   async runLocal(job,signal,onProgress) {
     const validate=() => {this.guard();signal.throwIfAborted();if (this.getPolicy().excludes(job.source,job.kind) || this.getPolicy().excludes(job.target,job.kind)) throw new Error('Exclusion rules changed; transfer stopped.');};
     validate();if (['symlink','other'].includes(job.kind)) return {skipped:true,reason:'Symlink/Spezialdatei übersprungen.'};
-    const parent=job.parentId && this.queue.list().find(j=>j.id===job.parentId),initial=parent?.finalTarget ? join(parent.finalTarget,job.name):job.target;
+    const parent=job.parentId && this.queue.get(job.parentId),initial=parent?.finalTarget ? join(parent.finalTarget,job.name):job.target;
     const existing=await targetSnapshot(localTarget,initial),source=await localTarget.stat(job.source);
     if (resolve(job.source)===resolve(initial) || existing && source.ino===existing.ino && source.dev===existing.dev) throw new Error('Cannot copy an entry onto itself or into its own folder.');
     const decision=job.kind==='directory' && existing?.kind==='directory' ? {path:initial,replace:false}:await this.conflicts.resolve({...job,direction:'local',target:initial},localTarget,signal);
@@ -97,23 +100,24 @@ export class TransferEngine {
     if (['symlink','other'].includes(job.kind)) return {skipped:true,reason:'Symlink/Spezialdatei übersprungen.'};
     const profile=this.profiles.get(job.profileId);if ((job.profileKey && job.profileKey!==profileIdentity(profile)) || ((job.protocol ?? 'sftp') !== profile.protocol) || serverIdentity(profile.host,profile.port).id !== job.server) throw Object.assign(new Error(),{publicMessage:'Profilziel wurde geändert; neuen Auftrag anlegen.'});
     if (this.sessions.matches && !this.sessions.matches(profile)) throw new Error('Profil wurde geändert; bitte erneut verbinden.');
-    const session=this.sessions.transport(job.profileId);if (session.endpoint?.id && session.endpoint.id !== job.server) throw new Error('Verbindung gehört zu einem anderen Server.');const files=await openRemoteFiles(session,profile.protocol,{signal});const close=() => files.close();signal.addEventListener('abort',close,{once:true});if (signal.aborted) close();
+    const session=this.sessions.transport(job.profileId);if (session.endpoint?.id && session.endpoint.id !== job.server) throw new Error('Verbindung gehört zu einem anderen Server.');const lease=profile.protocol==='sftp' ? await this.channels.acquire(session,signal):undefined;const files=lease?.files ?? await openRemoteFiles(session,profile.protocol,{signal});let healthy=false;const close=() => files.close();signal.addEventListener('abort',close,{once:true});if (signal.aborted) close();
     try {signal.throwIfAborted();
       const target=job.direction === 'upload' ? targetFor(files):localTarget;
-      const parent=job.parentId && this.queue.list().find(j => j.id === job.parentId);
+      const parent=job.parentId && this.queue.get(job.parentId);
       const initial=job.resumeFrom ? job.attempt.target:parent?.finalTarget ? (job.direction === 'upload' ? posix.join:join)(parent.finalTarget,job.name):job.target;
       let path=initial,replace=false;
       if (!job.resumeFrom && !(job.kind === 'directory' && (await targetSnapshot(target,path))?.kind === 'directory')) {
-        const decision=automatic || job.reviewedReplacement ? {path,replace:true}:await this.conflicts.resolve({...job,target:path},target,signal);if (decision.skipped) return decision;path=decision.path;replace=decision.replace;
+        const decision=automatic || job.reviewedReplacement ? {path,replace:true}:await this.conflicts.resolve({...job,target:path},target,signal);if (decision.skipped) {healthy=true;return decision;}path=decision.path;replace=decision.replace;
       }
-      return await this.queue.withLock(job.id,this.key(job,path),async () => {
+      const completed=await this.queue.withLock(job.id,this.key(job,path),async () => {
         await validate();
         if (job.kind === 'directory') {const existing=await targetSnapshot(target,path);if (!existing) await (job.direction === 'upload' ? files.mkdir(path):this.local.mkdir(path));else if (existing.kind !== 'directory') throw new Error('Ordnerziel ist keine directory.');return {bytes:0,committed:true,finalTarget:path};}
         const source=job.direction==='upload' ? localTarget:targetFor(files);
         const current=await source.stat(job.source);const metadata={mode:current.mode&0o777,modified:current.modified};
-        const result=await transferFile(session,{...job,target:path,metadata,...(automatic ? {expectedTarget:automatic.expected.get(path)?.info ?? null,expectedTargetHash:automatic.expected.get(path)?.hash}: {})},{target,source,identity:profileIdentity(profile),replace,signal,onProgress,stream:streamFor(profile.protocol),beforePublish:validate,onCheckpoint:attempt => this.queue.checkpoint(job.id,attempt,this.key(job,attempt.target))});return {...result,finalTarget:path};
+        const result=await transferFile(session,{...job,target:path,metadata,...(automatic ? {expectedTarget:automatic.expected.get(path)?.info ?? null,expectedTargetHash:automatic.expected.get(path)?.hash}: {})},{target,source,identity:profileIdentity(profile),replace,signal,onProgress,stream:profile.protocol==='sftp' ? (session,options)=>streamFile(session,{...options,files}):streamFor(profile.protocol),beforePublish:validate,onCheckpoint:attempt => this.queue.checkpoint(job.id,attempt,this.key(job,attempt.target))});return {...result,finalTarget:path};
       },signal);
-    } finally {signal.removeEventListener('abort',close);files.close();}
+      healthy=true;return completed;
+    } finally {signal.removeEventListener('abort',close);if(lease) lease.release(healthy);else files.close();}
   }
   async cleanup(id) {
     await this.ready;this.guard();const job=this.queue.list().find(j => j.id===id),a=job?.attempt;
@@ -130,5 +134,5 @@ export class TransferEngine {
     });
   }
   resume(ids) {this.guard();for (const job of this.queue.validateRetry(ids,{resume:true})) this.assertManual(job.profileId);return this.queue.retry(ids,randomUUID,{resume:true});}
-  dispose() {this.queue.dispose();}
+  dispose() {this.queue.dispose();this.channels.dispose();}
 }

@@ -13,3 +13,20 @@ test('pause stops new starts; abort frees locks and retry never includes success
   while (!started.includes('abort')) await new Promise(r => setTimeout(r,1));queue.cancel('abort');await queue.idle();assert.equal(queue.list().find(j => j.id === 'abort').state,'cancelled');
   assert.throws(() => queue.retry(['ok'],() => 'new'),/Nur/);let id=0;queue.retry(['abort'],() => 'retry-'+(++id));await queue.idle();assert.equal(started.filter(v => v === 'ok').length,1);assert.ok(queue.list().some(j => j.retryOf === 'abort' && j.state === 'completed'));queue.dispose();
 });
+
+test('large batches coalesce snapshots while publishing the final state and preserving all jobs',async()=>{
+ const snapshots=[];let finish;const gate=new Promise(r=>{finish=r;});
+ const queue=new TransferQueue({notifyInterval:100,limit:4,onChange:jobs=>snapshots.push(jobs),run:async()=>{await gate;return {committed:true};}});
+ for(let i=0;i<1500;i++) queue.add(job('bulk-'+i));
+ assert.equal(queue.list().length,1500);assert.equal(snapshots.length,1);
+ await new Promise(r=>setTimeout(r,120));assert.equal(snapshots.at(-1).length,1500);assert.equal(snapshots.at(-1).filter(j=>j.state==='running').length,4);
+ finish();await queue.idle();assert.ok(snapshots.at(-1).every(j=>j.state==='completed'));
+ assert.ok(snapshots.length<30,'Must not emit thousands of full queue snapshots');
+ queue.dispose();
+});
+
+test('coalesced notifications include children cancelled by a failed parent',async()=>{
+ let latest=[];const queue=new TransferQueue({notifyInterval:1000,onChange:jobs=>{latest=jobs;},run:async()=>{throw new Error('parent failure');}});
+ queue.add(job('parent'));queue.add({...job('child'),parentId:'parent'});
+ await queue.idle();assert.deepEqual(latest.map(j=>j.state),['failed','cancelled']);queue.dispose();
+});

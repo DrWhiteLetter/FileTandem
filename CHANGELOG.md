@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.25 – 03.11.2026
+
+- SFTP-Sammelübertragungen mit bis zu vier parallelen Aufträgen ausführen; verifizierte SFTP-Kanäle exklusiv wiederverwenden und nach Fehler, Abbruch oder Leerlauf schließen.
+- Metadaten und Dateiinhalt über denselben Transferkanal übertragen; Rechte und Zeitstempel mit einer gemeinsamen Anfrage setzen.
+- Aktualisierungen von Transferjournal und Oberfläche bündeln, damit große Warteschlangen den Upload nicht durch wiederholte Verarbeitung der gesamten Historie ausbremsen.
+- SHA-256-Prüfung, Konfliktentscheidungen, sichere Veröffentlichung und explizite Wiederaufnahme beibehalten.
+
 ## 0.0.24 – 02.11.2026
 
 - Lokale Bilder direkt und entfernte Bilder als temporäre, schreibgeschützte Vorschau öffnen; Ladefortschritt für entfernte Bilder und Dateien anzeigen und doppelte Öffnungsversuche bündeln.
