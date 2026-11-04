@@ -241,3 +241,15 @@ test('local Commander renders two local panes and copies in both directions with
  await act(()=>panes[1].querySelector('tbody tr').dispatchEvent(new dom.window.MouseEvent('dblclick',{bubbles:true})));assert.equal(messages.at(-1).action,'open');assert.equal(messages.at(-1).side,'remote');
  dom.window.close();
 });
+
+test('compact transfer updates preserve file panes and retry jobs outside the visible history',async t=>{
+ const {dom,doc,act,model,messages}=await polishFixture(t,{saved:{version:1,queueOpen:true}});
+ const row=doc.querySelector('.pane tr[data-entry-id]');
+ const data={version:1,type:'transferModel',sessionId:'polish',queuePaused:false,queue:[{id:'latest',source:'/local/file',target:'/remote/file',direction:'upload',state:'completed',bytes:4,rate:0}],queueSummary:{total:1500,active:400,failures:1,retryIds:['old-failed']},autoUpload:{active:false}};
+ await act(()=>dom.window.dispatchEvent(new dom.window.MessageEvent('message',{data:dom.window.JSON.parse(JSON.stringify(data))})));
+ assert.equal(doc.querySelector('.pane tr[data-entry-id]'),row);assert.ok(doc.querySelector('.queue-toggle').textContent.includes('1500'));assert.ok(doc.querySelector('.queue-summary').textContent.includes('400'));
+ const retry=[...doc.querySelectorAll('.queue button')].find(b=>b.textContent.includes('Fehlgeschlagene'));
+ assert.ok(retry);await act(()=>retry.click());assert.deepEqual(Array.from(messages.at(-1).ids),['old-failed']);
+ await act(()=>dom.window.dispatchEvent(new dom.window.MessageEvent('message',{data:dom.window.JSON.parse(JSON.stringify({...data,sessionId:'foreign',queueSummary:{...data.queueSummary,total:9999}}))})));
+ assert.ok(doc.querySelector('.queue-toggle').textContent.includes('1500'));assert.equal(model.local.path,'/local');
+});

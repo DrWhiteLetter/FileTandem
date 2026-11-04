@@ -12,3 +12,9 @@ test('excluded directories are not traversed and excluded files are never yielde
  const result=[];for await(const item of discoverTree(source,'/root','',0,{count:0},filePolicy({excludedExtensions:['log']}).excludes)) result.push(item.source);
  assert.deepEqual(result,['/root','/root/keep']);assert.deepEqual(visited,['/root','/root/keep']);
 });
+
+test('discovery reuses listed file metadata but rechecks directories before following them',async()=>{
+ const stats=[];const source={stat:async p=>{stats.push(p);return {kind:p==='/root' ? 'directory':'symlink',mode:0o755,modified:1};},listNoFollow:async p=>{assert.equal(p,'/root');return {entries:[{name:'file',path:'/root/file',kind:'file',mode:0o644,modified:1},{name:'swapped',path:'/root/swapped',kind:'directory',mode:0o755,modified:1}]};}};
+ const nodes=[];for await(const node of discoverTree(source,'/root'))nodes.push(node);
+ assert.deepEqual(stats,['/root','/root/swapped']);assert.equal(nodes[1].kind,'file');assert.equal(nodes[2].kind,'symlink');
+});

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.0.26 – 04.11.2026
+
+- Beim manuellen Remote-Löschen zusätzlich „Ohne Sicherung löschen“ anbieten, auch wenn .bak-Sicherungen aktiviert sind.
+
+- Bereits gelesene Dateimetadaten beim Befüllen der Warteschlange wiederverwenden; Ordner weiterhin vor dem Betreten prüfen. Queue-Planung auf wartende Aufträge begrenzen und zusammenfassen.
+- SFTP-Blöcke innerhalb einer Datei mit bis zu acht ausstehenden Anfragen übertragen und geordnet prüfen; verkürzte Antworten, Abbruch und Fehler berücksichtigen. Kleine SSH-Pakete ohne zusätzliche TCP-Bündelungsverzögerung senden.
+- Fortschrittsmeldungen als kompakte Queue-Aktualisierungen senden, statt sämtliche Verzeichnislisten und die ganze Historie zu übertragen. Summen und Wiederholungsaktionen bleiben vollständig.
+- Verzeichnislisten nach Transfers nur für tatsächlich betroffene Zielbereiche erneut laden.
+- Schnellen Modus als Standard für manuelle SFTP-Uploads verwenden: SSH-Transport, Quellenkonsistenz und Größe prüfen, ohne den Serverinhalt vollständig zurückzulesen. Zusätzliche SHA-256-Abschlussprüfung unter „Sicherheitsfeatures“ optional aktivieren; Fortsetzung, Überwachung und geprüfte Editor-Uploads verwenden sie weiterhin.
+
 ## 0.0.25 – 03.11.2026
 
 - SFTP-Sammelübertragungen mit bis zu vier parallelen Aufträgen ausführen; verifizierte SFTP-Kanäle exklusiv wiederverwenden und nach Fehler, Abbruch oder Leerlauf schließen.

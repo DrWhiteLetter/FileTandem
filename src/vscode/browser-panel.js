@@ -1,3 +1,5 @@
+import {transferView} from '../shared/transfer-view.js';
+import {transferRefreshSides} from '../application/transfer-refresh.js';
 import { registerFileOpeningProgress } from './file-opening-progress.js';
 import { isPreviewImage,registerImagePreviews } from './image-preview.js';
 import {LOCAL_PROFILE_ID} from '../application/local-transfer.js';
@@ -46,7 +48,7 @@ export function registerBrowser(context,profileUI) {
     let alive=true;const recent=new Set();
     const localSide=side => side==='local' || !profile;
     const queueOwner=()=>profile?.id ?? LOCAL_PROFILE_ID;
-    const model=() => {const policy=currentFilePolicy();return ({version:1,type:'browserModel',mode:profile ? 'remote':'local',sessionId,diagnostics,autoUpload:profileUI.transfers.autoUpload.state(profile?.id),pathFavorites:favorites.get(profile?.id),locale:language(),profileId:profile?.ephemeral ? undefined:profile?.id,queue:profileUI.transfers.engine.queue.list(queueOwner()),queuePaused:profileUI.transfers.engine.queue.paused,local:{...annotate(local.state,policy),canBack:local.index>0,canForward:local.index+1<local.history.length},remote:{...annotate(remote.state,policy),entries:annotate(remote.state,policy).entries.map(entry=>({...entry,previewStatus:profile ? openingProgress.state(profile,entry.path):undefined})),canBack:remote.index>0,canForward:remote.index+1<remote.history.length},...browserSettings(key => vscode.workspace.getConfiguration('filetandem').get(key)),connection:profile ? {...profileUI.sessions.snapshot(profile.id),name:profile.name} : {state:'disconnected'}});};
+    const model=() => {const policy=currentFilePolicy();return ({version:1,type:'browserModel',mode:profile ? 'remote':'local',sessionId,diagnostics,autoUpload:profileUI.transfers.autoUpload.state(profile?.id),pathFavorites:favorites.get(profile?.id),locale:language(),profileId:profile?.ephemeral ? undefined:profile?.id,...transferView(profileUI.transfers.engine.queue.list(queueOwner())),queuePaused:profileUI.transfers.engine.queue.paused,local:{...annotate(local.state,policy),canBack:local.index>0,canForward:local.index+1<local.history.length},remote:{...annotate(remote.state,policy),entries:annotate(remote.state,policy).entries.map(entry=>({...entry,previewStatus:profile ? openingProgress.state(profile,entry.path):undefined})),canBack:remote.index>0,canForward:remote.index+1<remote.history.length},...browserSettings(key => vscode.workspace.getConfiguration('filetandem').get(key)),connection:profile ? {...profileUI.sessions.snapshot(profile.id),name:profile.name} : {state:'disconnected'}});};
     const publish=() => {if (alive) {panel.title=profile ? `FileTandem · ${profile.name}`:'FileTandem';void panel.webview.postMessage(model());}};
     let start;try {start=localStart(restored.paths?.local ?? profile?.localPath);} catch {start=localStart();}
     const local=new DirectoryBrowser({start,parent:localParent,list:path => files.list(vscode.Uri.file(localPath(path))),onChange:publish});
@@ -77,15 +79,20 @@ export function registerBrowser(context,profileUI) {
       publish();
     });
     const observedTerminal=new Set();let observedAuto='';
-    const transferRefresh=coalescedRefresh(() => Promise.allSettled([
-      local.refresh(),...(!profile || profileUI.sessions.snapshot(profile.id).state==='connected' ? [remote.refresh()]:[])
-    ]));
+    const dirtyPanes=new Set();
+    const transferRefresh=coalescedRefresh(() => {
+      const sides=[...dirtyPanes];dirtyPanes.clear();
+      return Promise.allSettled(sides.map(side=>side==='local' ? local.refresh():!profile || profileUI.sessions.snapshot(profile.id).state==='connected' ? remote.refresh():Promise.resolve()));
+    });
     const configuration=vscode.workspace.onDidChangeConfiguration(e => {if (e.affectsConfiguration('filetandem')) publish();});
     const transferChanges=profileUI.transfers.changed.event(() => {
-      publish();
-      const newly=profileUI.transfers.engine.queue.list(queueOwner()).filter(j => ['completed','failed','cancelled','skipped'].includes(j.state) && !observedTerminal.has(j.id));for (const job of newly) observedTerminal.add(job.id);
+      const jobs=profileUI.transfers.engine.queue.list(queueOwner());
+      if(alive) void panel.webview.postMessage({version:1,type:'transferModel',sessionId,...transferView(jobs),queuePaused:profileUI.transfers.engine.queue.paused,autoUpload:profileUI.transfers.autoUpload.state(profile?.id)});
+      const newly=jobs.filter(j => ['completed','failed','cancelled','skipped'].includes(j.state) && !observedTerminal.has(j.id));for (const job of newly) observedTerminal.add(job.id);
       const auto=profileUI.transfers.autoUpload.state(profile?.id),autoKey=JSON.stringify([auto.localRoot,auto.remoteRoot,auto.starting,auto.uploaded,auto.deleted,auto.directories]),autoChanged=autoKey!==observedAuto;observedAuto=autoKey;
-      if (newly.length || autoChanged) transferRefresh.request();
+      for(const side of transferRefreshSides(newly,{local:local.state.path,remote:remote.state.path},{localMode:!profile})) dirtyPanes.add(side);
+      if(autoChanged) {dirtyPanes.add('local');dirtyPanes.add('remote');}
+      if(dirtyPanes.size) transferRefresh.request();
     });
     const transfer=async message => {
       const owner=profile;
@@ -195,19 +202,23 @@ Permissions: ${info.mode.toString(8).padStart(3,'0')}${info.kind === 'symlink' ?
             const backupSelections=selected.filter(entry=>isBackupPath(entry.path));
             if(!localSide(message.side) && backupSelections.length && backupSelections.length!==selected.length) throw new Error('Delete backup files separately to remove them permanently.');
             const backup=!localSide(message.side) && policy.backupRemoteDeletes && !backupSelections.length;
-            const plan=!localSide(message.side) ? backup ? await planRemoteBackup(adapter,paths):await planRemoteDelete(adapter,paths):undefined;
+            let plan=!localSide(message.side) ? backup ? await planRemoteBackup(adapter,paths):await planRemoteDelete(adapter,paths):undefined;
             const choice=localSide(message.side) ? 'Move to Trash':backup ? 'Create .bak backups':'Delete permanently';
             const count=backup ? plan.length:plan?.length ?? selected.length;
             const detail=backup ? t('Selected files and folders are renamed beside the originals. Existing backups are kept with numbered names. Backups are excluded from transfers and automatic deletion. Backups beside website files may be publicly downloadable; block access on the web server.'):!localSide(message.side) ? t('Includes subfolders; symlink targets are not deleted.'):t('Includes subfolders. Trash errors do not trigger permanent deletion.');
             const title=localSide(message.side) ? `Local: Move ${count} selected entries to Trash?`:backup ? `Remote: Back up ${count} selected entries instead of deleting them?`:`Remote: Permanently delete ${count} entries?`;
-            const confirmed=await vscode.window.showWarningMessage(title,{modal:true,detail:`${parent}\n${selected.slice(0,10).map(entry=>entry.name).join('\n')}\n${detail}`},choice);
+            const choices=backup ? [choice,'Delete without backup']:[choice];
+            const confirmed=await vscode.window.showWarningMessage(title,{modal:true,detail:`${parent}\n${selected.slice(0,10).map(entry=>entry.name).join('\n')}\n${detail}${backup ? '\n'+t('Deleting without a backup permanently removes the selected entries, including subfolders. Symlink targets are not deleted.'):''}`},...choices);
             const permitted=()=>allowed() && profile===owner && currentFilePolicy().signature===policy.signature;
-            if(confirmed!==choice) return;if(!permitted()) throw new Error('Permission is no longer valid.');
+            if(!choices.includes(confirmed)) return;
+            const createBackup=backup && confirmed===choice;
+            if(!permitted()) throw new Error('Permission is no longer valid.');
             try {
               if(localSide(message.side)) await trashLocal(paths,permitted);
               else {
                 const roots=paths.slice().sort().filter((path,index,all)=>!all.slice(0,index).some(parent=>path.startsWith(parent+'/')));
-                const locked=async index=>index===roots.length ? backup ? executeRemoteBackup(adapter,plan,permitted):executeRemoteDelete(adapter,plan,permitted):profileUI.transfers.engine.queue.maintain(profileUI.transfers.engine.key({direction:'upload',server:serverIdentity(profile.host,profile.port).id},roots[index]),()=>locked(index+1));
+                if(backup && !createBackup) plan=await planRemoteDelete(adapter,paths);
+                const locked=async index=>index===roots.length ? createBackup ? executeRemoteBackup(adapter,plan,permitted):executeRemoteDelete(adapter,plan,permitted):profileUI.transfers.engine.queue.maintain(profileUI.transfers.engine.key({direction:'upload',server:serverIdentity(profile.host,profile.port).id},roots[index]),()=>locked(index+1));
                 await locked(0);
               }
             } finally {if(alive) await browser.refresh();}

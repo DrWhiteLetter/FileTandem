@@ -1,3 +1,4 @@
+import {readBlocks,SFTP_REQUEST_WINDOW} from './read-blocks.js';
 import { createReadStream,createWriteStream,constants } from 'node:fs';
 import { lstat } from 'node:fs/promises';
 import { Readable,Writable,Transform } from 'node:stream';
@@ -26,17 +27,24 @@ export async function streamFile(session,{direction,local,remote,signal,onProgre
     if (!metadata.isFile() || metadata.isSymbolicLink()) throw new Error('Nur reguläre Dateien werden gestreamt.');
     const hash=createHash('sha256');let bytes=offset;
     if (offset>metadata.size) throw new Error('Fortsetzung überschreitet die Quelle.');
-    if (offset) {if (direction==='upload') {for await (const chunk of createReadStream(local,{highWaterMark:BUFFER_BYTES,end:offset-1,flags:constants.O_RDONLY | constants.O_NOFOLLOW,signal:controller.signal})) hash.update(chunk);}else {const handle=await rpc('open',remote,'r');try {let position=0;while (position<offset) {const chunk=Buffer.alloc(Math.min(BUFFER_BYTES,offset-position));const count=await rpc('read',handle,chunk,0,chunk.length,position);if (!count) throw new Error('Quelle beim Präfixlesen verkürzt.');hash.update(chunk.subarray(0,count));position+=count;}} finally {await rpc('close',handle);}}}
+    if (offset) {if (direction==='upload') {for await (const chunk of createReadStream(local,{highWaterMark:BUFFER_BYTES,end:offset-1,flags:constants.O_RDONLY | constants.O_NOFOLLOW,signal:controller.signal})) hash.update(chunk);}else {const handle=await rpc('open',remote,'r');try {for await(const chunk of readBlocks(rpc,handle,{end:offset,signal:controller.signal})) hash.update(chunk);} finally {await rpc('close',handle);}}}
     if (direction === 'upload') {
       const handle=await rpc('open',remote,resume ? 'r+':'wx',0o600);let position=offset;
       if (resume) {const info=await rpc('fstat',handle);if (!info.isFile() || info.size!==offset) throw new Error('Teil-Datei wurde geändert.');}
       source=createReadStream(local,{highWaterMark:BUFFER_BYTES,flags:constants.O_RDONLY | constants.O_NOFOLLOW,start:offset});
+      const pending=new Set();let failure;
       target=new Writable({highWaterMark:BUFFER_BYTES,write(chunk,_,callback) {
-        (async () => {for (let offset=0;offset < chunk.length;offset+=BUFFER_BYTES) {const count=Math.min(BUFFER_BYTES,chunk.length-offset);await rpc('write',handle,chunk,offset,count,position);position+=count;}})().then(() => callback(),callback);
-      },final(callback) {rpc('close',handle).then(() => callback(),callback);}});
+        if(failure) {callback(failure);return;}
+        const at=position;position+=chunk.length;
+        const request=rpc('write',handle,chunk,0,chunk.length,at).catch(error=>{failure ??= error;}).finally(()=>pending.delete(request));
+        pending.add(request);
+        if(pending.size>=SFTP_REQUEST_WINDOW) Promise.race(pending).then(()=>callback(failure));else callback();
+      },final(callback) {
+        Promise.all(pending).then(()=>{if(failure) throw failure;return rpc('close',handle);}).then(()=>callback(),callback);
+      }});
     } else {
       const handle=await rpc('open',remote,'r');
-      source=Readable.from((async function* () {let position=offset;try {while (true) {const buffer=Buffer.alloc(BUFFER_BYTES);const count=await rpc('read',handle,buffer,0,buffer.length,position);if (!count) break;position+=count;yield buffer.subarray(0,count);}} finally {if (!controller.signal.aborted) await rpc('close',handle);}})(),{objectMode:false,highWaterMark:BUFFER_BYTES});
+      source=Readable.from((async function* () {try {yield* readBlocks(rpc,handle,{start:offset,end:metadata.size,signal:controller.signal});} finally {if (!controller.signal.aborted) await rpc('close',handle);}})(),{objectMode:false,highWaterMark:BUFFER_BYTES});
       target=createWriteStream(local,{highWaterMark:BUFFER_BYTES,flags:resume ? constants.O_WRONLY | constants.O_NOFOLLOW:'wx',start:offset,mode:0o600});
     }
     const meter=new Transform({highWaterMark:BUFFER_BYTES,transform(chunk,_,callback) {try {hash.update(chunk);bytes+=chunk.length;onProgress({bytes,chunkBytes:chunk.length,resumedBytes:offset});callback(null,chunk);} catch(error) {callback(error);}}});

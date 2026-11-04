@@ -20,7 +20,7 @@ test('failed secret write retains legacy credential and profile for a later retr
 });
 test('manifest exposes only new settings, commands and editor menu schemes',async()=>{
  const {readFile}=await import('node:fs/promises');const manifest=JSON.parse(await readFile(new URL('../../package.json',import.meta.url),'utf8'));
- assert.ok(Object.keys(manifest.contributes.configuration.properties).every(k=>k.startsWith('filetandem.')));
+ assert.ok(Object.keys(Object.assign({},...manifest.contributes.configuration.map(category=>category.properties))).every(k=>k.startsWith('filetandem.')));
  assert.ok(manifest.contributes.commands.every(c=>c.command.startsWith('filetandem.')));
  assert.ok(manifest.contributes.views.filetandem);
  for(const entries of Object.values(manifest.contributes.menus))for(const item of entries)assert.ok(!/\bxscp\b/.test(item.when??''),'menu guards match new URI schemes and view IDs');

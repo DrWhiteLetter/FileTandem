@@ -12,7 +12,7 @@ test('VS Code language bundles contain every English message and matching placeh
  const de=JSON.parse(await readFile('l10n/bundle.l10n.de.json','utf8'));
  const manifest=JSON.parse(await readFile('package.json','utf8'));
  assert.equal(manifest.l10n,'./l10n');
- assert.equal(manifest.contributes.configuration.properties['filetandem.language'].default,'auto');
+ assert.equal(Object.assign({},...manifest.contributes.configuration.map(category=>category.properties))['filetandem.language'].default,'auto');
  assert.deepEqual(Object.keys(en).sort(),Object.keys(de).sort());
  for (const [key,value] of Object.entries(en)) {
   assert.equal(key,value,'English is the default source language');assert.ok(de[key]);

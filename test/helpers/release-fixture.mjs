@@ -6,11 +6,11 @@ import { runtime } from './auth.mjs';
 import { connectSsh } from '../../src/adapters/ssh/connect.js';
 import { HostKeyStore } from '../../src/adapters/ssh/host-keys.js';
 export const fixturePort=protocol => Number(process.env.XSCP_SSH_PORT_BASE ?? 22220)+(protocol==='scp' ? 2:1);
-export async function releaseFixture(protocol,port=fixturePort(protocol)) {
+export async function releaseFixture(protocol,port=fixturePort(protocol),connect=connectSsh,KeyStore=HostKeyStore) {
   const mode=protocol==='scp' ? 'scp':'sftp-only';
   const expected=(await readFile(join(runtime,'servers',mode,'host_ed25519.pub'),'utf8')).split(' ')[1];
   const records=new Map();
-  const session=await connectSsh({host:'127.0.0.1',port,username:'fixture',privateKey:await readFile(join(runtime,'client_ed25519')),readyTimeout:5000},{trust:new HostKeyStore({read:async k => records.get(k),write:async (k,v) => records.set(k,v)}),confirmUnknown:async key => {assert.equal(key.key,expected);return true;}});
+  const session=await connect({host:'127.0.0.1',port,username:'fixture',privateKey:await readFile(join(runtime,'client_ed25519')),readyTimeout:5000},{trust:new KeyStore({read:async k => records.get(k),write:async (k,v) => records.set(k,v)}),confirmUnknown:async key => {assert.equal(key.key,expected);return true;}});
   if (protocol==='scp') return {...session,sftp:() => {throw new Error('SCP-only test must never fall back to SFTP');}};
   return session;
 }

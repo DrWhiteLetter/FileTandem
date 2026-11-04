@@ -30,3 +30,12 @@ test('coalesced notifications include children cancelled by a failed parent',asy
  queue.add(job('parent'));queue.add({...job('child'),parentId:'parent'});
  await queue.idle();assert.deepEqual(latest.map(j=>j.state),['failed','cancelled']);queue.dispose();
 });
+
+test('a saturated server does not repeatedly schedule its waiting jobs; other servers still run',async()=>{
+ let release;const gate=new Promise(r=>{release=r;});let limitChecks=0;const started=[];
+ const queue=new TransferQueue({notifyInterval:100,limit:()=>{limitChecks++;return 2;},run:async job=>{started.push(job.id);if(job.server==='server')await gate;return {committed:true};}});
+ for(let i=0;i<1000;i++)queue.add(job('pending-'+i));await new Promise(r=>setImmediate(r));
+ const before=limitChecks;queue.add({...job('other'),server:'other'});await new Promise(r=>setImmediate(r));
+ assert.ok(started.includes('other'));assert.ok(limitChecks-before<20,'capacity checks must not scale with all waiting jobs');
+ for(let i=2;i<1000;i++)queue.cancel('pending-'+i);release();await queue.idle();assert.equal(queue.list().filter(j=>j.state==='completed').length,3);queue.dispose();
+});

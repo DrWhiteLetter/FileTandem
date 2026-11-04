@@ -1,7 +1,7 @@
 import { translate as t,setLanguage,getLanguage } from '../../src/shared/localization.js';
 import { DRAG_TYPE,browserDrag } from '../../src/shared/browser-settings.js';
 import { useEffect,useState,useRef,useMemo,useLayoutEffect } from 'react';
-import { browserResponse } from '../../src/shared/browser-messages.js';
+import { browserResponse,transferResponse } from '../../src/shared/browser-messages.js';
 import { browserViewState } from '../../src/shared/browser-view-state.js';
 import { sortEntries } from '../../src/domain/file-entry.js';
 const transferLabels={queued:"Queued",running:"Running",completed:"Completed",skipped:"Skipped",failed:"Failed",cancelled:"Cancelled",interrupted:"Interrupted"};
@@ -97,7 +97,7 @@ function FilePane({side,model,send,prefs,update,defaultHidden,connected,commande
 export function BrowserApp({bridge,sessionId}) {
   const copyIds=useRef(new Set());const activeSide=useRef('local');const activate=side => {activeSide.current=side;};
   const [drag,setDrag]=useState(null);const [model,setModel]=useState(null);const [state,setState]=useState(() => browserViewState(bridge.getState?.()));const send=(type,extra={}) => bridge.postMessage({version:1,type,id:crypto.randomUUID(),sessionId,...extra});
-  useEffect(() => {const receive=event => {if (event.data?.version===1 && event.data.type==='commanderCopy' && event.data.sessionId===sessionId && typeof event.data.id==='string' && /^[a-zA-Z0-9-]{1,64}$/.test(event.data.id)) {if (copyIds.current.has(event.data.id)) return;copyIds.current.add(event.data.id);if (copyIds.current.size>256) copyIds.current.delete(copyIds.current.values().next().value);if (!document.activeElement?.matches('input,textarea,select,[contenteditable=true]')) window.dispatchEvent(new CustomEvent('filetandem-copy',{detail:{side:activeSide.current}}));return;}if (browserResponse(event.data,sessionId)) {setModel(event.data);if (event.data.pathFavorites) {const restored=browserViewState({version:1,panes:{local:{favorites:event.data.pathFavorites.local},remote:{favorites:event.data.pathFavorites.remote}}});setState(current => ({...current,panes:{local:{...current.panes.local,favorites:restored.panes.local.favorites},remote:{...current.panes.remote,favorites:restored.panes.remote.favorites}}}));}}};window.addEventListener('message',receive);send('ready');return () => window.removeEventListener('message',receive);},[sessionId]);
+  useEffect(() => {const receive=event => {if (event.data?.version===1 && event.data.type==='commanderCopy' && event.data.sessionId===sessionId && typeof event.data.id==='string' && /^[a-zA-Z0-9-]{1,64}$/.test(event.data.id)) {if (copyIds.current.has(event.data.id)) return;copyIds.current.add(event.data.id);if (copyIds.current.size>256) copyIds.current.delete(copyIds.current.values().next().value);if (!document.activeElement?.matches('input,textarea,select,[contenteditable=true]')) window.dispatchEvent(new CustomEvent('filetandem-copy',{detail:{side:activeSide.current}}));return;}if(transferResponse(event.data,sessionId)) {const {queue,queueSummary,queuePaused,autoUpload}=event.data;setModel(current=>current ? {...current,queue,queueSummary,queuePaused,autoUpload}:current);return;}if (browserResponse(event.data,sessionId)) {setModel(event.data);if (event.data.pathFavorites) {const restored=browserViewState({version:1,panes:{local:{favorites:event.data.pathFavorites.local},remote:{favorites:event.data.pathFavorites.remote}}});setState(current => ({...current,panes:{local:{...current.panes.local,favorites:restored.panes.local.favorites},remote:{...current.panes.remote,favorites:restored.panes.remote.favorites}}}));}}};window.addEventListener('message',receive);send('ready');return () => window.removeEventListener('message',receive);},[sessionId]);
   useEffect(() => {bridge.setState?.({...state,profileId:model?.profileId,paths:model ? {local:model.local.path,remote:model.remote.path}:state.paths});},[state,model]);
   useEffect(() => {
     if (!model?.diagnostics) return;let timer;const report=() => {clearTimeout(timer);timer=setTimeout(() => {const pane=document.querySelector('.pane'),scroll=pane?.querySelector('.file-scroll'),row=pane?.querySelector('tr[data-entry-id]');const theme=['vscode-high-contrast-light','vscode-high-contrast','vscode-light','vscode-dark'].find(v => document.body.classList.contains(v)) ?? 'vscode-dark';send('renderProof',{rows:pane?.querySelectorAll('tr[data-entry-id]').length ?? 0,height:scroll?.clientHeight ?? 0,rowHeight:row?.getBoundingClientRect().height ?? 0,scrollHeight:scroll?.scrollHeight ?? 0,theme,focusColor:getComputedStyle(document.documentElement).getPropertyValue('--vscode-focusBorder').trim()});},100);};const observer=new MutationObserver(report);observer.observe(document.body,{attributes:true,attributeFilter:['class','style']});window.addEventListener('resize',report);report();return () => {clearTimeout(timer);observer.disconnect();window.removeEventListener('resize',report);};
@@ -130,23 +130,24 @@ export function BrowserApp({bridge,sessionId}) {
     {model?.autoUpload?.error && <div className="watch-error error-message" role="alert"><Icon name="error" /><span><strong>{t("Monitoring stopped:")}</strong> {t(model.autoUpload.error)}</span></div>}
     <div className="split-control"><label>{t("Pane width")}<input type="range" min={30} max={70} value={state.split} aria-valuetext={localMode ? t(`Left ${state.split}%, Right ${100-state.split}%`):t(`Local ${state.split}%, Remote ${100-state.split}%`)} onChange={e => setState({...state,split:Number(e.target.value)})} /></label></div>
     <div className="panes" style={{'--local-width':`${state.split}%`}}>{sides.map(side => <FilePane key={side} side={side} activate={activate} model={model?.[side]} send={send} prefs={state.panes[side]} watching={watching} connectionId={model?.connection.id} localMode={localMode} connected={!watching && (localMode ? model?.local.status==='ready' && model?.remote.status==='ready':model?.connection.state==='connected' && ['sftp','scp'].includes(model?.connection.protocol))} defaultHidden={model?.showHiddenFiles} commanderKeys={model?.commanderKeys} sessionId={sessionId} drag={drag} setDrag={setDrag} oppositePath={model?.[side==='local' ? 'remote':'local'].path} update={value => setState(current => ({...current,panes:{...current.panes,[side]:value}}))} />)}</div>
-    <TransferList jobs={model?.queue ?? []} paused={model?.queuePaused} watching={watching} localMode={localMode} send={send} open={state.queueOpen} setOpen={queueOpen => setState(current => ({...current,queueOpen}))} />
+    <TransferList summary={model?.queueSummary} jobs={model?.queue ?? []} paused={model?.queuePaused} watching={watching} localMode={localMode} send={send} open={state.queueOpen} setOpen={queueOpen => setState(current => ({...current,queueOpen}))} />
     <footer className="status">{localMode ? t('Local copies · Desktop computer'):t("Local: Desktop computer · SFTP / SCP")}</footer>
   </main>;
 }
 
-function TransferList({jobs,paused,send,watching,localMode,open,setOpen}) {
-  const retryable=jobs.filter(j => ['failed','cancelled','interrupted'].includes(j.state));
-  const failures=jobs.filter(j => ['failed','interrupted'].includes(j.state)).length;
-  const active=jobs.filter(j => ['queued','running'].includes(j.state)).length;
+function TransferList({summary,jobs,paused,send,watching,localMode,open,setOpen}) {
+  const retryIds=summary?.retryIds ?? jobs.filter(j => ['failed','cancelled','interrupted'].includes(j.state)).slice(0,1000).map(j=>j.id);
+  const total=summary?.total ?? jobs.length;
+  const failures=summary?.failures ?? jobs.filter(j => ['failed','interrupted'].includes(j.state)).length;
+  const active=summary?.active ?? jobs.filter(j => ['queued','running'].includes(j.state)).length;
   const action=(action,ids) => send('queueAction',{action,ids});
   const icons={queued:'clock',running:'sync',completed:'check',skipped:'debug-step-over',failed:'error',cancelled:'circle-slash',interrupted:'warning'};
   return <section className="queue" aria-label={t("Transfer queue")}>
-    <button className="queue-toggle" aria-expanded={open} aria-controls={open ? 'transfer-content':undefined} onClick={() => setOpen(!open)}><Icon name={open ? 'chevron-down':'chevron-right'} /><strong>Transfers</strong><span className="count-badge">{jobs.length}</span><span className="queue-summary">{paused ? t("Queue paused"):active ? t(`${active} active or queued`):t("No active transfers")}{failures>0 && <span className="queue-failures"> · {t(`${failures} failed`)}</span>}</span></button>
+    <button className="queue-toggle" aria-expanded={open} aria-controls={open ? 'transfer-content':undefined} onClick={() => setOpen(!open)}><Icon name={open ? 'chevron-down':'chevron-right'} /><strong>Transfers</strong><span className="count-badge">{total}</span><span className="queue-summary">{paused ? t("Queue paused"):active ? t(`${active} active or queued`):t("No active transfers")}{failures>0 && <span className="queue-failures"> · {t(`${failures} failed`)}</span>}</span></button>
     {open && <div id="transfer-content" className="queue-content">
       <div className="queue-toolbar">
         <button onClick={() => send('queuePause',{paused:!paused})}><Icon name={paused ? 'debug-continue':'debug-pause'} /> {paused ? t("Resume queue"):t("Pause queue")}</button>
-        <button disabled={watching || !retryable.length} onClick={() => action('retry',retryable.slice(0,1000).map(j => j.id))}>{t("Retry failed jobs")}</button>
+        <button disabled={watching || !retryIds.length} onClick={() => action('retry',retryIds)}>{t("Retry failed jobs")}</button>
         <span className="badge">{paused ? t(" New starts paused; active transfers continue."):t(" Pause applies globally to new starts.")}</span>
       </div>
       <div className="queue-scroll" tabIndex={0} role="region" aria-label={t("Transfer history")}>
@@ -162,13 +163,14 @@ function TransferList({jobs,paused,send,watching,localMode,open,setOpen}) {
                   {['failed','cancelled','interrupted'].includes(job.state) && <><button disabled={watching} onClick={() => action('retry',[job.id])}>{t("Restart from the beginning")}</button>{job.attempt && (job.protocol ?? 'sftp')==='sftp' && <button disabled={watching} onClick={() => action('resume',[job.id])}>{t("Resume after verification")}</button>}</>}
                   {job.attempt && !job.partialCleaned && !job.committed && ['failed','cancelled','interrupted','completed'].includes(job.state) && <button onClick={() => action('cleanup',[job.id])}>{t("Clean up partial file")}</button>}
                 </div>
+                {job.verification==='size' && job.state==='completed' && <span className="transfer-error">{t('SSH + size verified')}</span>}
                 {(job.error || job.reason) && <span className="transfer-error">{t(job.error || job.reason)}</span>}
               </td><td className="numeric"><span>{job.bytes.toLocaleString(getLanguage())} B</span><span className="transfer-rate">{(job.rate/1024).toFixed(1)} KiB/s</span></td>
             </tr>;
           })}
         </tbody></table>}
       </div>
-      <div className="queue-footer"><span>{t("Newest first · For this profile across all sessions.")}</span>{jobs.length>200 && <span>{t("Showing the last 200 jobs.")}</span>}</div>
+      <div className="queue-footer"><span>{t("Newest first · For this profile across all sessions.")}</span>{total>200 && <span>{t("Showing the last 200 jobs.")}</span>}</div>
     </div>}
   </section>;
 }

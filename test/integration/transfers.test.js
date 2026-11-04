@@ -71,3 +71,16 @@ test('borrowed SFTP stream channels survive success and isolate cancellation fro
   assert.equal(first.closed,true);assert.equal(second.closed,false);assert.equal((await second.stat(remote)).size,upload.bytes);
  } finally {for(const path of [remote,remote+'-abort']) await second.call('unlink',path).catch(()=>{});first.close();second.close();await session.close();await rm(directory,{recursive:true,force:true});}
 });
+
+test('default SFTP upload performs no remote readback; downloads remain fully verified', {timeout:20000},async()=>{
+ const {TransferEngine}=await import('../../src/application/transfer-engine.js');
+ const session=await fixture(),files=await RemoteFiles.open(session),directory=await mkdtemp(join(tmpdir(),'xscp-fast-')),source=join(directory,'fast-'+randomUUID()),content=Buffer.alloc(128*1024+17,0x63);await writeFile(source,content);
+ let reads=0;const counted={...session,sftp:callback=>session.sftp((error,channel)=>{if(channel){const read=channel.read.bind(channel);channel.read=(...args)=>{reads++;return read(...args);};}callback(error,channel);})};
+ const profile={id:'p',host:'127.0.0.1',port:Number(process.env.XSCP_SSH_PORT_BASE ?? 22220)+1,protocol:'sftp'};
+ const engine=new TransferEngine({profiles:{get:()=>profile},sessions:{transport:()=>counted},choose:async()=>({choice:'replace'})});let remote;
+ try {
+  const batch=await engine.submit('p','upload',[source],'/data');await engine.queue.idle();const job=engine.queue.get(batch.ids[0]);remote=job.target;
+  assert.equal(job.state,'completed',job.error);assert.equal(job.verification,'size');assert.equal(reads,0);assert.deepEqual(await files.call('readFile',remote),content);
+  const download=await engine.submit('p','download',[remote],directory);await engine.queue.idle();const downloaded=engine.queue.get(download.ids[0]);assert.equal(downloaded.state,'completed',downloaded.error);assert.equal(downloaded.verification,'sha256');assert.ok(reads>0);assert.deepEqual(await readFile(source),content);
+ } finally {engine.dispose();if(remote)await files.call('unlink',remote).catch(()=>{});files.close();await session.close();await rm(directory,{recursive:true,force:true});}
+});

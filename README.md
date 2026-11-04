@@ -68,3 +68,14 @@ Die Kopie wird beim Schließen des Bild-Tabs oder beim regulären Beenden der
 Erweiterung entfernt. Nach einem Absturz können temporäre Dateien verbleiben.
 Es erfolgt kein automatischer Rückupload. Oberhalb von 10 MiB wird stattdessen
 ein normaler Download angeboten.
+
+## Viele Dateien per SFTP hochladen
+
+Ab 0.0.26 werden Queue und Dateilisten sparsamer aktualisiert und SFTP-Datenblöcke parallel übertragen. Unter **Einstellungen → FileTandem → Sicherheitsfeatures → SFTP Upload Verification** (`filetandem.sftpUploadVerification`) stehen zwei Prüfmodi zur Wahl:
+
+- **`sha256`** (optional): Hochgeladene Teil-Datei vollständig zurücklesen und ihren SHA-256-Wert vergleichen.
+- **`size`** (schnell, Voreinstellung): SSH-Transport, Quellenkonsistenz und Dateigröße prüfen, anschließend sicher veröffentlichen. Der gespeicherte Serverinhalt wird nicht per Prüfsumme kontrolliert. Die Queue kennzeichnet diese Abschlüsse mit „SSH + Größe geprüft“.
+
+Die Auswahl gilt für neu startende Dateien manueller SFTP-Uploads, auch beim manuellen Ordnerabgleich. Fortsetzungen, automatische Überwachung und geprüfte Editor-Uploads verwenden immer SHA-256. Downloads, SCP und lokale Kopien behalten ihre vollständige Prüfung.
+
+[Messungen, Grenzen und Recherche](docs/nachweise/SFTP-Performance-0.0.26.md).

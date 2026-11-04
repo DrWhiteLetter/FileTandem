@@ -17,7 +17,7 @@ for (const protocol of ['sftp','scp']) test(`${protocol}: automatic external sav
   const session=await releaseFixture(protocol),files=await openRemoteFiles(session,protocol),directory=await realpath(await mkdtemp(join(tmpdir(),'filetandem-auto-'))),root=join(directory,'local'),remote='/data/auto-'+randomUUID();
   const profile={id:'auto',host:'127.0.0.1',port:fixturePort(protocol),username:'fixture',protocol};let connected=true,dialogs=0,stopOnProgress=false;
   const sessions={transport:() => session,snapshot:() => ({state:connected ? 'connected':'disconnected'}),matches:() => true},profiles={get:() => profile};
-  const engine=new TransferEngine({sessions,profiles,choose:async () => {dialogs++;return {choice:'replace'};},onChange:jobs => {if (stopOnProgress && jobs.some(job => job.automatic && job.state==='running' && job.bytes>0)) {stopOnProgress=false;service.stop(profile.id);}}}),service=new AutoUploadService({getPolicy:()=>filePolicy({backupRemoteDeletes:false}),engine,sessions,profiles,guard:() => {}});
+  const engine=new TransferEngine({getSftpUploadVerification:()=> 'size',sessions,profiles,choose:async () => {dialogs++;return {choice:'replace'};},onChange:jobs => {if (stopOnProgress && jobs.some(job => job.automatic && job.state==='running' && job.bytes>0)) {stopOnProgress=false;service.stop(profile.id);}}}),service=new AutoUploadService({getPolicy:()=>filePolicy({backupRemoteDeletes:false}),engine,sessions,profiles,guard:() => {}});
   const activate=async () => {const monitor=await service.start({profileId:profile.id,localRoot:root,remoteRoot:remote,owner:'test'});clearTimeout(monitor.timer);monitor.interval=25;monitor.schedule();return monitor;};
   try {
     await mkdir(root);await files.mkdir(remote);await writeFile(join(root,'existing'),'1111');await engine.submit(profile.id,'upload',[join(root,'existing')],remote);await engine.queue.idle();
@@ -46,6 +46,7 @@ for (const protocol of ['sftp','scp']) test(`${protocol}: automatic external sav
     assert.doesNotThrow(() => engine.assertManual(profile.id));
     const interrupted=await activate(),beforeInterruption=await targetFor(files).hash(remote+'/existing');stopOnProgress=true;await writeFile(join(root,'existing'),Buffer.alloc(2*1024*1024,0x61));
     await wait(() => interrupted.stopped);await engine.queue.idle();assert.equal(await targetFor(files).hash(remote+'/existing'),beforeInterruption,'stopping during streaming never publishes a partial replacement');
+    assert.ok(engine.queue.list().filter(j=>j.automatic && j.kind==='file' && j.state==='completed').every(j=>j.verification==='sha256'));
     const disconnected=await activate();connected=false;service.validate();assert.equal(disconnected.stopped,true);assert.equal(service.state(profile.id).active,false);connected=true;service.validate();assert.equal(disconnected.stopped,true,'reconnect never silently reactivates monitoring');
   } finally {
     service.dispose();engine.dispose();await executeRemoteDelete(files,await planRemoteDelete(files,[remote]).catch(() => []),() => true).catch(() => {});files.close();await session.close();await rm(directory,{recursive:true,force:true});

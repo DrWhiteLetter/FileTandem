@@ -11,16 +11,19 @@ export class ConflictRules {
     let abort;
     try {
       signal?.throwIfAborted();
+      // Only decisions are serialized; independent metadata requests may overlap.
+      const snapshot=targetSnapshot(target,job.target).then(value=>({value}),error=>({error}));
       if (signal) await Promise.race([previous,new Promise((_,reject) => {
         abort=() => reject(signal.reason);signal.addEventListener('abort',abort,{once:true});
       })]);
       else await previous;
       signal?.throwIfAborted();
-      return await this.resolveConflict(job,target,signal);
+      const result=await snapshot;signal?.throwIfAborted();if(result.error) throw result.error;
+      return await this.resolveConflict(job,target,signal,result.value);
     } finally {if (abort) signal.removeEventListener('abort',abort);release();}
   }
-  async resolveConflict(job,target,signal) {
-    const existing=await targetSnapshot(target,job.target);if (!existing) return {path:job.target,replace:false};
+  async resolveConflict(job,target,signal,existing) {
+    if (!existing) return {path:job.target,replace:false};
     const safeReplace=target.atomicReplace && existing.kind === 'file';
     let choice=this.rules.get(job.batchId);
     if (!choice || (choice === 'replace' && !safeReplace)) {

@@ -22,3 +22,7 @@ export function browserResponse(value,sessionId) {
   return plain(value) && value.version === 1 && value.type === 'browserModel' && value.sessionId === sessionId
     && ['local','remote'].every(side => plain(value[side]) && typeof value[side].path === 'string' && Array.isArray(value[side].entries) && value[side].entries.length <= 10000 && value[side].entries.every(e => plain(e) && typeof e.id === 'string' && typeof e.name === 'string' && typeof e.path === 'string' && ['file','directory','symlink','other'].includes(e.kind)));
 }
+
+export function transferResponse(value,sessionId) {
+  return plain(value) && value.version===1 && value.type==='transferModel' && value.sessionId===sessionId && Array.isArray(value.queue) && value.queue.length<=200 && plain(value.queueSummary) && ['total','active','failures'].every(key=>Number.isSafeInteger(value.queueSummary[key]) && value.queueSummary[key]>=0) && Array.isArray(value.queueSummary.retryIds) && value.queueSummary.retryIds.length<=1000 && value.queueSummary.retryIds.every(token) && typeof value.queuePaused==='boolean';
+}

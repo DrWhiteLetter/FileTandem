@@ -42,6 +42,8 @@ export async function connectSsh(config, { trust, confirmUnknown, confirmChanged
       client.destroy();
     };
     signal?.addEventListener('abort', abort, { once: true });
+    // Send small SFTP control packets immediately instead of waiting for TCP batching.
+    client.once('connect', () => client.setNoDelay(true));
     client.on('error', error => { fail(failure ?? error); });
     client.on('keyboard-interactive', (name, instructions, language, prompts, finish) => {
       if (!verified || !config.keyboardInteractive || controller.signal.aborted) {

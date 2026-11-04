@@ -7,10 +7,16 @@ exports.run = async () => {
   if (process.env.XSCP_INSTALLED_EXTENSIONS) assert.ok(extension.extensionPath.startsWith(process.env.XSCP_INSTALLED_EXTENSIONS), 'Test loads installed VSIX, not checkout');
   await extension.activate();
   assert.ok(extension.isActive, 'Host-Bundle aktiviert');
-  for (const [key, property] of Object.entries(extension.packageJSON.contributes.configuration.properties)) {
+  for (const [key, property] of Object.entries(Object.assign({},...extension.packageJSON.contributes.configuration.map(category=>category.properties)))) {
     assert.deepEqual(vscode.workspace.getConfiguration().inspect(key)?.defaultValue, property.default,
       `Installed setting is registered with its default: ${key}`);
   }
+  const verificationConfig=vscode.workspace.getConfiguration('filetandem');
+  assert.equal(vscode.workspace.getConfiguration('filetandem').get('sftpUploadVerification'),'size');
+  await verificationConfig.update('sftpUploadVerification','sha256',vscode.ConfigurationTarget.Global);
+  assert.equal(vscode.workspace.getConfiguration('filetandem').get('sftpUploadVerification'),'sha256');
+  await verificationConfig.update('sftpUploadVerification',undefined,vscode.ConfigurationTarget.Global);
+  assert.equal(vscode.workspace.getConfiguration('filetandem').get('sftpUploadVerification'),'size');
   const extensionApi=require('node:module').createRequire(require('node:path').join(extension.extensionPath,'dist/extension.cjs'))('vscode');
   if (process.env.XSCP_EXPECT_LOCALE) assert.equal(extensionApi.env.language,process.env.XSCP_EXPECT_LOCALE,'requested editor locale is actually active');
   const german=extensionApi.env.language.toLowerCase().startsWith('de');

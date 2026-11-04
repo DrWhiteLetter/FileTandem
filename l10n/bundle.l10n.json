@@ -656,5 +656,8 @@
   "Opening image …": "Opening image …",
   "Opening file …": "Opening file …",
   "Loading file …": "Loading file …",
-  "File waiting – transfers paused": "File waiting – transfers paused"
+  "File waiting – transfers paused": "File waiting – transfers paused",
+  "SSH + size verified": "SSH + size verified",
+  "Delete without backup": "Delete without backup",
+  "Deleting without a backup permanently removes the selected entries, including subfolders. Symlink targets are not deleted.": "Deleting without a backup permanently removes the selected entries, including subfolders. Symlink targets are not deleted."
 }

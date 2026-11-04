@@ -60,3 +60,11 @@ test('replace-all never authorizes replacing a directory in a parallel conflict'
   const results=await Promise.all([rules.resolve(job,target),rules.resolve({...job,target:'/directory'},directory)]);
   assert.deepEqual(results,[{path:'/file',replace:true},{skipped:true}]);assert.equal(calls,2);
 });
+
+test('metadata requests overlap while replace-all still produces one dialog',async()=>{
+ let calls=0,release;const gate=new Promise(r=>{release=r;});let dialogs=0;
+ const rules=new ConflictRules(async()=>{dialogs++;return {choice:'replace',apply:true};});
+ const parallelTarget={...target,stat:async()=>{calls++;await gate;return {kind:'file'};}};
+ const pending=[rules.resolve(job,parallelTarget),rules.resolve({...job,target:'/other'},parallelTarget)];
+ await new Promise(r=>setImmediate(r));assert.equal(calls,2);release();await Promise.all(pending);assert.equal(dialogs,1);
+});

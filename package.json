@@ -2,7 +2,7 @@
   "name": "xscp",
   "displayName": "FileTandem – SFTP & SCP File Manager",
   "description": "%description%",
-  "version": "0.0.25",
+  "version": "0.0.26",
   "private": true,
   "publisher": "xscp-dev",
   "type": "module",
@@ -281,110 +281,137 @@
         }
       ]
     },
-    "configuration": {
-      "title": "FileTandem",
-      "properties": {
-        "filetandem.showHiddenFiles": {
-          "type": "boolean",
-          "default": false,
-          "scope": "application",
-          "description": "%filetandem.showHiddenFiles.description%",
-          "title": "%filetandem.showHiddenFiles.title%"
-        },
-        "filetandem.demoScenario": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error",
-            "disconnected"
-          ],
-          "default": "ready",
-          "scope": "application",
-          "description": "%filetandem.demoScenario.description%",
-          "title": "%filetandem.demoScenario.title%"
-        },
-        "filetandem.editorPollInterval": {
-          "type": "integer",
-          "default": 5,
-          "minimum": 2,
-          "maximum": 60,
-          "scope": "application",
-          "description": "%filetandem.editorPollInterval.description%",
-          "title": "%filetandem.editorPollInterval.title%"
-        },
-        "filetandem.commanderKeys": {
-          "type": "boolean",
-          "default": false,
-          "scope": "application",
-          "description": "%filetandem.commanderKeys.description%",
-          "title": "%filetandem.commanderKeys.title%"
-        },
-        "filetandem.language": {
-          "type": "string",
-          "enum": [
-            "auto",
-            "de",
-            "en"
-          ],
-          "default": "auto",
-          "scope": "application",
-          "description": "%filetandem.language.description%",
-          "title": "%filetandem.language.title%",
-          "enumDescriptions": [
-            "%filetandem.language.auto%",
-            "%filetandem.language.de%",
-            "%filetandem.language.en%"
-          ]
-        },
-        "filetandem.excludedExtensions": {
-          "type": "array",
-          "default": [],
-          "maxItems": 100,
-          "uniqueItems": true,
-          "items": {
-            "type": "string",
-            "pattern": "^\\*?\\.?[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+    "configuration": [
+      {
+        "title": "FileTandem",
+        "properties": {
+          "filetandem.showHiddenFiles": {
+            "type": "boolean",
+            "default": false,
+            "scope": "application",
+            "description": "%filetandem.showHiddenFiles.description%",
+            "title": "%filetandem.showHiddenFiles.title%"
           },
-          "scope": "window",
-          "description": "%filetandem.excludedExtensions.description%"
-        },
-        "filetandem.excludedNames": {
-          "type": "array",
-          "default": [
-            ".git",
-            ".vscode",
-            ".env",
-            ".env.*",
-            "node_modules"
-          ],
-          "maxItems": 100,
-          "uniqueItems": true,
-          "items": {
+          "filetandem.demoScenario": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 256,
-            "pattern": "^[^/\\\\\\r\\n]+$"
+            "enum": [
+              "ready",
+              "loading",
+              "empty",
+              "error",
+              "disconnected"
+            ],
+            "default": "ready",
+            "scope": "application",
+            "description": "%filetandem.demoScenario.description%",
+            "title": "%filetandem.demoScenario.title%"
           },
-          "scope": "window",
-          "description": "%filetandem.excludedNames.description%"
+          "filetandem.editorPollInterval": {
+            "type": "integer",
+            "default": 5,
+            "minimum": 2,
+            "maximum": 60,
+            "scope": "application",
+            "description": "%filetandem.editorPollInterval.description%",
+            "title": "%filetandem.editorPollInterval.title%"
+          },
+          "filetandem.commanderKeys": {
+            "type": "boolean",
+            "default": false,
+            "scope": "application",
+            "description": "%filetandem.commanderKeys.description%",
+            "title": "%filetandem.commanderKeys.title%"
+          },
+          "filetandem.language": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "de",
+              "en"
+            ],
+            "default": "auto",
+            "scope": "application",
+            "description": "%filetandem.language.description%",
+            "title": "%filetandem.language.title%",
+            "enumDescriptions": [
+              "%filetandem.language.auto%",
+              "%filetandem.language.de%",
+              "%filetandem.language.en%"
+            ]
+          },
+          "filetandem.excludedExtensions": {
+            "type": "array",
+            "default": [],
+            "maxItems": 100,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^\\*?\\.?[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+            },
+            "scope": "window",
+            "description": "%filetandem.excludedExtensions.description%"
+          },
+          "filetandem.excludedNames": {
+            "type": "array",
+            "default": [
+              ".git",
+              ".vscode",
+              ".env",
+              ".env.*",
+              "node_modules"
+            ],
+            "maxItems": 100,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "pattern": "^[^/\\\\\\r\\n]+$"
+            },
+            "scope": "window",
+            "description": "%filetandem.excludedNames.description%"
+          },
+          "filetandem.excludeHidden": {
+            "type": "boolean",
+            "default": false,
+            "scope": "window",
+            "description": "%filetandem.excludeHidden.description%"
+          },
+          "filetandem.backupRemoteDeletes": {
+            "type": "boolean",
+            "default": true,
+            "scope": "window",
+            "description": "%filetandem.backupRemoteDeletes.description%"
+          }
         },
-        "filetandem.excludeHidden": {
-          "type": "boolean",
-          "default": false,
-          "scope": "window",
-          "description": "%filetandem.excludeHidden.description%"
-        },
-        "filetandem.backupRemoteDeletes": {
-          "type": "boolean",
-          "default": true,
-          "scope": "window",
-          "description": "%filetandem.backupRemoteDeletes.description%"
-        }
+        "id": "FileTandem"
       },
-      "id": "FileTandem"
-    },
+      {
+        "id": "filetandem.security",
+        "title": "%filetandem.security.title%",
+        "order": 20,
+        "properties": {
+          "filetandem.sftpUploadVerification": {
+            "type": "string",
+            "enum": [
+              "size",
+              "sha256"
+            ],
+            "default": "size",
+            "scope": "application",
+            "description": "%filetandem.sftpUploadVerification.description%",
+            "enumDescriptions": [
+              "%filetandem.sftpUploadVerification.size%",
+              "%filetandem.sftpUploadVerification.sha256%"
+            ],
+            "enumItemLabels": [
+              "%filetandem.sftpUploadVerification.sizeLabel%",
+              "%filetandem.sftpUploadVerification.sha256Label%"
+            ]
+          }
+        }
+      }
+    ],
     "viewsWelcome": [
       {
         "view": "filetandem.connections",

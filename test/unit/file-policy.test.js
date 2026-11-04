@@ -15,7 +15,7 @@ test('backup and partial names stay excluded even if all configurable rules are 
  assert.equal(rules.excludes('/site/.env'),false,'user-controlled exclusions can be removed explicitly');
 });
 test('VS Code defaults agree with the backend exclusion and backup policy',async()=>{
- const props=JSON.parse(await readFile('package.json','utf8')).contributes.configuration.properties;
+ const props=Object.assign({},...JSON.parse(await readFile('package.json','utf8')).contributes.configuration.map(category=>category.properties));
  assert.deepEqual(props['filetandem.excludedNames'].default,DEFAULT_EXCLUDED_NAMES);
  assert.equal(props['filetandem.backupRemoteDeletes'].default,filePolicy().backupRemoteDeletes);
  assert.equal(filePolicy().excludes('/site/.env.production'),true);

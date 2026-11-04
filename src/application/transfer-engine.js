@@ -10,8 +10,8 @@ import { localTarget } from '../adapters/local/transfer-target.js';
 import { TransferQueue } from './transfer-queue.js';import { discoverTree } from './transfer-tree.js';import { ConflictRules } from './transfer-conflicts.js';import { transferFile,targetSnapshot } from './transfer-file.js';
 import { serverIdentity } from '../adapters/ssh/host-keys.js';
 export class TransferEngine {
-  constructor({sessions,profiles,choose,guard=() => {},onChange=() => {},notifyInterval=0,getPolicy=()=>filePolicy()}) {
-    this.getPolicy=getPolicy;this.autoUploads=new Map();this.autoJobs=new Map();this.ready=Promise.resolve();this.sessions=sessions;this.profiles=profiles;this.guard=guard;this.local=new LocalFiles();this.conflicts=new ConflictRules(choose);
+  constructor({sessions,profiles,choose,guard=() => {},onChange=() => {},notifyInterval=0,getSftpUploadVerification=()=>'size',getPolicy=()=>filePolicy()}) {
+    this.getSftpUploadVerification=getSftpUploadVerification;this.getPolicy=getPolicy;this.autoUploads=new Map();this.autoJobs=new Map();this.ready=Promise.resolve();this.sessions=sessions;this.profiles=profiles;this.guard=guard;this.local=new LocalFiles();this.conflicts=new ConflictRules(choose);
     this.channels=new TransferChannels();
     this.queue=new TransferQueue({limit:job=>job.protocol==='sftp' ? 4:2,notifyInterval,run:(j,s,p) => this.run(j,s,p),onChange});
   }
@@ -114,7 +114,8 @@ export class TransferEngine {
         if (job.kind === 'directory') {const existing=await targetSnapshot(target,path);if (!existing) await (job.direction === 'upload' ? files.mkdir(path):this.local.mkdir(path));else if (existing.kind !== 'directory') throw new Error('Ordnerziel ist keine directory.');return {bytes:0,committed:true,finalTarget:path};}
         const source=job.direction==='upload' ? localTarget:targetFor(files);
         const current=await source.stat(job.source);const metadata={mode:current.mode&0o777,modified:current.modified};
-        const result=await transferFile(session,{...job,target:path,metadata,...(automatic ? {expectedTarget:automatic.expected.get(path)?.info ?? null,expectedTargetHash:automatic.expected.get(path)?.hash}: {})},{target,source,identity:profileIdentity(profile),replace,signal,onProgress,stream:profile.protocol==='sftp' ? (session,options)=>streamFile(session,{...options,files}):streamFor(profile.protocol),beforePublish:validate,onCheckpoint:attempt => this.queue.checkpoint(job.id,attempt,this.key(job,attempt.target))});return {...result,finalTarget:path};
+        const verification=profile.protocol==='sftp' && job.direction==='upload' && !job.automatic && !job.reviewedReplacement && !job.resumeFrom ? this.getSftpUploadVerification():'sha256';
+        const result=await transferFile(session,{...job,target:path,metadata,...(automatic ? {expectedTarget:automatic.expected.get(path)?.info ?? null,expectedTargetHash:automatic.expected.get(path)?.hash}: {})},{verification,target,source,identity:profileIdentity(profile),replace,signal,onProgress,stream:profile.protocol==='sftp' ? (session,options)=>streamFile(session,{...options,files}):streamFor(profile.protocol),beforePublish:validate,onCheckpoint:attempt => this.queue.checkpoint(job.id,attempt,this.key(job,attempt.target))});return {...result,finalTarget:path};
       },signal);
       healthy=true;return completed;
     } finally {signal.removeEventListener('abort',close);if(lease) lease.release(healthy);else files.close();}
