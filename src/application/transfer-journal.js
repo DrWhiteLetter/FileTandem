@@ -2,12 +2,13 @@ import { localPath } from '../adapters/local/files.js';import { remotePath } fro
 import { mkdir,readFile,open,rename,unlink } from 'node:fs/promises';
 import { createHmac,timingSafeEqual } from 'node:crypto';
 import { dirname } from 'node:path';import { randomUUID } from 'node:crypto';
-const fields=['verification','automatic','id','batchId','profileId','profileKey','server','direction','source','target','lockKey','kind','protocol','metadata','parentId','name','state','bytes','error','errorCode','started','rate','reason','sha256','committed','finalTarget','partialPath','retryOf','attempt','resumeFrom','resumedBytes','partialCleaned'];
+const fields=['historyHidden','verification','automatic','id','batchId','profileId','profileKey','server','direction','source','target','lockKey','kind','protocol','metadata','parentId','name','state','bytes','error','errorCode','started','rate','reason','sha256','committed','finalTarget','partialPath','retryOf','attempt','resumeFrom','resumedBytes','partialCleaned'];
 const states=['queued','running','completed','failed','cancelled','skipped','interrupted'];
 export function journalJob(raw) {
   if (!raw || typeof raw !== 'object' || Object.keys(raw).some(k => !fields.includes(k)) || !['id','batchId','profileId','server','source','target','lockKey'].every(k => typeof raw[k] === 'string' && raw[k].length > 0 && raw[k].length <= 32768) || !['upload','download'].includes(raw.direction) || !states.includes(raw.state) || !['file','directory','symlink','other','error'].includes(raw.kind)) throw new Error('Ungültiger Journaleintrag.');
   (raw.protocol==='local' || raw.direction === 'upload' ? localPath:remotePath)(raw.source);(raw.protocol==='local' || raw.direction !== 'upload' ? localPath:remotePath)(raw.target);
   if (raw.protocol==='local' && (raw.profileId!=='local-files' || raw.server!=='local' || raw.attempt || raw.resumeFrom || raw.automatic)) throw new Error('Ungültiger lokaler Auftrag.');
+  if (raw.historyHidden!==undefined && (typeof raw.historyHidden!=='boolean' || raw.historyHidden && ['queued','running'].includes(raw.state))) throw new Error('Invalid transfer history state.');
   if(raw.verification!==undefined && !['sha256','size'].includes(raw.verification)) throw new Error('Invalid verification result.');
   if (raw.automatic!==undefined && typeof raw.automatic!=='boolean') throw new Error('Ungültiger automatischer Auftrag.');
   if (raw.partialCleaned !== undefined && typeof raw.partialCleaned!=='boolean') throw new Error('Ungültiger Bereinigungszustand.');

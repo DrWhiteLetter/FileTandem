@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.28 – 05.11.2026
+
+- Erfolgreiche Transfers direkt aus dem Verlauf entfernen oder alle beendeten Einträge nach Bestätigung ausblenden; laufende und wartende Aufträge sowie Dateien bleiben erhalten. Die Auswahl gilt pro Profil in allen Sitzungen und bleibt nach Neustart bestehen.
+
 ## 0.0.27 – 05.11.2026
 
 - Hochladen und Herunterladen als größere Hauptaktionen in einer eigenen Zeile hervorheben.

@@ -17,3 +17,13 @@ test('signed journal detects edited paths and retains only safe unsigned M3 hist
 test('unavailable secure storage disables journal operations without overwriting existing history',async () => {
  const directory=await mkdtemp(join(tmpdir(),'xscp-journal-disabled-'));try {const path=join(directory,'journal.json');await writeFile(path,'keep-existing-history');const journal=new TransferJournal(path);journal.disabled=true;assert.deepEqual(await journal.load(),[]);journal.update([job]);await journal.flush();assert.equal(await readFile(path,'utf8'),'keep-existing-history');} finally {await rm(directory,{recursive:true,force:true});}
 });
+
+test('cleared history survives journal reload with dependency metadata intact',async()=>{
+ const directory=await mkdtemp(join(tmpdir(),'filetandem-history-'));
+ try {
+  const journal=new TransferJournal(join(directory,'journal.json'));const queue=new TransferQueue({run:async()=>{},onChange:jobs=>journal.update(jobs)});
+  queue.restore([{...job,state:'completed',kind:'directory',finalTarget:'/renamed'},{...job,id:'child',state:'failed',parentId:'job'}]);queue.clearHistory('profile','successful');await journal.flush();
+  const restored=await journal.load();assert.equal(restored.find(j=>j.id==='job').historyHidden,true);assert.equal(restored.find(j=>j.id==='job').finalTarget,'/renamed');assert.equal(restored.find(j=>j.id==='child').historyHidden,undefined);
+  queue.dispose();await journal.flush();
+ } finally {await rm(directory,{recursive:true,force:true});}
+});

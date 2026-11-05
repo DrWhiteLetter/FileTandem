@@ -57,6 +57,9 @@ test('Real browser selection survives refresh; per-pane filters, symlinks and pr
   await act(() => button('Hochladen →').click());assert.equal(messages.at(-1).type,'transfer');assert.equal(messages.at(-1).side,'local');assert.deepEqual(JSON.parse(JSON.stringify(messages.at(-1).ids)),['/tmp/a.txt']);
   await act(() => doc.querySelector('.pane:last-child tbody tr').click());await act(() => button('Download nach …').click());assert.equal(messages.at(-1).destination,'choose');assert.equal(messages.at(-1).side,'remote');
   model.queue=[{id:'running',source:'/a',target:'/b',direction:'upload',state:'running',bytes:12,rate:10},{id:'failed',source:'/a',target:'/c',direction:'upload',protocol:'sftp',attempt:{part:'/own-part'},state:'failed',bytes:0,rate:0},{id:'success',source:'/a',target:'/d',direction:'upload',state:'completed',bytes:12,rate:10}];await render();
+  assert.equal(button('Erfolgreiche entfernen').disabled,false);assert.equal(button('Transferverlauf leeren …').disabled,false);
+  await act(() => button('Erfolgreiche entfernen').click());assert.equal(messages.at(-1).type,'queueClear');assert.equal(messages.at(-1).mode,'successful');
+  await act(() => button('Transferverlauf leeren …').click());assert.equal(messages.at(-1).mode,'all');
   await act(() => button('Queue pausieren').click());assert.equal(messages.at(-1).type,'queuePause');assert.equal(messages.at(-1).paused,true);
   await act(() => button('Abbrechen').click());assert.deepEqual(JSON.parse(JSON.stringify(messages.at(-1).ids)),['running']);
   await act(() => button('Fehlgeschlagene erneut starten').click());assert.deepEqual(JSON.parse(JSON.stringify(messages.at(-1).ids)),['failed']);
@@ -254,4 +257,12 @@ test('compact transfer updates preserve file panes and retry jobs outside the vi
  assert.ok(doc.querySelector('.queue-toggle').textContent.includes('1500'));assert.equal(model.local.path,'/local');
  assert.equal(doc.querySelector('.queue-progress progress').max,500);assert.equal(doc.querySelector('.queue-progress progress').value,100);assert.ok(doc.querySelector('.queue-progress').textContent.includes('20%'));
  await act(()=>doc.querySelector('.queue-toggle').click());assert.equal(doc.querySelector('.queue-content'),null);assert.ok(doc.querySelector('.queue-progress'));assert.ok(doc.querySelector('.queue-progress .queue-failures').textContent.includes('1'));
+});
+
+test('history controls use full-profile totals and disable after cleared updates',async t=>{
+ const {dom,doc,act}=await polishFixture(t,{saved:{version:1,queueOpen:true}});
+ const data={version:1,type:'transferModel',sessionId:'polish',queuePaused:false,queue:[],queueSummary:{total:400,active:200,failures:0,successful:200,settled:200,retryIds:[]}};
+ const render=()=>act(()=>dom.window.dispatchEvent(new dom.window.MessageEvent('message',{data:dom.window.JSON.parse(JSON.stringify(data))})));
+ await render();let buttons=doc.querySelectorAll('.queue-history-toolbar button');assert.equal(buttons[0].disabled,false);assert.equal(buttons[1].disabled,false);
+ data.queueSummary={total:200,active:200,failures:0,successful:0,settled:0,retryIds:[]};await render();buttons=doc.querySelectorAll('.queue-history-toolbar button');assert.equal(buttons[0].disabled,true);assert.equal(buttons[1].disabled,true);
 });

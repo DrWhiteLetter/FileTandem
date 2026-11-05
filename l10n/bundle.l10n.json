@@ -667,5 +667,12 @@
   "successful": "successful",
   "skipped": "skipped",
   "cancelled": "cancelled",
-  "failed": "failed"
+  "failed": "failed",
+  "Remove successful entries": "Remove successful entries",
+  "Clear transfer history …": "Clear transfer history …",
+  "Manage transfer history": "Manage transfer history",
+  "History only · Current profile · Files are kept.": "History only · Current profile · Files are kept.",
+  "Clear transfer history?": "Clear transfer history?",
+  "Clear history": "Clear history",
+  "Only finished entries for this profile are removed from the history in all sessions. Running and queued transfers remain. Files and partial files are not deleted. Retry and partial-file cleanup actions for removed entries will no longer be available.": "Only finished entries for this profile are removed from the history in all sessions. Running and queued transfers remain. Files and partial files are not deleted. Retry and partial-file cleanup actions for removed entries will no longer be available."
 }

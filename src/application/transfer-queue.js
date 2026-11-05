@@ -1,4 +1,4 @@
-import { transition,batchState,locksOverlap } from '../domain/transfer-job.js';
+import { transition,batchState,locksOverlap,TERMINAL } from '../domain/transfer-job.js';
 export class TransferQueue {
   #jobs=new Map();#waiting=new Map();#active=new Map();#scheduled=false;#disposed=false;#progressAt=0;#notifyTimer;#notifiedAt=0;#maintenance=new Set();
   constructor({run,onChange=() => {},limit=2,notifyInterval=0}) {this.notifyInterval=notifyInterval;this.run=run;this.onChange=onChange;this.limit=limit;this.paused=false;}
@@ -62,11 +62,22 @@ export class TransferQueue {
   retry(ids,idFactory,{resume=false}={}) {
     const retryable=this.validateRetry(ids,{resume});const mapping=new Map(retryable.map(j => [j.id,idFactory()]));const batchId=idFactory();
     for (const job of retryable) {
-      const copy={...job};for (const key of ['verification','automatic','bytes','error','errorCode','started','rate','state','sha256','committed','finalTarget','partialPath','resumedBytes','resumeFrom']) delete copy[key];
+      const copy={...job};for (const key of ['historyHidden','verification','automatic','bytes','error','errorCode','started','rate','state','sha256','committed','finalTarget','partialPath','resumedBytes','resumeFrom']) delete copy[key];
       if (!resume) delete copy.attempt;else copy.resumeFrom=job.id;
       this.add({...copy,id:mapping.get(job.id),batchId,parentId:mapping.get(job.parentId) ?? job.parentId,retryOf:job.id});
     }
     return batchId;
+  }
+  // Retain dependency/checkpoint metadata; clearing history must not break children or retries.
+  clearHistory(profileId,mode,ids) {
+    if (typeof profileId!=='string' || !profileId || !['successful','all'].includes(mode)) throw new Error('Invalid history selection.');
+    const selected=ids===undefined ? undefined:new Set(ids);let count=0;
+    for (const [id,job] of this.#jobs) {
+      if (job.profileId!==profileId || job.historyHidden || !TERMINAL.includes(job.state) || mode==='successful' && job.state!=='completed' || selected && !selected.has(id)) continue;
+      this.#jobs.set(id,{...job,historyHidden:true});count++;
+    }
+    if (count) this.#notify(true);
+    return count;
   }
   clearPartial(part) {for (const [id,job] of this.#jobs) if (job.attempt?.part===part) {const copy={...job,partialCleaned:true};delete copy.attempt;this.#jobs.set(id,copy);}this.#notify();}
   async maintain(key,action) {while ([...this.#maintenance].some(held => locksOverlap(held,key)) || [...this.#active.values()].some(a => [a.job.lockKey,...(a.extra ?? [])].some(held => locksOverlap(held,key)))) await new Promise(r => setTimeout(r,10));if (this.#disposed) throw new Error('Queue beendet.');this.#maintenance.add(key);try {return await action();} finally {this.#maintenance.delete(key);this.#schedule();}}

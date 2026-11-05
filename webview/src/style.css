@@ -218,3 +218,6 @@ body.vscode-high-contrast .entry-icon, body.vscode-high-contrast-light .entry-ic
 .queue-progress.is-running progress { animation: transfer-pulse 1.6s ease-in-out infinite; }
 @keyframes transfer-pulse { 50% { opacity: .65; } }
 @media (prefers-reduced-motion: reduce) { .queue-progress.is-running progress { animation: none; } .queue-progress progress::-webkit-progress-value { transition: none; } }
+
+.queue-history-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 6px 8px 10px; border-bottom: 1px solid var(--vscode-panel-border); }
+.queue-history-toolbar .badge { font-size: .92em; }

@@ -39,3 +39,29 @@ test('a saturated server does not repeatedly schedule its waiting jobs; other se
  assert.ok(started.includes('other'));assert.ok(limitChecks-before<20,'capacity checks must not scale with all waiting jobs');
  for(let i=2;i<1000;i++)queue.cancel('pending-'+i);release();await queue.idle();assert.equal(queue.list().filter(j=>j.state==='completed').length,3);queue.dispose();
 });
+
+test('history clearing preserves active jobs, other profiles and parent dependencies; retries become visible',async()=>{
+ let notifications=0;
+ const queue=new TransferQueue({onChange:()=>notifications++,run:async j=>{assert.equal(queue.get(j.parentId)?.state,'completed');return {committed:true};}});
+ queue.restore([{...job('parent'),kind:'directory',state:'completed',finalTarget:'/renamed'},...['failed','cancelled','interrupted','skipped'].map(state=>({...job(state),state,parentId:'parent'})),{...job('other'),profileId:'other',state:'completed'},{...job('pending'),state:'queued',parentId:'parent'}]);
+ assert.equal(queue.clearHistory('p','successful'),1);
+ assert.equal(queue.get('parent').finalTarget,'/renamed');assert.equal(queue.get('failed').historyHidden,undefined);
+ assert.equal(queue.get('other').historyHidden,undefined);assert.equal(queue.get('pending').historyHidden,undefined);
+ assert.equal(queue.clearHistory('p','all'),4);assert.equal(queue.clearHistory('p','all'),0);
+ let id=0;queue.retry(['failed'],()=>`new-${++id}`);
+ assert.equal(queue.list().find(j=>j.retryOf==='failed').historyHidden,undefined);
+ queue.pause(false);await queue.idle();assert.equal(queue.get('pending').state,'completed');
+ assert.ok(notifications>=3);assert.throws(()=>queue.clearHistory(undefined,'all'));assert.throws(()=>queue.clearHistory('p','running'));queue.dispose();
+});
+
+test('clearing a captured history selection does not hide jobs that finish while confirmation is open',async()=>{
+ let finish;const gate=new Promise(resolve=>{finish=resolve;});
+ const queue=new TransferQueue({run:async()=>{await gate;return {committed:true};}});
+ queue.restore([{...job('old'),state:'completed'}]);queue.add(job('active'));
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(queue.get('active').state,'running');
+ assert.equal(queue.clearHistory('p','all',['active']),0);
+ const selected=queue.list('p').filter(j=>j.state==='completed').map(j=>j.id);
+ finish();await queue.idle();queue.clearHistory('p','all',selected);
+ assert.equal(queue.get('active').historyHidden,undefined);assert.equal(queue.get('old').historyHidden,true);queue.dispose();
+});

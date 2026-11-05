@@ -30,3 +30,10 @@ test('settings and backup restoration cannot inject server destinations or appro
  assert.equal(browserRequest({version:1,type:'settings',sessionId:'session-a',id:'settings'},'session-a'),true);
  assert.equal(browserRequest({version:1,type:'settings',sessionId:'session-a',id:'settings',command:'arbitrary'},'session-a'),false);
 });
+
+test('history requests allow only explicit modes and cannot choose another profile or bypass confirmation',()=>{
+ const request={version:1,type:'queueClear',sessionId:'session-a',id:'clear',mode:'all'};
+ assert.ok(browserRequest(request,'session-a'));assert.ok(browserRequest({...request,mode:'successful'},'session-a'));
+ for(const extra of [{mode:'running'},{profileId:'other'},{confirmed:true},{ids:['foreign']},{path:'/file'}]) assert.equal(browserRequest({...request,...extra},'session-a'),false);
+ assert.equal(browserRequest(request,'other'),false);
+});

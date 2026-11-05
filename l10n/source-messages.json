@@ -670,5 +670,12 @@
   "erfolgreich": "successful",
   "übersprungen": "skipped",
   "abgebrochen": "cancelled",
-  "fehlgeschlagen": "failed"
+  "fehlgeschlagen": "failed",
+  "Erfolgreiche entfernen": "Remove successful entries",
+  "Transferverlauf leeren …": "Clear transfer history …",
+  "Transferverlauf verwalten": "Manage transfer history",
+  "Nur Verlauf · Aktuelles Profil · Dateien bleiben erhalten.": "History only · Current profile · Files are kept.",
+  "Transferverlauf leeren?": "Clear transfer history?",
+  "Verlauf leeren": "Clear history",
+  "Nur beendete Einträge dieses Profils werden in allen Sitzungen aus dem Verlauf entfernt. Laufende und wartende Transfers bleiben erhalten. Dateien und Teil-Dateien werden nicht gelöscht. Wiederholen und Teil-Dateien bereinigen sind für entfernte Einträge anschließend nicht mehr verfügbar.": "Only finished entries for this profile are removed from the history in all sessions. Running and queued transfers remain. Files and partial files are not deleted. Retry and partial-file cleanup actions for removed entries will no longer be available."
 }

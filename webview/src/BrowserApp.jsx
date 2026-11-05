@@ -142,6 +142,8 @@ function TransferList({summary,jobs,paused,send,watching,localMode,open,setOpen}
   const total=summary?.total ?? jobs.length;
   const failures=summary?.failures ?? jobs.filter(j => ['failed','interrupted'].includes(j.state)).length;
   const active=summary?.active ?? jobs.filter(j => ['queued','running'].includes(j.state)).length;
+  const successful=summary?.successful ?? jobs.filter(job=>job.state==='completed').length;
+  const settled=summary?.settled ?? jobs.filter(job=>['completed','skipped','failed','cancelled','interrupted'].includes(job.state)).length;
   const progress=summary?.progress ?? transferProgress(jobs);
   const percent=progress.total ? Math.floor(100*progress.settled/progress.total):0;
   const dataSize=value=>value>=1048576 ? `${(value/1048576).toFixed(1)} MiB`:`${(value/1024).toFixed(1)} KiB`;
@@ -159,6 +161,11 @@ function TransferList({summary,jobs,paused,send,watching,localMode,open,setOpen}
         <button onClick={() => send('queuePause',{paused:!paused})}><Icon name={paused ? 'debug-continue':'debug-pause'} /> {paused ? t("Resume queue"):t("Pause queue")}</button>
         <button disabled={watching || !retryIds.length} onClick={() => action('retry',retryIds)}>{t("Retry failed jobs")}</button>
         <span className="badge">{paused ? t(" New starts paused; active transfers continue."):t(" Pause applies globally to new starts.")}</span>
+      </div>
+      <div className="queue-history-toolbar" role="group" aria-label={t("Manage transfer history")}>
+        <button disabled={!successful} onClick={() => send('queueClear',{mode:'successful'})}>{t("Remove successful entries")}</button>
+        <button disabled={!settled} onClick={() => send('queueClear',{mode:'all'})}>{t("Clear transfer history …")}</button>
+        <span className="badge">{t("History only · Current profile · Files are kept.")}</span>
       </div>
       <div className="queue-scroll" tabIndex={0} role="region" aria-label={t("Transfer history")}>
         {!jobs.length ? <p className="queue-empty">{localMode ? t('No copies yet. Select files and copy them to the opposite folder.'):t("No transfers yet. Select files, then upload or download them.")}</p>:<table aria-label={t("Transfer queue")} className="transfer-table"><colgroup><col className="transfer-path-column" /><col className="transfer-direction-column" /><col className="transfer-status-column" /><col className="transfer-bytes-column" /></colgroup><thead><tr><th scope="col">{t("File / destination")}</th><th scope="col">{t("Direction")}</th><th scope="col">{t('Status')}</th><th scope="col" className="numeric">Bytes / Rate</th></tr></thead><tbody>

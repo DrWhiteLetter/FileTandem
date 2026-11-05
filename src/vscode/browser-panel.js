@@ -1,3 +1,4 @@
+import {clearTransferHistory} from '../application/transfer-history.js';
 import {transferView} from '../shared/transfer-view.js';
 import {transferRefreshSides} from '../application/transfer-refresh.js';
 import { registerFileOpeningProgress } from './file-opening-progress.js';
@@ -256,6 +257,14 @@ Permissions: ${info.mode.toString(8).padStart(3,'0')}${info.kind === 'symlink' ?
         else if (message.type === 'disconnect') {if (profile) await profileUI.disconnect(profile);}
         else if (message.type === 'reconnect') {if (profile) {await profileUI.connect(profile);remoteFiles?.close();remoteTransport=undefined;opening=undefined;await remote.refresh();}}
         else if (message.type === 'queuePause') profileUI.transfers.engine.queue.pause(message.paused);
+        else if (message.type === 'queueClear') {
+          const owner=queueOwner(),queue=profileUI.transfers.engine.queue;
+          await profileUI.transfers.engine.ready;
+          await clearTransferHistory({queue,profileId:owner,mode:message.mode,
+            confirm:async()=>await vscode.window.showWarningMessage("Clear transfer history?",{modal:true,detail:"Only finished entries for this profile are removed from the history in all sessions. Running and queued transfers remain. Files and partial files are not deleted. Retry and partial-file cleanup actions for removed entries will no longer be available."},"Clear history")==="Clear history",
+            isCurrent:()=>{profileUI.guard();return alive && queueOwner()===owner;},
+          });
+        }
         else if (message.type === 'queueAction') {
           const owned=profileUI.transfers.engine.queue.list(queueOwner());if (message.ids.some(id => !owned.some(j => j.id === id))) throw new Error("Queue job belongs to another profile.");
           if (message.action === 'cancel') for (const id of message.ids) profileUI.transfers.engine.queue.cancel(id);

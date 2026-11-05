@@ -1,13 +1,16 @@
 /** Send only displayed rows; keep totals and retry actions for the entire history. */
-export function transferView(jobs) {
-  let active=0,failures=0;const retryIds=[];
+export function transferView(allJobs) {
+  const jobs=allJobs.filter(job=>!job.historyHidden);
+  let active=0,failures=0,successful=0,settled=0;const retryIds=[];
   for(const job of jobs) {
+    if(job.state==='completed') successful++;
+    if(['completed','skipped','failed','cancelled','interrupted'].includes(job.state)) settled++;
     if(['queued','running'].includes(job.state)) active++;
     if(['failed','interrupted'].includes(job.state)) failures++;
     if(retryIds.length<1000 && ['failed','cancelled','interrupted'].includes(job.state)) retryIds.push(job.id);
   }
   const fields=['batchId','verification','id','source','target','finalTarget','direction','protocol','state','bytes','rate','error','reason','partialCleaned','committed'];
-  return {queue:jobs.slice(-200).map(job=>({...Object.fromEntries(fields.filter(key=>job[key]!==undefined).map(key=>[key,job[key]])),attempt:!!job.attempt})),queueSummary:{total:jobs.length,active,failures,retryIds,progress:transferProgress(jobs)}};
+  return {queue:jobs.slice(-200).map(job=>({...Object.fromEntries(fields.filter(key=>job[key]!==undefined).map(key=>[key,job[key]])),attempt:!!job.attempt})),queueSummary:{total:jobs.length,active,failures,successful,settled,retryIds,progress:transferProgress(active ? allJobs:jobs.length ? allJobs.filter(job=>job.batchId===jobs.at(-1).batchId):[])}};
 }
 
 /** Active batches, or the latest batch after completion; never dilute with old history. */
