@@ -662,5 +662,13 @@
   "Datei wartet – Transfers pausiert": "File waiting – transfers paused",
   "SSH + Größe geprüft": "SSH + size verified",
   "Ohne Sicherung löschen": "Delete without backup",
-  "Löschen ohne Sicherung entfernt die ausgewählten Einträge einschließlich Unterordner dauerhaft. Symlink-Ziele werden nicht gelöscht.": "Deleting without a backup permanently removes the selected entries, including subfolders. Symlink targets are not deleted."
+  "Löschen ohne Sicherung entfernt die ausgewählten Einträge einschließlich Unterordner dauerhaft. Symlink-Ziele werden nicht gelöscht.": "Deleting without a backup permanently removes the selected entries, including subfolders. Symlink targets are not deleted.",
+  "Transferlauf beendet": "Transfer batch finished",
+  "Dateien werden übertragen …": "Transferring files …",
+  "Einträge bearbeitet": "entries processed",
+  "Transferfortschritt nach Einträgen": "Transfer progress by entries",
+  "erfolgreich": "successful",
+  "übersprungen": "skipped",
+  "abgebrochen": "cancelled",
+  "fehlgeschlagen": "failed"
 }

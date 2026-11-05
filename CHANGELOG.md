@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.27 – 05.11.2026
+
+- Hochladen und Herunterladen als größere Hauptaktionen in einer eigenen Zeile hervorheben.
+- Ordner durch gefüllte, farbige Symbole deutlicher von Dokumenten unterscheiden.
+- Fortschrittsbalken nach bearbeiteten Einträgen, Datenmenge und Geschwindigkeit auch bei eingeklappter Transferliste anzeigen; Ergebnisse getrennt ausweisen.
+
 ## 0.0.26 – 04.11.2026
 
 - Beim manuellen Remote-Löschen zusätzlich „Ohne Sicherung löschen“ anbieten, auch wenn .bak-Sicherungen aktiviert sind.

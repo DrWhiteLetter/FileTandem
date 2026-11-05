@@ -86,6 +86,10 @@ summary:hover { background: var(--vscode-toolbar-hoverBackground); }
 .column-popover { position: absolute; z-index: 5; right: 0; top: 100%; width: 256px; max-width: calc(100vw - 48px); padding: 12px; border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border)); background: var(--vscode-editorWidget-background, var(--vscode-editor-background)); color: var(--vscode-editorWidget-foreground, var(--vscode-foreground)); box-shadow: 0 2px 8px var(--vscode-widget-shadow, transparent); }
 .column-popover label { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-height: 28px; }
 .column-popover input[type='range'] { width: 100%; }
+/* Transfers are the primary action in each pane; keep file maintenance separate. */
+.pane-transfer-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 8px; border-bottom: 1px solid var(--vscode-panel-border); }
+.pane-transfer-button { min-height: 36px; min-width: 150px; padding: 6px 18px; font-weight: 600; }
+.pane-transfer-button:disabled { border-color: var(--vscode-button-border, var(--vscode-panel-border)); }
 .pane-actions { display: flex; flex-wrap: wrap; gap: 2px; padding: 4px 6px; }
 .pane-actions button { padding-inline: 6px; }
 .file-scroll { flex: 1; overflow: auto; min-height: 72px; position: relative; scroll-padding-top: 36px; }
@@ -197,3 +201,20 @@ body.vscode-high-contrast .selected, body.vscode-high-contrast-light .selected {
 .preview-status { margin-left: 8px; font-size: 0.9em; }
 .preview-status .codicon-loading { animation: directory-spin 1s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .preview-status .codicon-loading { animation: none; } }
+
+/* Folder mass + document outline distinguish kinds independently of color. */
+.entry-icon { display: inline-block; width: 20px; height: 20px; margin-right: 5px; vertical-align: middle; flex-shrink: 0; }
+.entry-icon.codicon { font-size: 20px; }
+.entry-icon-folder { color: var(--vscode-symbolIcon-folderForeground, var(--vscode-editorWarning-foreground, #cca700)); }
+.pane tbody tr.selected .entry-icon, .pane tbody tr:hover .entry-icon,
+body.vscode-high-contrast .entry-icon, body.vscode-high-contrast-light .entry-icon { color: inherit; }
+
+.queue-progress { padding: 8px 12px; flex-shrink: 0; border-top: 1px solid var(--vscode-panel-border); }
+.queue-progress-heading, .queue-progress-details { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; font-variant-numeric: tabular-nums; }
+.queue-progress-details { font-size: 12px; color: var(--vscode-descriptionForeground); }
+.queue-progress progress { display: block; appearance: none; width: 100%; height: 8px; margin: 7px 0; border: 1px solid var(--vscode-contrastBorder, transparent); border-radius: 4px; overflow: hidden; background: var(--vscode-button-secondaryBackground); }
+.queue-progress progress::-webkit-progress-bar { background: var(--vscode-button-secondaryBackground); }
+.queue-progress progress::-webkit-progress-value { background: var(--vscode-progressBar-background, var(--vscode-focusBorder)); transition: width .2s ease; }
+.queue-progress.is-running progress { animation: transfer-pulse 1.6s ease-in-out infinite; }
+@keyframes transfer-pulse { 50% { opacity: .65; } }
+@media (prefers-reduced-motion: reduce) { .queue-progress.is-running progress { animation: none; } .queue-progress progress::-webkit-progress-value { transition: none; } }

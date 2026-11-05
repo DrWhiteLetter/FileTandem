@@ -1,10 +1,10 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {transferView} from '../../src/shared/transfer-view.js';
+import {transferView,transferProgress} from '../../src/shared/transfer-view.js';
 import {transferRefreshSides} from '../../src/application/transfer-refresh.js';
 import {transferResponse} from '../../src/shared/browser-messages.js';
 test('bounded history keeps all totals and retry IDs, omitting checkpoints and hidden row details',()=>{
  const jobs=Array.from({length:1500},(_,i)=>({id:'job-'+i,state:i===0?'failed':i<1300?'queued':'completed',source:'/local/'+i,target:'/remote/'+i,attempt:{sourceHash:'secret-to-view'}}));
- const view=transferView(jobs);assert.equal(view.queue.length,200);assert.deepEqual(view.queueSummary,{total:1500,active:1299,failures:1,retryIds:['job-0']});assert.equal(view.queue[0].attempt,true);assert.ok(!JSON.stringify(view).includes('secret-to-view'));
+ const view=transferView(jobs);assert.equal(view.queue.length,200);assert.deepEqual({...view.queueSummary,progress:undefined},{progress:undefined,total:1500,active:1299,failures:1,retryIds:['job-0']});assert.equal(view.queue[0].attempt,true);assert.ok(!JSON.stringify(view).includes('secret-to-view'));
  const message={version:1,type:'transferModel',sessionId:'p',queuePaused:false,...view};assert.ok(transferResponse(message,'p'));assert.equal(transferResponse(message,'other'),false);
 });
 test('uploads refresh only the visible target directory; nested transfers do not rescan its ancestor',()=>{
@@ -13,4 +13,12 @@ test('uploads refresh only the visible target directory; nested transfers do not
  assert.equal(transferRefreshSides([{direction:'upload',target:'/remote/nested/file'}],paths).size,0);
  assert.deepEqual([...transferRefreshSides([{direction:'download',target:'/local/file'}],paths)],['local']);
  assert.deepEqual([...transferRefreshSides([{direction:'upload',target:'/remote/file'}],paths,{localMode:true})],['remote']);
+});
+
+test('progress excludes old history and reports all active batches, errors and live rates',()=>{
+ const jobs=[{batchId:'old',state:'completed',bytes:9000,rate:900},{batchId:'a',state:'completed',bytes:100,rate:100},{batchId:'a',state:'running',bytes:50,rate:25},{batchId:'b',state:'queued'},{batchId:'b',state:'failed',bytes:10}];
+ assert.deepEqual(transferProgress(jobs),{total:4,settled:2,completed:1,failed:1,skipped:0,cancelled:0,running:1,bytes:160,rate:25});
+ jobs[2].state='completed';jobs[3].state='cancelled';
+ assert.deepEqual(transferProgress(jobs),{total:2,settled:2,completed:0,failed:1,skipped:0,cancelled:1,running:0,bytes:10,rate:0});
+ assert.equal(transferProgress([]).total,0);
 });

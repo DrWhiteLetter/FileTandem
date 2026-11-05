@@ -24,5 +24,5 @@ export function browserResponse(value,sessionId) {
 }
 
 export function transferResponse(value,sessionId) {
-  return plain(value) && value.version===1 && value.type==='transferModel' && value.sessionId===sessionId && Array.isArray(value.queue) && value.queue.length<=200 && plain(value.queueSummary) && ['total','active','failures'].every(key=>Number.isSafeInteger(value.queueSummary[key]) && value.queueSummary[key]>=0) && Array.isArray(value.queueSummary.retryIds) && value.queueSummary.retryIds.length<=1000 && value.queueSummary.retryIds.every(token) && typeof value.queuePaused==='boolean';
+  return plain(value) && value.version===1 && value.type==='transferModel' && value.sessionId===sessionId && Array.isArray(value.queue) && value.queue.length<=200 && plain(value.queueSummary) && ['total','active','failures'].every(key=>Number.isSafeInteger(value.queueSummary[key]) && value.queueSummary[key]>=0) && (value.queueSummary.progress===undefined || plain(value.queueSummary.progress) && ['total','settled','completed','failed','skipped','cancelled','running','bytes','rate'].every(key=>Number.isFinite(value.queueSummary.progress[key]) && value.queueSummary.progress[key]>=0)) && Array.isArray(value.queueSummary.retryIds) && value.queueSummary.retryIds.length<=1000 && value.queueSummary.retryIds.every(token) && typeof value.queuePaused==='boolean';
 }
