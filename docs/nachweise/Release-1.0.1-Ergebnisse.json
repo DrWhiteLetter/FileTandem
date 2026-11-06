@@ -1,0 +1,173 @@
+{
+  "started": "2026-11-06T13:29:09.608Z",
+  "version": "1.0.1",
+  "platform": "darwin",
+  "architecture": "arm64",
+  "os": "25.6.0",
+  "node": "v22.13.1",
+  "steps": [
+    {
+      "name": "quality",
+      "exitCode": 0,
+      "seconds": 15.108,
+      "log": "quality.log"
+    },
+    {
+      "name": "fixtures-verify",
+      "exitCode": 0,
+      "seconds": 2.608,
+      "log": "fixtures-verify.log"
+    },
+    {
+      "name": "protocols",
+      "exitCode": 0,
+      "seconds": 24.753,
+      "log": "protocols.log"
+    },
+    {
+      "name": "editor-service",
+      "exitCode": 0,
+      "seconds": 0.415,
+      "log": "editor-service.log"
+    },
+    {
+      "name": "integrity",
+      "exitCode": 0,
+      "seconds": 2.191,
+      "log": "integrity.log"
+    },
+    {
+      "name": "local-disk-full",
+      "exitCode": 0,
+      "seconds": 2.241,
+      "log": "local-disk-full.log"
+    },
+    {
+      "name": "package",
+      "exitCode": 0,
+      "seconds": 4.171,
+      "log": "package.log"
+    },
+    {
+      "name": "namespace-migration",
+      "exitCode": 0,
+      "seconds": 7.511,
+      "log": "namespace-migration.log"
+    },
+    {
+      "name": "minimum-installed",
+      "exitCode": 0,
+      "seconds": 3.385,
+      "log": "minimum-installed.log"
+    },
+    {
+      "name": "minimum-browser-restart",
+      "exitCode": 0,
+      "seconds": 8.241,
+      "log": "minimum-browser-restart.log"
+    },
+    {
+      "name": "minimum-editor",
+      "exitCode": 0,
+      "seconds": 13.277,
+      "log": "minimum-editor.log"
+    },
+    {
+      "name": "minimum-remote-editor",
+      "exitCode": 0,
+      "seconds": 75.154,
+      "log": "minimum-remote-editor.log"
+    },
+    {
+      "name": "minimum-accessibility",
+      "exitCode": 0,
+      "seconds": 4.963,
+      "log": "minimum-accessibility.log"
+    },
+    {
+      "name": "minimum-restricted",
+      "exitCode": 0,
+      "seconds": 3.697,
+      "log": "minimum-restricted.log"
+    },
+    {
+      "name": "minimum-reload",
+      "exitCode": 0,
+      "seconds": 4.618,
+      "log": "minimum-reload.log"
+    },
+    {
+      "name": "minimum-two-windows",
+      "exitCode": 0,
+      "seconds": 11.206,
+      "log": "minimum-two-windows.log"
+    },
+    {
+      "name": "minimum-native-f5",
+      "exitCode": 0,
+      "seconds": 7.583,
+      "log": "minimum-native-f5.log"
+    },
+    {
+      "name": "stable-installed",
+      "exitCode": 0,
+      "seconds": 3.71,
+      "log": "stable-installed.log"
+    },
+    {
+      "name": "stable-browser-restart",
+      "exitCode": 0,
+      "seconds": 8.496,
+      "log": "stable-browser-restart.log"
+    },
+    {
+      "name": "stable-editor",
+      "exitCode": 0,
+      "seconds": 13.308,
+      "log": "stable-editor.log"
+    },
+    {
+      "name": "stable-remote-editor",
+      "exitCode": 0,
+      "seconds": 80.683,
+      "log": "stable-remote-editor.log"
+    },
+    {
+      "name": "stable-accessibility",
+      "exitCode": 0,
+      "seconds": 4.546,
+      "log": "stable-accessibility.log"
+    },
+    {
+      "name": "stable-restricted",
+      "exitCode": 0,
+      "seconds": 3.539,
+      "log": "stable-restricted.log"
+    },
+    {
+      "name": "stable-reload",
+      "exitCode": 0,
+      "seconds": 4.711,
+      "log": "stable-reload.log"
+    },
+    {
+      "name": "stable-two-windows",
+      "exitCode": 0,
+      "seconds": 11.278,
+      "log": "stable-two-windows.log"
+    },
+    {
+      "name": "stable-native-f5",
+      "exitCode": 0,
+      "seconds": 8.228,
+      "log": "stable-native-f5.log"
+    }
+  ],
+  "vscode": {
+    "minimum": "1.140.0",
+    "stable": "1.145.0"
+  },
+  "completed": "2026-11-06T13:34:39.270Z",
+  "ok": true,
+  "note": "Regression des 1.0.1-Produktcodes. Nach Eintragen dieses Nachweises wird das Paket erneut gebaut und installiert geprüft; maßgebliche Prüfsumme im GitHub-Release."
+}

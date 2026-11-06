@@ -17,6 +17,13 @@ exports.run = async () => {
   assert.equal(vscode.workspace.getConfiguration('filetandem').get('sftpUploadVerification'),'sha256');
   await verificationConfig.update('sftpUploadVerification',undefined,vscode.ConfigurationTarget.Global);
   assert.equal(vscode.workspace.getConfiguration('filetandem').get('sftpUploadVerification'),'size');
+  await verificationConfig.update('checkUploadOwnership',undefined,vscode.ConfigurationTarget.Global);
+  assert.equal(vscode.workspace.getConfiguration('filetandem').get('checkUploadOwnership'),false,'ownership guard is opt-in');
+  try {
+    await verificationConfig.update('checkUploadOwnership',true,vscode.ConfigurationTarget.Global);
+    assert.equal(vscode.workspace.getConfiguration('filetandem').get('checkUploadOwnership'),true);
+  } finally {await verificationConfig.update('checkUploadOwnership',undefined,vscode.ConfigurationTarget.Global);}
+  assert.equal(vscode.workspace.getConfiguration('filetandem').get('checkUploadOwnership'),false);
   const extensionApi=require('node:module').createRequire(require('node:path').join(extension.extensionPath,'dist/extension.cjs'))('vscode');
   if (process.env.XSCP_EXPECT_LOCALE) assert.equal(extensionApi.env.language,process.env.XSCP_EXPECT_LOCALE,'requested editor locale is actually active');
   const german=extensionApi.env.language.toLowerCase().startsWith('de');

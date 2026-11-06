@@ -27,3 +27,12 @@ test('cleared history survives journal reload with dependency metadata intact',a
   queue.dispose();await journal.flush();
  } finally {await rm(directory,{recursive:true,force:true});}
 });
+
+test('ownership metadata survives journal reload for safe resume checks',async t=>{
+ const directory=await mkdtemp(join(tmpdir(),'filetandem-owner-journal-'));t.after(()=>rm(directory,{recursive:true,force:true}));
+ const journal=new TransferJournal(join(directory,'journal.json'));
+ const info={kind:'file',size:5,modified:123,mode:420,uid:1000,gid:1001};
+ const attempt={id:'attempt',part:'/part',target:'/target',source:'/source',protocol:'sftp',identity:'a'.repeat(64),sourceInfo:info,sourceHash:'b'.repeat(64),before:{...info,uid:0}};
+ journal.update([{...job,attempt}]);await journal.flush();
+ const restored=await journal.load();assert.equal(restored.length,1);assert.equal(restored[0].attempt.before.uid,0);assert.equal(restored[0].attempt.sourceInfo.gid,1001);
+});

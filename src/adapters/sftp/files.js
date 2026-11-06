@@ -3,7 +3,7 @@ export function remotePath(value) {
   if (typeof value !== 'string' || !value.startsWith('/') || value.includes('\0') || value.length > 4096) throw new Error('Remote-Pfad muss ein absoluter POSIX-Pfad sein.');
   return posix.normalize(value);
 }
-const entry=(path,attrs,target='') => ({id:path,path,name:posix.basename(path),kind:attrs.isSymbolicLink() ? 'symlink':attrs.isDirectory() ? 'directory':attrs.isFile() ? 'file':'other',size:attrs.size,modified:attrs.mtime*1000,mode:attrs.mode & 0o777,linkTarget:target});
+const entry=(path,attrs,target='') => ({id:path,path,name:posix.basename(path),kind:attrs.isSymbolicLink() ? 'symlink':attrs.isDirectory() ? 'directory':attrs.isFile() ? 'file':'other',size:attrs.size,...(Number.isSafeInteger(attrs.uid) && attrs.uid>=0 ? {uid:attrs.uid}:{}),...(Number.isSafeInteger(attrs.gid) && attrs.gid>=0 ? {gid:attrs.gid}:{}),modified:attrs.mtime*1000,mode:attrs.mode & 0o777,linkTarget:target});
 export class RemoteFiles {
   #pending=new Set(); #closed=false; #ended=false;
   constructor(channel,session) {

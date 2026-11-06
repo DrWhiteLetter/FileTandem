@@ -3,7 +3,7 @@ const vscode=require('vscode');
 const fs=require('node:fs/promises');
 const path=require('node:path');
 exports.activate=async context => {
-  const root=context.extensionPath,sessionId='ui-preview',panel=vscode.window.createWebviewPanel('filetandem.ui-preview','FileTandem · UI-Prüfung',vscode.ViewColumn.One,{enableScripts:true,localResourceRoots:[vscode.Uri.file(path.join(root,'dist'))]});
+  const root=context.extensionPath,sessionId='ui-preview',panel=vscode.window.createWebviewPanel('filetandem.ui-preview','FileTandem · Commander',vscode.ViewColumn.One,{enableScripts:true,localResourceRoots:[vscode.Uri.file(path.join(root,'dist'))]});
   const uri=file => panel.webview.asWebviewUri(vscode.Uri.file(path.join(root,'dist',file)));
   const source='/Users/demo/Projekte/Website',target='/var/www/vhosts/beispiel.de/httpdocs/Website';
   const entry=(root,name,kind='file',size=1280) => ({id:root+'/'+name,path:root+'/'+name,name,kind,size,modified:1793170000000,mode:0o644});
@@ -12,6 +12,10 @@ exports.activate=async context => {
   const base={version:1,type:'browserModel',sessionId,locale:'de',commanderKeys:true,connection:{id:'preview',name:'beispiel.de',state:'connected',protocol:'sftp'},local:{path:source,status:'ready',entries:entries(source)},remote:{path:target,status:'ready',entries:entries(target)},queue:[job('older','completed','index.html',{attempt:{part:target+'/.part'}}),job('failed','failed','stylesheet-mit-einem-sehr-langen-dateinamen.css',{error:'Transfer fehlgeschlagen; Quelle/Ziel und Verbindung prüfen.',attempt:{part:target+'/.part'},protocol:'sftp'}),job('latest','completed','README.md')],pathFavorites:{local:[source],remote:[target]}};
   let current,ready=false,config={theme:'Default Dark Modern',scenario:'watch'};
   const publish=() => {current=structuredClone(base);current.locale=config.locale ?? 'de';
+    if (config.scenario==='release') {
+      for (const side of ['local','remote']) {const root=side==='local'?source:target;current[side].entries=[entry(root,'assets','directory'),entry(root,'src','directory'),entry(root,'docs','directory'),entry(root,'index.html','file',15229),entry(root,'style.css','file',20755),entry(root,'README.md','file',6432),entry(root,'LICENSE','file',1086)];}
+      current.queue=[job('index','completed','index.html',{batchId:'demo-upload',protocol:'sftp',verification:'size',bytes:15229}),job('styles','completed','style.css',{batchId:'demo-upload',protocol:'sftp',verification:'size',bytes:20755}),job('logo','queued','assets/logo.svg',{batchId:'demo-upload',protocol:'sftp',bytes:0}),job('image','running','assets/hero.webp',{batchId:'demo-upload',protocol:'sftp',bytes:524288,rate:262144})];
+    }
     if (config.scenario==='watch') current.autoUpload={active:true,starting:false,localRoot:source,remoteRoot:target,uploaded:2,deleted:5};
     if (config.scenario==='starting') current.autoUpload={active:false,starting:true,localRoot:source,remoteRoot:target,uploaded:0,deleted:0};
     if (config.scenario==='loading') current.remote.status='loading';

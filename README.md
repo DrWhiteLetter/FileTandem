@@ -4,7 +4,7 @@
 
 # FileTandem
 
-**Version 1.0.0** · SFTP- und SCP-Dateimanager für VS Code Desktop · MIT-Lizenz
+**Version 1.0.1** · SFTP- und SCP-Dateimanager für VS Code Desktop · MIT-Lizenz
 
 Lokale Dateien und Serverdateien nebeneinander – direkt in Visual Studio Code. Mit FileTandem verwaltest du Dateien über **SFTP und SCP**, überträgst ganze Ordner und bearbeitest Remote-Dateien im Editor.
 
@@ -12,7 +12,7 @@ Lokale Dateien und Serverdateien nebeneinander – direkt in Visual Studio Code.
 
 ![FileTandem: lokale und entfernte Dateien mit Transferübersicht](media/filetandem-screenshot.png)
 
-*Die Ansicht zeigt Beispieldaten.*
+*FileTandem 1.0.1 mit Beispieldaten in einer isolierten UI-Vorschau; kein echter Transfer.*
 
 ## Was kann FileTandem?
 
@@ -37,7 +37,7 @@ Benötigt **VS Code Desktop ab 1.140.0**. Node.js ist für die Installation nich
 
 | Plattform | Nachweis |
 | --- | --- |
-| macOS mit Apple Silicon | Automatisierte lokale Release- und Installationstests; Details im [Release-Nachweis](docs/nachweise/Release-1.0.0.md). |
+| macOS mit Apple Silicon | Automatisierte lokale Release- und Installationstests; Details im [Release-Nachweis](docs/nachweise/Release-1.0.1.md). |
 | Windows | Erfolgreicher manueller Desktop-Test, vom Projektinhaber bestätigt. OS-/VS-Code-Version und Architektur wurden nicht gesondert dokumentiert. [Nachweis](docs/nachweise/Windows-Desktop.md). |
 | Debian 13.7, Xfce, ARM64 | Erfolgreicher manueller Test mit VS Code 1.145.0 (`code_1.145.0-1793748906_arm64.deb`), vom Projektinhaber bestätigt. [Nachweis](docs/nachweise/Linux-Desktop.md). |
 
@@ -91,6 +91,14 @@ Ab 0.0.26 werden Queue und Dateilisten sparsamer aktualisiert und SFTP-Datenblö
 Die Auswahl gilt für neu startende Dateien manueller SFTP-Uploads, auch beim manuellen Ordnerabgleich. Fortsetzungen, automatische Überwachung und geprüfte Editor-Uploads verwenden immer SHA-256. Downloads, SCP und lokale Kopien behalten ihre vollständige Prüfung.
 
 [Messungen, Grenzen und Recherche](docs/nachweise/SFTP-Performance-0.0.26.md).
+
+## Optional: Dateieigentümer bei Uploads prüfen
+
+Unter **Einstellungen → FileTandem → Sicherheitsfeatures** lässt sich `filetandem.checkUploadOwnership` aktivieren. Die Option ist **standardmäßig aus**.
+
+Beim Ersetzen einer bestehenden Serverdatei vergleicht FileTandem die numerische Eigentümer- und Gruppen-ID mit der hochgeladenen temporären Datei, bevor sie das Ziel ersetzt. Würde die Zuordnung wechseln oder liefert der Server keine vollständigen Angaben, stoppt die betroffene Datei mit einer Erklärung im Transferverlauf. Die bestehende Zieldatei bleibt erhalten; eine eigene Teil-Datei kann zur Bereinigung zurückbleiben. Verwende den passenden Serverbenutzer oder prüfe die Rechte mit dem Serverbetreiber. FileTandem ändert keine Eigentümer automatisch.
+
+Die Prüfung verwendet bereits benötigte Metadatenabfragen und benötigt keine zusätzliche Serveranfrage pro Datei. Sie gilt für neu startende Datei-Uploads über die Transferwarteschlange mit SFTP/SCP, einschließlich automatischer Uploads und SFTP-Fortsetzungen. Neue Dateien haben keinen bisherigen Eigentümer zum Vergleich; Ordner und direkte SFTP-Editor-Speichervorgänge werden nicht geprüft. Die Option prüft keine ACLs oder Zugriffsrechte der Serveranwendung und kann spätere Änderungen durch Serverprozesse nicht verhindern.
 
 ## Transferverlauf aufräumen
 

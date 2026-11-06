@@ -56,5 +56,7 @@
   "filetandem.sftpUploadVerification.size": "Schnell: SSH-Transport, unveränderte Quelle und hochgeladene Größe prüfen, dann sicher veröffentlichen. Kein Zurücklesen und kein Prüfsummenvergleich des gespeicherten Serverinhalts.",
   "filetandem.security.title": "Sicherheitsfeatures",
   "filetandem.sftpUploadVerification.sizeLabel": "Schnell (Standard)",
-  "filetandem.sftpUploadVerification.sha256Label": "Zusätzliche SHA-256-Prüfung"
+  "filetandem.sftpUploadVerification.sha256Label": "Zusätzliche SHA-256-Prüfung",
+  "filetandem.checkUploadOwnership.title": "Dateieigentümer bei Uploads prüfen",
+  "filetandem.checkUploadOwnership.description": "Optional vor dem Ersetzen bestehender Serverdateien über die Transferwarteschlange Eigentümer- und Gruppen-ID vergleichen (SFTP/SCP, einschließlich automatischer Uploads und Fortsetzungen). Betroffene Datei stoppen, wenn die Zuordnung sich ändern würde oder nicht prüfbar ist. Standardmäßig aus. Verwendet vorhandene Metadatenabfragen; ändert keine Eigentümer. Prüft keine neuen Dateien, Ordner oder direkten SFTP-Editor-Speichervorgänge."
 }

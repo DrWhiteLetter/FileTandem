@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.1 – 06.11.2026
+
+- Optionale, standardmäßig deaktivierte Eigentümerprüfung bei Uploads: Eigentümer-/Gruppenwechsel vor dem Ersetzen erkennen und betroffene Datei stoppen. Bestehende Metadatenabfragen für SFTP/SCP wiederverwenden.
+- Doppelten Abbrechen-Button im Transfer-Konfliktdialog durch explizite native Abbruchaktion vermeiden. „Alle weiteren ersetzen“ auf „Alle ersetzen“ kürzen; englisch „Replace all“.
+
+- README mit aktueller Commander-Ansicht, Transferfortschritt und Aktionen zum Aufräumen des Verlaufs bebildern.
+
 ## 1.0.0 – 06.11.2026
 
 - Beim unmittelbaren Reload den aktuellen Transferstand speichern, auch wenn eine gebündelte Änderungsbenachrichtigung noch aussteht.

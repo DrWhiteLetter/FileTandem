@@ -11,8 +11,8 @@ export async function probeScp(session,{signal}={}) {
 export async function statScp(session,path,{signal}={}) {
  path=remotePath(path,true);
  try {
- const data=await collectExec(session,`export LC_ALL=C; if ! test -e ${shellQuote(path)} && ! test -L ${shellQuote(path)}; then exit 44; fi; stat --printf='%F\\0%s\\0%Y\\0%a\\0%i\\0%d\\0' -- ${shellQuote(path)}`,{signal,maxBytes:8192});
- const fields=new TextDecoder('utf-8',{fatal:true}).decode(data).split('\0');if (fields.length!==7 || fields[6]!=='' || !/^\d+$/.test(fields[1]) || !Number.isSafeInteger(Number(fields[1])) || !/^-?\d+$/.test(fields[2]) || !/^[0-7]{1,4}$/.test(fields[3]) || !fields.slice(4,6).every(v => /^\d+$/.test(v))) throw new ScpError('INVALID_STAT','Ungültige GNU-stat-Ausgabe.');
- const kind=fields[0]==='directory' ? 'directory':fields[0]==='symbolic link' ? 'symlink':fields[0].startsWith('regular') ? 'file':'other';return {id:path,path,name:path.split('/').at(-1),kind,size:Number(fields[1]),modified:Number(fields[2])*1000,mode:parseInt(fields[3],8)&0o777,ino:fields[4],dev:fields[5],linkTarget:''};
+ const data=await collectExec(session,`export LC_ALL=C; if ! test -e ${shellQuote(path)} && ! test -L ${shellQuote(path)}; then exit 44; fi; stat --printf='%F\\0%s\\0%Y\\0%a\\0%i\\0%d\\0%u\\0%g\\0' -- ${shellQuote(path)}`,{signal,maxBytes:8192});
+ const fields=new TextDecoder('utf-8',{fatal:true}).decode(data).split('\0');if (fields.length!==9 || fields[8]!=='' || !/^\d+$/.test(fields[1]) || !Number.isSafeInteger(Number(fields[1])) || !/^-?\d+$/.test(fields[2]) || !/^[0-7]{1,4}$/.test(fields[3]) || !fields.slice(4,8).every(v => /^\d+$/.test(v)) || !fields.slice(6,8).every(v => Number.isSafeInteger(Number(v)))) throw new ScpError('INVALID_STAT','Ungültige GNU-stat-Ausgabe.');
+ const kind=fields[0]==='directory' ? 'directory':fields[0]==='symbolic link' ? 'symlink':fields[0].startsWith('regular') ? 'file':'other';return {id:path,path,name:path.split('/').at(-1),kind,size:Number(fields[1]),modified:Number(fields[2])*1000,mode:parseInt(fields[3],8)&0o777,ino:fields[4],dev:fields[5],uid:Number(fields[6]),gid:Number(fields[7]),linkTarget:''};
  } catch(error) {if (error.status===44) throw Object.assign(new Error('Eintrag existiert nicht.'),{code:'ENOENT'});throw error;}
 }

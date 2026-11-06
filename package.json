@@ -2,7 +2,7 @@
   "name": "xscp",
   "displayName": "FileTandem – SFTP & SCP File Manager",
   "description": "%description%",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "publisher": "xscp-dev",
   "type": "module",
@@ -408,6 +408,13 @@
               "%filetandem.sftpUploadVerification.sizeLabel%",
               "%filetandem.sftpUploadVerification.sha256Label%"
             ]
+          },
+          "filetandem.checkUploadOwnership": {
+            "type": "boolean",
+            "default": false,
+            "scope": "application",
+            "title": "%filetandem.checkUploadOwnership.title%",
+            "description": "%filetandem.checkUploadOwnership.description%"
           }
         }
       }
@@ -489,7 +496,7 @@
     "test:browser": "node --test --test-concurrency=1 test/integration/browser.test.js",
     "test:browser:installed": "node scripts/test-browser-installed.mjs",
     "test:transfers": "node --test --test-concurrency=1 test/integration/transfers.test.js",
-    "test:protocols": "node --test --test-concurrency=1 test/integration/host-keys.test.js test/integration/authentication.test.js test/integration/sftp-streaming.test.js test/integration/scp.test.js test/integration/scp-engine.test.js test/integration/transfers.test.js test/integration/resume.test.js test/integration/transfer-auth.test.js test/integration/browser.test.js",
+    "test:protocols": "node --test --test-concurrency=1 test/integration/host-keys.test.js test/integration/authentication.test.js test/integration/sftp-streaming.test.js test/integration/scp.test.js test/integration/scp-engine.test.js test/integration/transfers.test.js test/integration/resume.test.js test/integration/transfer-auth.test.js test/integration/browser.test.js test/integration/upload-ownership.test.js",
     "test:native:f5": "node scripts/test-native-f5.mjs",
     "preview:ui": "node scripts/preview-ui.mjs",
     "l10n:sync": "node scripts/sync-localization.mjs",

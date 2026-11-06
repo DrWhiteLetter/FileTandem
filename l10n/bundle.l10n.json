@@ -57,8 +57,8 @@
   "Monitored folder was redirected.": "Monitored folder was redirected.",
   "Monitoring source is not a regular directory.": "Monitoring source is not a regular directory.",
   "Automatic upload is already active for this profile.": "Automatic upload is already active for this profile.",
-  "Replace all remaining": "Replace all remaining",
-  "Replace applies immediately to this file. Replace all remaining also applies to further file conflicts in this batch. Publication occurs only after the partial file has been verified.": "Replace applies immediately to this file. Replace all remaining also applies to further file conflicts in this batch. Publication occurs only after the partial file has been verified.",
+  "Replace all": "Replace all",
+  "Replace applies immediately to this file. Replace all also applies to further file conflicts in this batch. Publication occurs only after the partial file has been verified.": "Replace applies immediately to this file. Replace all also applies to further file conflicts in this batch. Publication occurs only after the partial file has been verified.",
   "Skip and Keep both apply only to this file.": "Skip and Keep both apply only to this file.",
   "Synchronize folders …": "Synchronize folders …",
   " New starts paused; active transfers continue.": " New starts paused; active transfers continue.",
@@ -674,5 +674,7 @@
   "History only · Current profile · Files are kept.": "History only · Current profile · Files are kept.",
   "Clear transfer history?": "Clear transfer history?",
   "Clear history": "Clear history",
-  "Only finished entries for this profile are removed from the history in all sessions. Running and queued transfers remain. Files and partial files are not deleted. Retry and partial-file cleanup actions for removed entries will no longer be available.": "Only finished entries for this profile are removed from the history in all sessions. Running and queued transfers remain. Files and partial files are not deleted. Retry and partial-file cleanup actions for removed entries will no longer be available."
+  "Only finished entries for this profile are removed from the history in all sessions. Running and queued transfers remain. Files and partial files are not deleted. Retry and partial-file cleanup actions for removed entries will no longer be available.": "Only finished entries for this profile are removed from the history in all sessions. Running and queued transfers remain. Files and partial files are not deleted. Retry and partial-file cleanup actions for removed entries will no longer be available.",
+  "Ownership check unavailable: Owner and group IDs are incomplete. The existing file is preserved. Restart the upload or check the login and server; clean up the transfer’s partial file if needed.": "Ownership check unavailable: Owner and group IDs are incomplete. The existing file is preserved. Restart the upload or check the login and server; clean up the transfer’s partial file if needed.",
+  "Upload stopped: Replacing the file would change its owner or group. The existing file is preserved. Connect as the appropriate server user or check server permissions; clean up the transfer’s partial file if needed.": "Upload stopped: Replacing the file would change its owner or group. The existing file is preserved. Connect as the appropriate server user or check server permissions; clean up the transfer’s partial file if needed."
 }

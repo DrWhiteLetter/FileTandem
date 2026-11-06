@@ -56,5 +56,7 @@
   "filetandem.sftpUploadVerification.size": "Fast: verify SSH transport, source consistency and uploaded size, then publish safely. Does not read back or verify the stored remote content by checksum.",
   "filetandem.security.title": "Security Features",
   "filetandem.sftpUploadVerification.sizeLabel": "Fast (default)",
-  "filetandem.sftpUploadVerification.sha256Label": "Additional SHA-256 verification"
+  "filetandem.sftpUploadVerification.sha256Label": "Additional SHA-256 verification",
+  "filetandem.checkUploadOwnership.title": "Check upload ownership",
+  "filetandem.checkUploadOwnership.description": "Optionally compare owner and group IDs before replacing existing server files through the transfer queue (SFTP/SCP, including automatic uploads and resumed transfers). Stop the affected file if ownership would change or cannot be checked. Off by default. Reuses existing metadata requests; does not change ownership. Does not check new files, folders or direct SFTP editor saves."
 }

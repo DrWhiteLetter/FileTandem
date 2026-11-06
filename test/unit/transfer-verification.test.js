@@ -29,3 +29,22 @@ test('fast mode cannot be used for download, SCP, resume, automatic or reviewed 
   await assert.rejects(transferFile(null,{protocol:'sftp',direction:'upload',...extra},{verification:'size'}),/verification mode/);
  }
 });
+
+test('optional upload ownership guard preserves the old file on owner/group changes or unknown IDs',async t=>{
+ for (const scenario of ['owner','group','unknown','changed-target','same','disabled','new','download']) {
+  const {job,target}=await fixture(t);let reads=0,part,stats=0;
+  if (scenario==='new') await rm(target);
+  const adapter={...localTarget,stat:async path=>{
+   stats++;const info=await localTarget.stat(path);
+   if(path===target) {reads++;return {...info,uid:scenario==='changed-target' && reads>1?2000:1000,gid:1000};}
+   return {...info,...(scenario==='unknown'?{}:{uid:['owner','disabled'].includes(scenario)?0:1000,gid:scenario==='group'?0:1000})};
+  }};
+  const stream=async (_,options)=>{part=options.direction==='upload'?options.remote:options.local;await writeFile(part,'data');return {bytes:4,sha256:sha('data')};};
+  const operation=transferFile(null,{...job,direction:scenario==='download'?'download':'upload'},{target:adapter,replace:true,checkUploadOwnership:scenario!=='disabled',stream});
+  if(['owner','group','unknown','changed-target'].includes(scenario)) {
+   await assert.rejects(operation,{code:scenario==='unknown'?'UPLOAD_OWNERSHIP_UNKNOWN':'UPLOAD_OWNERSHIP_CHANGED'});
+   assert.equal(await readFile(target,'utf8'),'old');assert.equal(await readFile(part,'utf8'),'data');
+  } else {assert.equal((await operation).committed,true);assert.equal(await readFile(target,'utf8'),'data');}
+  assert.equal(stats,3,'ownership comparison reuses the existing three target metadata calls');
+ }
+});
