@@ -1,3 +1,7 @@
+<p>
+  <img src="media/filetandem-logo.png" alt="FileTandem-Logo" width="112" height="112">
+</p>
+
 # FileTandem
 
 **Version 1.0.0** · SFTP- und SCP-Dateimanager für VS Code Desktop · MIT-Lizenz
