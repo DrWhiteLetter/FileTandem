@@ -2,7 +2,7 @@
   "name": "xscp",
   "displayName": "FileTandem – SFTP & SCP File Manager",
   "description": "%description%",
-  "version": "0.0.28",
+  "version": "1.0.0",
   "private": true,
   "publisher": "xscp-dev",
   "type": "module",
@@ -526,5 +526,17 @@
     "file transfer",
     "dual pane"
   ],
-  "l10n": "./l10n"
+  "l10n": "./l10n",
+  "overrides": {
+    "minimatch": "11.0.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DrWhiteLetter/FileTandem.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DrWhiteLetter/FileTandem/issues"
+  },
+  "homepage": "https://github.com/DrWhiteLetter/FileTandem#readme",
+  "author": "Tobias Kohlhepp"
 }

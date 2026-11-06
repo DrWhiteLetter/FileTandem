@@ -1,5 +1,7 @@
 # Öffentliche Produktdaten – M6-08 vorgezogen
 
+> **Aktueller Stand, 06.11.2026:** Der Benutzer hat die öffentliche GitHub-Veröffentlichung von Version 1.0.0 beauftragt. Maßgeblich sind die [README](../README.md) und der [Release-Nachweis](nachweise/Release-1.0.0.md). Linux: erfolgreicher manueller Test auf Debian 13.7 / Xfce / ARM64 mit VS Code 1.145.0 bestätigt. Die folgenden Planungsstände sind historisch; weitere Plattformkombinationen und die manuelle Screenreader-Abnahme bleiben offen. Ein Marketplace-Publisher ist für die GitHub-VSIX nicht erforderlich und weiterhin nicht eingerichtet. Die Extension-ID bleibt `xscp-dev.xscp`.
+
 Stand: 8. Oktober 2026. **Name übernommen und juristisches Okay durch den Benutzer bestätigt; Publisher noch offen.** Technische Release-Abnahmen bleiben davon unberührt. Keine Veröffentlichung beauftragt.
 
 ## Name

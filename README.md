@@ -1,5 +1,7 @@
 # FileTandem
 
+**Version 1.0.0** · SFTP- und SCP-Dateimanager für VS Code Desktop · MIT-Lizenz
+
 Lokale Dateien und Serverdateien nebeneinander – direkt in Visual Studio Code. Mit FileTandem verwaltest du Dateien über **SFTP und SCP**, überträgst ganze Ordner und bearbeitest Remote-Dateien im Editor.
 
 **[Aktuelle Version herunterladen](https://github.com/DrWhiteLetter/FileTandem/releases/latest)** · [Änderungen](CHANGELOG.md) · [Fehler melden](https://github.com/DrWhiteLetter/FileTandem/issues)
@@ -12,7 +14,7 @@ Lokale Dateien und Serverdateien nebeneinander – direkt in Visual Studio Code.
 
 - Zwei Dateibereiche mit Filtern, Sortierung, Mehrfachauswahl und Pfadfavoriten.
 - Ohne Serverprofil zwei lokale Ordner unabhängig öffnen und Dateien oder Ordner in beide Richtungen kopieren.
-- Dateien und Ordner hoch- und herunterladen, mit Transferqueue und SFTP-Fortsetzung.
+- Dateien und Ordner hoch- und herunterladen, mit Fortschrittsanzeige, aufräumbarem Transferverlauf und geprüfter SFTP-Fortsetzung.
 - Serverprofile speichern; Anmeldung per Passwort, SSH-Schlüssel oder SSH-Agent.
 - Remote-Dateien öffnen, Änderungen vergleichen und Bearbeitung gezielt freigeben.
 - Ordner mit Vorschau abgleichen oder lokale Änderungen automatisch hochladen.
@@ -25,7 +27,17 @@ Lokale Dateien und Serverdateien nebeneinander – direkt in Visual Studio Code.
 2. In VS Code die **Erweiterungen** öffnen und im Menü **… → Aus VSIX installieren …** die Datei auswählen.
 3. Über die Befehlspalette **FileTandem: Dateimanager öffnen** starten.
 
-Benötigt **VS Code Desktop ab 1.140.0**. Node.js ist für die Installation nicht nötig. FileTandem ist eine frühe Version; macOS mit Apple Silicon und Windows sind erfolgreich im Desktop-Einsatz getestet. Die Linux-Desktop-Abnahme steht noch aus.
+Benötigt **VS Code Desktop ab 1.140.0**. Node.js ist für die Installation nicht nötig. Die Veröffentlichung erfolgt als VSIX über GitHub Releases; eine Veröffentlichung im VS Code Marketplace ist nicht Bestandteil dieses Releases.
+
+### Getestete Desktop-Umgebungen
+
+| Plattform | Nachweis |
+| --- | --- |
+| macOS mit Apple Silicon | Automatisierte lokale Release- und Installationstests; Details im [Release-Nachweis](docs/nachweise/Release-1.0.0.md). |
+| Windows | Erfolgreicher manueller Desktop-Test, vom Projektinhaber bestätigt. OS-/VS-Code-Version und Architektur wurden nicht gesondert dokumentiert. [Nachweis](docs/nachweise/Windows-Desktop.md). |
+| Debian 13.7, Xfce, ARM64 | Erfolgreicher manueller Test mit VS Code 1.145.0 (`code_1.145.0-1793748906_arm64.deb`), vom Projektinhaber bestätigt. [Nachweis](docs/nachweise/Linux-Desktop.md). |
+
+Diese Nachweise sind keine Zusage für jede Distribution, Architektur oder Remote-Umgebung. macOS Intel, weitere Linux-Desktops sowie spezielle WSL-/Container-/UNC-Kombinationen sind nicht pauschal abgenommen. Eine vollständige manuelle Screenreader-Abnahme steht noch aus.
 
 ## Lokal arbeiten
 
@@ -54,11 +66,7 @@ npm start
 
 `npm run quality` prüft den Code und baut die Erweiterung. `npm run package` erstellt die installierbare VSIX unter `out/`.
 
-## Unterstützen & Lizenz
-
-FileTandem hilft dir? [Unterstütze die Weiterentwicklung über PayPal](https://paypal.me/TobiasKohlhepp).
-
-[MIT-Lizenz](LICENSE) · [Drittanbieterhinweise](THIRD_PARTY_NOTICES.md)
+## Bilder öffnen
 
 Bilder (JPG/JPEG, PNG, GIF, WebP, BMP und ICO) öffnet FileTandem in der
 Bildvorschau von VS Code. Lokale Bilder werden direkt gelesen. Remote-Bilder
@@ -85,3 +93,15 @@ Die Auswahl gilt für neu startende Dateien manueller SFTP-Uploads, auch beim ma
 In der aufgeklappten Transferliste blendet **Erfolgreiche entfernen** abgeschlossene Einträge direkt aus. **Transferverlauf leeren …** entfernt nach Bestätigung auch fehlgeschlagene, abgebrochene, unterbrochene und übersprungene Einträge aus der Anzeige. Laufende und wartende Transfers bleiben erhalten. Die Änderung gilt für das aktuelle Profil in allen Sitzungen und wird gespeichert.
 
 Dateien und Teil-Dateien werden nicht gelöscht. Für ausgeblendete Einträge stehen Wiederholung und Teil-Dateibereinigung nicht mehr in der Oberfläche zur Verfügung; bei Bedarf vorher bereinigen. Interne Auftragsdaten bleiben für Ordnerabhängigkeiten und Transferfortschritt im Journal erhalten; diese Funktion gibt keinen Journalspeicher frei.
+
+## Support und Sicherheit
+
+Fehler und Verbesserungsvorschläge bitte über [GitHub Issues](https://github.com/DrWhiteLetter/FileTandem/issues) melden. Nenne FileTandem-Version, Betriebssystem, Architektur, VS-Code-Version, Protokoll und reproduzierbare Schritte. Zugangsdaten, private Schlüssel und unbereinigte Transferjournale gehören nicht in Issues.
+
+Für vertrauliche Sicherheitsmeldungen siehe [SECURITY.md](SECURITY.md). Bekannte Funktionsgrenzen und Installationshinweise stehen in der [Bedienungsanleitung](docs/release-anleitung.md).
+
+## Unterstützen & Lizenz
+
+FileTandem hilft dir? [Unterstütze die Weiterentwicklung über PayPal](https://paypal.me/TobiasKohlhepp).
+
+[MIT-Lizenz](LICENSE) · [Drittanbieterhinweise](THIRD_PARTY_NOTICES.md)

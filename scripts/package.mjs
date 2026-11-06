@@ -14,4 +14,4 @@ run('npm',['exec','--yes','--package=@vscode/vsce@4.0.0','--','vsce','package','
 run('python3',['scripts/inspect-vsix.py',target]);
 const sha256=createHash('sha256').update(await readFile(target)).digest('hex');
 await writeFile(target+'.sha256',`${sha256}  FileTandem-${manifest.version}.vsix\n`);
-console.log(`Installierbare private Demo: ${target}`);
+console.log(`Installationspaket: ${target}`);

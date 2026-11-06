@@ -2,12 +2,12 @@
 
 Ab 0.0.21: [Ausschlussregeln und Löschsicherungen](ausschlussregeln-und-sicherungen.md) beachten. Remote-Löschungen werden standardmäßig als `.bak` aufbewahrt; Aussagen über endgültige Löschungen gelten nur bei deaktivierter Sicherungsoption.
 
-Stand: 08.10.2026, private Vorabversion 0.0.11. macOS Apple Silicon ist das lokal geprüfte System. Windows/Linux, macOS Intel und weitere Remote-Fensterkombinationen sind nicht freigegeben. Die vollständige 1.0-Abnahme und Marketplace-Veröffentlichung bleiben an [M6](meilensteine/M6.md) gebunden.
+Stand: 06.11.2026, Version **1.0.0** für GitHub Releases. Plattformnachweise und verbleibende Grenzen stehen in der [README](../README.md#getestete-desktop-umgebungen) und im [Release-Nachweis](nachweise/Release-1.0.0.md). Die Veröffentlichung im Marketplace ist ein separater, noch offener Schritt.
 
 ## Installation und erster Transfer
 
-1. VS Code Desktop ab 1.140.0 öffnen. Für die lokale M6-Abnahme wird zusätzlich Stable 1.141.0 geprüft. Anwender benötigen kein separat installiertes Node/npm, Docker oder lokales SCP-Programm.
-2. Erweiterungen → Menü „…“ → **Aus VSIX installieren…** → `out/FileTandem-0.0.11.vsix` wählen; einen angebotenen Fenster-Reload durchführen.
+1. VS Code Desktop ab 1.140.0 öffnen. Die konkret geprüften VS-Code-Versionen stehen im Release-Nachweis. Anwender benötigen kein separat installiertes Node/npm, Docker oder lokales SCP-Programm.
+2. Erweiterungen → Menü „…“ → **Aus VSIX installieren…** → die von [GitHub Releases](https://github.com/DrWhiteLetter/FileTandem/releases/latest) heruntergeladene `FileTandem-1.0.0.vsix` wählen; einen angebotenen Fenster-Reload durchführen.
 3. FileTandem in der Activity Bar öffnen. Der Logo-Button oben in **Verbindungen** öffnet den Dateimanager; alternativ **FileTandem: Dateimanager öffnen** in der Befehlspalette.
 4. **Profil anlegen** wählen: Host, Port, Benutzer, lokalen und entfernten Startordner sowie Anmeldung eintragen. **SFTP** ist voreingestellt. Ein leerer lokaler Startordner verwendet dein Home-Verzeichnis.
 5. **Profil verbinden** wählen. Den SHA-256-Fingerprint des Host-Keys mit einer unabhängig beschafften Angabe vergleichen und ausdrücklich bestätigen. Ein geänderter bekannter Host-Key blockiert die Verbindung.
@@ -16,11 +16,11 @@ Stand: 08.10.2026, private Vorabversion 0.0.11. macOS Apple Silicon ist das loka
 
 Passwort, Schlüssel mit optionaler Passphrase, expliziter SSH-Agent und Keyboard-Interactive werden unterstützt. Secrets werden in VS Code SecretStorage abgelegt, nicht in Webview-Nachrichten oder Profilexporten. Windows-Agent und konkrete MFA-/Hardwareverfahren benötigen eigene Abnahmen.
 
-Version 0.0.11 migriert alte `xscp`-Einstellungen automatisch nach `filetandem`; bereits gesetzte neue Werte bleiben erhalten. Für Commander-Tasten in den VS-Code-Einstellungen nach `@id:filetandem.commanderKeys` suchen. Alte Befehl-IDs bleiben für eigene Tastenkürzel kompatibel. Die Extension-ID bleibt vorerst gleich; nach dem Update offene Remote-Editoren erneut aus dem Dateimanager öffnen.
+FileTandem migriert alte `xscp`-Einstellungen automatisch nach `filetandem`; bereits gesetzte neue Werte bleiben erhalten. Für Commander-Tasten in den VS-Code-Einstellungen nach `@id:filetandem.commanderKeys` suchen. Alte Befehl-IDs bleiben für eigene Tastenkürzel kompatibel. Die Extension-ID bleibt vorerst gleich; nach dem Update offene Remote-Editoren erneut aus dem Dateimanager öffnen.
 
 ## Installation prüfen und aktualisieren
 
-Nach der Installation in der Erweiterungsansicht den Titel **FileTandem – SFTP & SCP File Manager** und Version **0.0.11** prüfen. Den Dateimanager öffnen und eine eigene kleine Testdatei in einen dafür angelegten Serverordner hochladen, wieder unter anderem lokalen Namen herunterladen und den Inhalt vergleichen. Erst danach mit wichtigen Dateien arbeiten. Die Queue muss den Auftrag als erfolgreich anzeigen; bei einem Fehler zunächst die Diagnose unten verwenden.
+Nach der Installation in der Erweiterungsansicht den Titel **FileTandem – SFTP & SCP File Manager** und Version **1.0.0** prüfen. Den Dateimanager öffnen und eine eigene kleine Testdatei in einen dafür angelegten Serverordner hochladen, wieder unter anderem lokalen Namen herunterladen und den Inhalt vergleichen. Erst danach mit wichtigen Dateien arbeiten. Die Queue muss den Auftrag als erfolgreich anzeigen; bei einem Fehler zunächst die Diagnose unten verwenden.
 
 Für ein Update laufende Transfers abschließen oder bewusst abbrechen, die neue VSIX über **Aus VSIX installieren…** installieren und den angebotenen Reload ausführen. Version und Testtransfer erneut prüfen. Ein Reload nimmt unterbrochene Aufträge nicht automatisch wieder auf. Eine ältere geprüfte VSIX aufbewahren; ein Downgrade ist keine Zusage der Kompatibilität zukünftiger Profil-/Journalformate.
 
@@ -38,9 +38,9 @@ SCP-Bearbeitung verwendet eine lokale private Kopie. Auto Save speichert diese a
 
 **Queue pausieren** verhindert neue Starts, stoppt aber keine aktiven Streams. **Abbrechen** betrifft den gewählten Auftrag. Nach Reload/Neustart werden frühere laufende oder wartende Aufträge als unterbrochen wiederhergestellt und starten nicht automatisch. **Erneut starten** beginnt bewusst neu; **Fortsetzen** ist nur für geprüfte SFTP-Teil-Dateien verfügbar. Geänderte Quelle, falsches Präfix oder geändertes Profil blockieren Fortsetzung. SCP startet eine Datei neu.
 
-Übertragungen schreiben zunächst eigene `.xscp-<id>.part`-Dateien. Größe/Prüfsumme werden geprüft, bevor das endgültige Ziel veröffentlicht wird. Bei Fehlern können eigene Teil-Dateien zurückbleiben. **Teil-Datei bereinigen** prüft die Auftrags-/Profilzuordnung; fremde Teil-Dateien werden nicht pauschal gelöscht. Bei beschädigtem Journal bleibt eine `.corrupt-…`-Sicherung erhalten. Die Integrität des produktiven Journals wird mit einem SecretStorage-Schlüssel geprüft.
+Übertragungen schreiben zunächst eigene `.xscp-<id>.part`-Dateien. Je nach Transferart werden Größe oder SHA-256 geprüft, bevor das endgültige Ziel veröffentlicht wird. Manuelle SFTP-Uploads verwenden standardmäßig SSH + Größe; SHA-256 ist optional. Fortsetzungen, automatische Uploads und geprüfte Editor-Uploads verwenden SHA-256. Bei Fehlern können eigene Teil-Dateien zurückbleiben. **Teil-Datei bereinigen** prüft die Auftrags-/Profilzuordnung; fremde Teil-Dateien werden nicht pauschal gelöscht. Bei beschädigtem Journal bleibt eine `.corrupt-…`-Sicherung erhalten. Die Integrität des produktiven Journals wird mit einem SecretStorage-Schlüssel geprüft.
 
-Serveroperationen bieten kein globales Undo. Remote-Löschen ist endgültig und verlangt eine Bestätigung von Zielpfad/Umfang. Lokal wird nach Möglichkeit der Papierkorb verwendet. Server-CAS, Erhalt von Eigentümer/ACLs/Xattrs/Hardlinks und Remote-fsync-Dauerhaftigkeit sind nicht zugesagt. Gleichzeitige externe Schreiber können zwischen Abschlussprüfung und Rename eingreifen.
+Serveroperationen bieten kein globales Undo. Manuelles Remote-Löschen verlangt eine Bestätigung von Zielpfad/Umfang. Standardmäßig werden `.bak`-Sicherungen angelegt; ohne Sicherungsoption ist die Löschung endgültig. Lokal wird nach Möglichkeit der Papierkorb verwendet. Server-CAS, Erhalt von Eigentümer/ACLs/Xattrs/Hardlinks und Remote-fsync-Dauerhaftigkeit sind nicht zugesagt. Gleichzeitige externe Schreiber können zwischen Abschlussprüfung und Rename eingreifen.
 
 ## Diagnose und Troubleshooting
 
@@ -66,34 +66,34 @@ npm ci
 npm run quality
 # Docker/Colima zuerst bereitstellen: siehe verlinkte Fixture-Anleitung unten.
 # Nur die eigenen lokalen SSH-Fixtures starten:
-XSCP_DOCKER_CONTEXT=colima-xscp npm run fixtures:start
-XSCP_DOCKER_CONTEXT=colima-xscp \
-  VSCODE_TEST_EXECUTABLE="/Applications/Visual Studio Code.app/Contents/MacOS/Code" \
+DOCKER_CONTEXT=colima-xscp npm run fixtures:start
+DOCKER_CONTEXT=colima-xscp \
+  XSCP_STABLE_VERSION=1.145.0 \
   npm run test:release
 # Benchmark separat ausführen; nicht parallel zu Protokolltests mit Host-Key-Rotation:
-XSCP_DOCKER_CONTEXT=colima-xscp npm run benchmark:release
-XSCP_DOCKER_CONTEXT=colima-xscp npm run fixtures:stop
+DOCKER_CONTEXT=colima-xscp npm run benchmark:release
+DOCKER_CONTEXT=colima-xscp npm run fixtures:stop
 ```
 
 Voraussetzungen und Start des isolierten Colima-Profils stehen in der [Fixture-Anleitung](../test/fixtures/ssh/README.md) im Quellrepository. Nach den Tests mit `fixtures:stop` eigene Container entfernen und ein eigens gestartetes Colima-Profil mit `colima stop xscp` wieder stoppen. Der Ordner `test/` wird nicht in die VSIX aufgenommen; diese Wartungsschritte gelten nur für das Quellrepository.
 
-Gezielt nur Fehler-/Integritätsfälle erneut prüfen: mit laufenden eigenen Fixtures `XSCP_DOCKER_CONTEXT=colima-xscp npm run test:faults`. Der Runner prüft Protokoll-/Symlinkregeln, Netzabbruch, Finalisierungsabbruch, volle Datenträger und Restart/Reload/zwei Fenster auf Mindestversion und Stable. Er versetzt den Desktop nicht in Ruhezustand; die erfolgreiche manuelle macOS-Abnahme ist in [M6-03](nachweise/M6-03.md) dokumentiert. Ergebnisse unter `out/m6/faults/results.json`.
+Gezielt nur Fehler-/Integritätsfälle erneut prüfen: mit laufenden eigenen Fixtures `DOCKER_CONTEXT=colima-xscp npm run test:faults`. Der Runner prüft Protokoll-/Symlinkregeln, Netzabbruch, Finalisierungsabbruch, volle Datenträger und Restart/Reload/zwei Fenster auf Mindestversion und Stable. Er versetzt den Desktop nicht in Ruhezustand; die erfolgreiche manuelle macOS-Abnahme ist in [M6-03](nachweise/M6-03.md) dokumentiert. Ergebnisse unter `out/m6/faults/results.json`.
 
 Seit 0.0.11 führt der M6-Runner zusätzlich den installierten Migrationstest aus (seit 0.0.11 zusätzlich native F5-Prüfung je VS-Code-Version; 26 Schritte auf macOS). `npm run test:migration` kann ihn separat in eigenen Profilen wiederholen.
 
-Der M6-Runner erzeugt `out/m6/regression.json` und Schrittlogs; der Benchmark erzeugt `out/m6/performance.json`. Stable wird isoliert unter `.vscode-test/` heruntergeladen. `XSCP_STABLE_VERSION` erlaubt einen reproduzierbaren konkreten Stable-Stand; `XSCP_STABLE_EXECUTABLE` eine bereits vorhandene Testinstallation. Die Runner verändern keine persönlichen VS-Code- oder SSH-Einstellungen. Protokolltests mit Host-Key-Rotation und Benchmarks müssen nacheinander laufen. Benchmarks benötigen mindestens 5 GiB freien Platz im Fixture-Dateisystem und etwa 10 GiB lokalen Arbeitsraum; Auftragsgröße 4 GiB plus 1 MiB, 1.000 kleine Dateien und 10.000 Einträge.
+Der M6-Runner erzeugt `out/m6/regression.json` und Schrittlogs; der Benchmark erzeugt `out/m6/performance.json`. Die tatsächlichen Installationsversionen werden vor dem Lauf geprüft und im Ergebnis erfasst; ein zwischenzeitlich aktualisierter Mindestversions-Cache wird abgelehnt. Stable wird isoliert unter `.vscode-test/` heruntergeladen. `XSCP_STABLE_VERSION` erlaubt einen reproduzierbaren konkreten Stable-Stand; `XSCP_STABLE_EXECUTABLE` eine bereits vorhandene Testinstallation. Die Runner verändern keine persönlichen VS-Code- oder SSH-Einstellungen. Protokolltests mit Host-Key-Rotation und Benchmarks müssen nacheinander laufen. Benchmarks benötigen mindestens 5 GiB freien Platz im Fixture-Dateisystem und etwa 10 GiB lokalen Arbeitsraum; Auftragsgröße 4 GiB plus 1 MiB, 1.000 kleine Dateien und 10.000 Einträge.
 
-`npm run package` baut die private VSIX und prüft ihren ZIP-Inhalt unabhängig. Für Anwender ist nur die VSIX erforderlich; test-only SSH-/Docker-/hdiutil-Helfer werden nicht mitgeliefert. Quelltexte enthalten keine produktiven Zugangsdaten. [MIT-Lizenz](../LICENSE) und [Drittanbieterhinweise](../THIRD_PARTY_NOTICES.md) gehören zum Paket.
+`npm run package` baut die VSIX und prüft ihren ZIP-Inhalt unabhängig. Für Anwender ist nur die VSIX erforderlich; test-only SSH-/Docker-/hdiutil-Helfer werden nicht mitgeliefert. Quelltexte enthalten keine produktiven Zugangsdaten. [MIT-Lizenz](../LICENSE) und [Drittanbieterhinweise](../THIRD_PARTY_NOTICES.md) gehören zum Paket.
 
 ## Änderungen warten und Fehler melden
 
 Vor Änderungen `npm ci` mit dem eingecheckten Lockfile verwenden. Bei Bibliotheksupdates Versionen und Lockfile gemeinsam ändern, `npm audit`, `npm run quality` sowie die betroffenen realen Protokoll-/Editorprüfungen ausführen und `THIRD_PARTY_NOTICES.md` mit den tatsächlich gebündelten Lizenzen abgleichen. Vor einem neuen Kandidaten die komplette M6-Regression ausführen, `CHANGELOG.md` und Versionsnummer in Manifest/Lockfile aktualisieren und mit `npm run package` neu paketieren. Die SHA-256-Datei neben der VSIX muss zum ausgelieferten Paket passen; nach jeder mitpaketierten Dokumentationsänderung neu bauen.
 
-Die private Vorabversion hat noch kein öffentliches Support-/Issue-Repository. Fehler über den bisherigen Projektkontakt mit den oben genannten anonymisierten Angaben melden. Ein späteres öffentliches Repository und ein Publisher-Konto werden erst nach ihrer Einrichtung dokumentiert. Für eine öffentliche Version gelten weiterhin die offenen Abnahmepunkte aus dem M6-Backlog.
+Fehler über [GitHub Issues](https://github.com/DrWhiteLetter/FileTandem/issues) mit den oben genannten anonymisierten Angaben melden. Vertrauliche Sicherheitsmeldungen: [SECURITY.md](../SECURITY.md). Die bestehende Extension-ID `xscp-dev.xscp` bleibt zur Update-Kompatibilität erhalten; dies ist kein Nachweis eines Marketplace-Publishers. `private: true` im npm-Manifest verhindert versehentliche npm-Veröffentlichungen und betrifft nicht die Sichtbarkeit des GitHub-Repositorys.
 
 ## Bewusste Grenzen
 
-Manueller Ordnerabgleich über „Ordner abgleichen …“: Richtung wählen, rekursive Vorschau und Transferauswahl bestätigen. Vergleich nach Größe und Änderungszeit (Sekundenauflösung), kein Inhalts-/Hashvergleich; gleiche Metadaten können unterschiedliche Inhalte verdecken. Zusätzliche Zieldateien werden nicht gelöscht. Symlinks, Spezialdateien und Typkonflikte werden übersprungen. Vor dem Start wird die Vorschau erneut geprüft; spätere externe Änderungen unterliegen den bestehenden Transfer-Konfliktprüfungen. Maximal 10.000 Einträge je Seite, Tiefe 100 und 1.000 Transferauswahlen. Windows-/Linux-Desktop-Abnahme des Abgleichs steht aus. Ab 0.0.14 ergänzt „Remote-Ordner aktuell halten …“ einen ausdrücklich aktivierten automatischen Upload lokaler Dateiänderungen, einschließlich Unterordnern und Speichern aus externen Programmen. Manuelle Transfers für dasselbe Profil sind währenddessen gesperrt. Ab 0.0.15 wird der Remote-Ordner beim Start vollständig an den lokalen Stand angeglichen; überzählige Remote-Dateien und -Ordner werden endgültig gelöscht. Weitere lokale Löschungen werden automatisch übernommen. Kein automatischer Neustart nach Sitzungsende oder Verbindungswechsel. [Bedienung, Grenzen und Tests](automatischer-upload.md). Kein Terminal, kein ProxyJump und keine Browser-Ausführung. Editorlimit 10 MiB; höchstens 32 gehaltene Editorressourcen und 64 private SCP-Kopien. Das Journal hält maximal 10.000 Aufträge / 32 MiB. Vollständige Screenreader-Abnahme bleibt separat nachzuweisen; echter macOS-Suspend/Resume ist in [M6-03](nachweise/M6-03.md) nachgewiesen. Nicht getestete Desktop-Plattformen bleiben offen.
+Manueller Ordnerabgleich über „Ordner abgleichen …“: Richtung wählen, rekursive Vorschau und Transferauswahl bestätigen. Vergleich nach Größe und Änderungszeit (Sekundenauflösung), kein Inhalts-/Hashvergleich; gleiche Metadaten können unterschiedliche Inhalte verdecken. Zusätzliche Zieldateien werden nicht gelöscht. Symlinks, Spezialdateien und Typkonflikte werden übersprungen. Vor dem Start wird die Vorschau erneut geprüft; spätere externe Änderungen unterliegen den bestehenden Transfer-Konfliktprüfungen. Maximal 10.000 Einträge je Seite, Tiefe 100 und 1.000 Transferauswahlen. Die manuellen Windows-/Linux-Rückmeldungen enthalten keine gesonderte Testmatrix des Ordnerabgleichs. Ab 0.0.14 ergänzt „Remote-Ordner aktuell halten …“ einen ausdrücklich aktivierten automatischen Upload lokaler Dateiänderungen, einschließlich Unterordnern und Speichern aus externen Programmen. Manuelle Transfers für dasselbe Profil sind währenddessen gesperrt. Ab 0.0.15 wird der Remote-Ordner beim Start vollständig an den lokalen Stand angeglichen; überzählige Remote-Dateien und -Ordner werden entfernt, unter Beachtung der Ausschluss- und Sicherungsregeln. Weitere lokale Löschungen werden automatisch übernommen. Kein automatischer Neustart nach Sitzungsende oder Verbindungswechsel. [Bedienung, Grenzen und Tests](automatischer-upload.md). Kein Terminal, kein ProxyJump und keine Browser-Ausführung. Editorlimit 10 MiB; höchstens 32 gehaltene Editorressourcen und 64 private SCP-Kopien. Das Journal hält maximal 10.000 Aufträge / 32 MiB. Vollständige Screenreader-Abnahme bleibt separat nachzuweisen; echter macOS-Suspend/Resume ist in [M6-03](nachweise/M6-03.md) nachgewiesen. Weitere, nicht dokumentierte Plattformkombinationen bleiben offen.
 
 
 ## Serverumzug: geänderter SSH-Host-Key

@@ -34,5 +34,5 @@ export function registerTransfers(context,profileUI) {
     if (profileUI.sessions.snapshot(profile.id).state !== 'connected') await profileUI.connect(profile);
     await engine.submit(profile.id,'upload',paths,profile.remotePath);profileUI.open(profile);
   });
-  return {ready:engine.ready,flush:() => journal.flush(),resume,cleanup:id => {profileUI.guard();return engine.cleanup(id);},pause:value => {profileUI.guard();engine.queue.pause(value);},cancel:id => {profileUI.guard();engine.queue.cancel(id);},retry,list:() => {profileUI.guard();return engine.queue.list();},submit:async (id,direction,paths,destination) => {profileUI.guard();return engine.submit(id,direction,paths,destination);}};
+  return {ready:engine.ready,flush:async () => {await engine.ready;journal.update(engine.queue.list());await journal.flush();},resume,cleanup:id => {profileUI.guard();return engine.cleanup(id);},pause:value => {profileUI.guard();engine.queue.pause(value);},cancel:id => {profileUI.guard();engine.queue.cancel(id);},retry,list:() => {profileUI.guard();return engine.queue.list();},submit:async (id,direction,paths,destination) => {profileUI.guard();return engine.submit(id,direction,paths,destination);}};
 }

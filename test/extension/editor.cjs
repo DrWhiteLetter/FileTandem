@@ -103,7 +103,7 @@ exports.run = async () => {
     assert.equal(await document.save(), false);
     assert.equal(server(), 'editor-initial');
     await vscode.commands.executeCommand('workbench.action.files.revert');
-    assert.equal(await api.editorProof.enable(uri, async warning => { assert.match(warning, /Auto Save/); assert.match(warning, /direkt auf den Server/); return false; }), false);
+    assert.equal(await api.editorProof.enable(uri, async warning => { assert.match(warning, /Auto Save/); assert.match(warning, vscode.env.language.startsWith('de') ? /direkt auf den Server/ : /directly to the server/); return false; }), false);
     await api.editorProof.enable(uri, async () => true);
     await wait(async () => (await vscode.workspace.fs.stat(uri)).permissions === undefined);
     await delay(500);

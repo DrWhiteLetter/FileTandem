@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.0 – 06.11.2026
+
+- Beim unmittelbaren Reload den aktuellen Transferstand speichern, auch wenn eine gebündelte Änderungsbenachrichtigung noch aussteht.
+- Erste finale Veröffentlichung als VSIX über das öffentliche GitHub-Repository.
+- Plattformnachweise für macOS Apple Silicon, Windows und Debian 13.7 mit Xfce auf ARM64 dokumentieren; Linux-Test mit VS Code 1.145.0 vom Projektinhaber bestätigt.
+- README, Installationsanleitung, Support- und Release-Angaben aktualisieren. Bestehende Extension-ID und gespeicherte Profile bleiben kompatibel.
+- Sicherheitsbefund in der Entwicklungsabhängigkeit minimatch durch Override auf 11.0.1 beheben; kein Wechsel der Laufzeitabhängigkeiten.
+- Release-Runner prüft die tatsächlichen VS-Code-Installationsversionen; der installierte Editor-Test berücksichtigt die aktive Oberflächensprache.
+
 ## 0.0.28 – 05.11.2026
 
 - Erfolgreiche Transfers direkt aus dem Verlauf entfernen oder alle beendeten Einträge nach Bestätigung ausblenden; laufende und wartende Aufträge sowie Dateien bleiben erhalten. Die Auswahl gilt pro Profil in allen Sitzungen und bleibt nach Neustart bestehen.

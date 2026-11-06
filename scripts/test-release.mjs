@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { mkdir,writeFile,readFile } from 'node:fs/promises';
-import { join,resolve } from 'node:path';
+import { join,resolve,dirname } from 'node:path';
 import { createHash } from 'node:crypto';
 import { platform,arch,release } from 'node:os';
 import { downloadAndUnzipVSCode } from '@vscode/test-electron';
@@ -12,6 +12,14 @@ const report={started:new Date().toISOString(),version:manifestVersion,platform:
 const env=Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('VSCODE_') && key!=='ELECTRON_RUN_AS_NODE'));
 const minimum=process.env.VSCODE_TEST_EXECUTABLE ?? await downloadAndUnzipVSCode('1.140.0');
 const stable=process.env.XSCP_STABLE_EXECUTABLE ?? await downloadAndUnzipVSCode(process.env.XSCP_STABLE_VERSION ?? 'stable');
+async function installedVersion(executable) {
+  const manifest=resolve(dirname(executable),process.platform==='darwin' ? '../Resources/app/package.json':'resources/app/package.json');
+  return JSON.parse(await readFile(manifest,'utf8')).version;
+}
+report.vscode={minimum:await installedVersion(minimum),stable:await installedVersion(stable)};
+if (report.vscode.minimum!=='1.140.0') throw new Error(`Minimum test installation is ${report.vscode.minimum}, expected 1.140.0. Refresh the test cache.`);
+if (process.env.XSCP_STABLE_VERSION && report.vscode.stable!==process.env.XSCP_STABLE_VERSION) throw new Error(`Stable test installation is ${report.vscode.stable}, expected ${process.env.XSCP_STABLE_VERSION}. Refresh the test cache.`);
+
 async function run(name,args,extra={}) {
   const logPath=join(reportDirectory,name+'.log');const started=Date.now();let log='';
   console.log(`M6: ${name}`);
