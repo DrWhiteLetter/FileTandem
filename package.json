@@ -11,7 +11,7 @@
     "node": ">=22.13.1"
   },
   "main": "./dist/extension.cjs",
-  "icon": "media/filetandem-logo.png",
+  "icon": "media/filetandem-marketplace-icon.png",
   "categories": [
     "Other"
   ],

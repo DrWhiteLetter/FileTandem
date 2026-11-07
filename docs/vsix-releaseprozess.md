@@ -57,6 +57,9 @@ Prüfungen müssen nicht ohne Grund wiederholt werden. Bei weiterreichenden
 `scripts/inspect-vsix.py` kontrolliert unter anderem die Übereinstimmung von
 Publisher, Paketname und Version zwischen Quellmanifest, Paketmanifest und
 `extension.vsixmanifest`. SHA-256 des ausgelieferten Pakets festhalten.
+Das Marketplace-Icon wird als PNG aus dem fertigen Paket geprüft und darf
+höchstens 1024 × 1024 Pixel groß sein. Ein eigenes verkleinertes Paket-Icon
+verwenden, wenn das hochauflösende Logo für Website und README größer ist.
 
 ## 5. Bei jedem Build committen und pushen
 

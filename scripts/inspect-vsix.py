@@ -1,6 +1,7 @@
 """Inspect the ZIP independently of the VSIX packager; do not print secrets."""
 import json
 import pathlib
+import struct
 import sys
 import zipfile
 from xml.etree import ElementTree
@@ -54,4 +55,12 @@ with zipfile.ZipFile(sys.argv[1]) as archive:
         assert isinstance(asset, str) and not asset.startswith('/') and '..' not in pathlib.PurePosixPath(asset).parts, 'Unsafe manifest asset path'
         assert 'extension/' + asset in names, 'Missing manifest icon'
         assert archive.read('extension/' + asset) == pathlib.Path(asset).read_bytes(), 'Packaged icon differs from source'
+    icon = archive.read('extension/' + manifest['icon'])
+    assert icon[:8] == b'\x89PNG\r\n\x1a\n' and icon[12:16] == b'IHDR', 'Marketplace icon must be a PNG'
+    width, height = struct.unpack('>II', icon[16:24])
+    assert 0 < width <= 1024 and 0 < height <= 1024, f'Marketplace icon exceeds 1024 x 1024 pixels: {width} x {height}'
+    icon_asset = next((asset for asset in ElementTree.fromstring(archive.read('extension.vsixmanifest')).findall('.//{*}Asset')
+                       if asset.get('Type') == 'Microsoft.VisualStudio.Services.Icons.Default'), None)
+    assert icon_asset is not None and icon_asset.get('Path') == 'extension/' + manifest['icon'], 'Marketplace icon asset differs from package manifest'
+    print(f'Marketplace-Icon geprüft: {width} x {height} Pixel.')
     print(f'VSIX geprüft: {len(names)} Dateien; keine Entwicklungsdateien, nativen Addons oder Fixture-Geheimnisse.')
