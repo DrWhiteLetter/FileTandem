@@ -1,6 +1,6 @@
 # Öffentliche Produktdaten – M6-08 vorgezogen
 
-> **Aktueller Stand, 06.11.2026:** Der Benutzer hat die öffentliche GitHub-Veröffentlichung von Version 1.0.0 beauftragt. Maßgeblich sind die [README](../README.md) und der [Release-Nachweis](nachweise/Release-1.0.0.md). Linux: erfolgreicher manueller Test auf Debian 13.7 / Xfce / ARM64 mit VS Code 1.145.0 bestätigt. Die folgenden Planungsstände sind historisch; weitere Plattformkombinationen und die manuelle Screenreader-Abnahme bleiben offen. Ein Marketplace-Publisher ist für die GitHub-VSIX nicht erforderlich und weiterhin nicht eingerichtet. Die Extension-ID bleibt `xscp-dev.xscp`.
+> **Aktueller Stand, 07.11.2026:** Der Benutzer hat die Marketplace-Publisher-ID `RootShellForge` vorgegeben. Neu gebaute Pakete verwenden `RootShellForge.xscp`; der Paketname `xscp` bleibt erhalten. Der Wechsel der Entwicklungsidentität ist in [Publisherwechsel](publisherwechsel.md) beschrieben. Ein Marketplace-Upload wurde hier nicht ausgeführt. Die folgenden Planungsstände und bisherigen Release-Nachweise bleiben historisch.
 
 Stand: 8. Oktober 2026. **Name übernommen und juristisches Okay durch den Benutzer bestätigt; Publisher noch offen.** Technische Release-Abnahmen bleiben davon unberührt. Keine Veröffentlichung beauftragt.
 
@@ -16,7 +16,7 @@ Seit 0.0.9 verwenden Einstellungen, Befehle, Ansichten und Editor-URIs `filetand
 
 ## Publisher und Identität
 
-`xscp-dev` ist ausschließlich der bestehende Entwicklungsplatzhalter. Ein tatsächlich vorhandenes Konto mit Veröffentlichungsrecht ist bislang nicht nachgewiesen. Benötigt werden Publisher-ID und öffentlicher Herausgebername; die ID wird danach im Manifest und in den installierten Extension-Tests konsistent umgesetzt. Kein erfundenes Konto oder öffentlicher Repository-/Support-Link.
+Der bisherige Entwicklungsplatzhalter `xscp-dev` wurde auf Benutzeranweisung durch die Publisher-ID `RootShellForge` ersetzt. Manifest, Einstellungsfilter und installierte Extension-Tests verwenden die neue Identität. Der Paketbau bestätigt diese Metadaten; die Kontoberechtigung und die Freischaltung im Marketplace werden durch einen lokalen Build nicht geprüft.
 
 Nach [offizieller Publishing-Anleitung](https://code.visualstudio.com/api/working-with-extensions/publishing-extension) ist die Publisher-ID nach Erstellung unveränderlich. Die Extension-ID besteht aus `publisher.name` ([Manifest](https://code.visualstudio.com/api/references/extension-manifest)). Wechsel dieser ID ist eine neue Extension-Identität und benötigt einen bewusst dokumentierten Übergang für bestehende Installation und gespeicherte Profile/Secrets. Eine sichtbare Namensänderung allein verlangt keinen Wechsel der internen `xscp.*`-Befehle, Einstellungen oder URI-Schemes.
 

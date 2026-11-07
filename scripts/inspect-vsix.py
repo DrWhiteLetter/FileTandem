@@ -3,6 +3,7 @@ import json
 import pathlib
 import sys
 import zipfile
+from xml.etree import ElementTree
 
 secrets = []
 runtime = pathlib.Path('test/fixtures/ssh/.runtime')
@@ -26,6 +27,12 @@ with zipfile.ZipFile(sys.argv[1]) as archive:
         assert 'extension/'+required in names, 'Missing runtime artifact or notice'
     assert any(name.endswith('.ttf') for name in names), 'Missing local icon font'
     manifest = json.loads(archive.read('extension/package.json'))
+    source_manifest = json.loads(pathlib.Path('package.json').read_text())
+    identity = ElementTree.fromstring(archive.read('extension.vsixmanifest')).find('.//{*}Identity')
+    assert identity is not None, 'Missing VSIX identity'
+    for field, attribute in [('publisher', 'Publisher'), ('name', 'Id'), ('version', 'Version')]:
+        assert manifest[field] == source_manifest[field], 'Packaged identity differs from source'
+        assert identity.get(attribute) == manifest[field], 'VSIX identity differs from package manifest'
     assert manifest.get('l10n') == './l10n', 'Missing VS Code localization bundle path'
     assert manifest.get('license') == 'MIT', 'Missing MIT license metadata'
     assert archive.read('extension/LICENSE.txt') == pathlib.Path('LICENSE').read_bytes(), 'Packaged license differs from source'

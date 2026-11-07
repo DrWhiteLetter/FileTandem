@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const vscode = require('vscode');
 
 exports.run = async () => {
-  const extension = vscode.extensions.getExtension('xscp-dev.xscp');
+  const extension = vscode.extensions.getExtension('RootShellForge.xscp');
   assert.ok(extension, 'Extension aus dem Checkout gefunden');
   if (process.env.XSCP_INSTALLED_EXTENSIONS) assert.ok(extension.extensionPath.startsWith(process.env.XSCP_INSTALLED_EXTENSIONS), 'Test loads installed VSIX, not checkout');
   await extension.activate();

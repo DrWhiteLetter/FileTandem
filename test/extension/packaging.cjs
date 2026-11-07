@@ -4,7 +4,7 @@ const path = require('node:path');
 const fs = require('node:fs/promises');
 const { pathToFileURL } = require('node:url');
 exports.run = async () => {
-  const extension = vscode.extensions.getExtension('xscp-dev.xscp');
+  const extension = vscode.extensions.getExtension('RootShellForge.xscp');
   assert.ok(extension, 'Installed VSIX found');
   assert.ok(extension.extensionUri.fsPath.startsWith(process.env.XSCP_PACKAGE_EXTENSIONS + path.sep), 'Loaded from isolated installed extensions, not development checkout');
   assert.equal(extension.extensionKind, vscode.ExtensionKind.UI);

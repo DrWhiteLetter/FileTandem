@@ -23,9 +23,9 @@ try {
       a.equal(v.workspace.workspaceFolders?.length ?? 0,0,'Separate empty-window trust fixture');
       a.equal(v.workspace.isTrusted,false,'Fresh empty window really runs in Restricted Mode');
       const installed=JSON.parse(await fs.readFile(process.env.XSCP_RESTRICTED_PACKAGE,'utf8'));
-      a.equal(installed.name,'xscp');a.equal(installed.publisher,'xscp-dev');
+      a.equal(installed.name,'xscp');a.equal(installed.publisher,'RootShellForge');
       a.equal(installed.capabilities.untrustedWorkspaces.supported,false);
-      const extension=v.extensions.getExtension('xscp-dev.xscp');
+      const extension=v.extensions.getExtension('RootShellForge.xscp');
       // VS Code can omit trust-disabled extensions from this API altogether.
       if (extension) {try {await extension.activate();} catch {}}
       a.equal(extension?.isActive ?? false,false,'VS Code blocks activation in untrusted window');
@@ -36,7 +36,7 @@ try {
   };`);
   const installed=spawnSync(cli,['--user-data-dir',user,'--extensions-dir',extensions,'--install-extension',join(process.cwd(),'out',`FileTandem-${manifest.version}.vsix`),'--force'],{env,encoding:'utf8',timeout:120000,shell:process.platform==='win32'});
   if (installed.error || installed.status!==0) throw installed.error ?? new Error(installed.stderr);
-  child=spawn(executable,['--user-data-dir',user,'--extensions-dir',extensions,'--new-window','--skip-welcome','--skip-release-notes'],{env:{...env,XSCP_TEST_RESULT:resultPath,XSCP_RESTRICTED_PACKAGE:join(extensions,`${manifest.publisher}.${manifest.name}-${manifest.version}`,'package.json')},stdio:'ignore'});
+  child=spawn(executable,['--user-data-dir',user,'--extensions-dir',extensions,'--new-window','--skip-welcome','--skip-release-notes'],{env:{...env,XSCP_TEST_RESULT:resultPath,XSCP_RESTRICTED_PACKAGE:join(extensions,`${manifest.publisher.toLowerCase()}.${manifest.name}-${manifest.version}`,'package.json')},stdio:'ignore'});
   closed=new Promise(resolve => child.once('exit',resolve));let spawnError;child.once('error',error => {spawnError=error;});
   let result;const deadline=Date.now()+45000;
   while (Date.now()<deadline && child.exitCode===null && !spawnError) {

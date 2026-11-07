@@ -29,7 +29,7 @@ import { browserRequest } from '../shared/browser-messages.js';
 export function registerBrowser(context,profileUI) {
   // The workbench must consume forwarded Commander keys instead of debugging.
   profileUI.command('filetandem.consumeCommanderKey',() => {});
-  profileUI.command('filetandem.openSettings',()=>vscode.commands.executeCommand('workbench.action.openSettings','@ext:xscp-dev.xscp'));
+  profileUI.command('filetandem.openSettings',()=>vscode.commands.executeCommand('workbench.action.openSettings',`@ext:${context.extension.id}`));
   const openingProgress=registerFileOpeningProgress(context,{vscode,t,onChange:()=>{for (const view of views) view.publish();}});
   const images=registerImagePreviews(context,profileUI,{vscode,openRemoteFiles,progress:openingProgress});
   const annotations=new WeakMap();

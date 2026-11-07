@@ -20,6 +20,7 @@ package-lock.json
 out/**
 coverage/**
 eslint.config.js
+AGENTS.md
 **/*.vsix
 
 # Separate project website and its source repository

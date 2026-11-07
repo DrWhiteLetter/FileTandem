@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),vscode=require('vscode'),fs=require('node:fs/promises'),path=require('node:path');
 exports.run=async () => {
-  const api=await vscode.extensions.getExtension('xscp-dev.xscp').activate();const folder=path.join(path.dirname(process.env.XSCP_EDITOR_MARKER),'ten-thousand');await fs.mkdir(folder);
+  const api=await vscode.extensions.getExtension('RootShellForge.xscp').activate();const folder=path.join(path.dirname(process.env.XSCP_EDITOR_MARKER),'ten-thousand');await fs.mkdir(folder);
   for (let offset=0;offset<10000;offset+=200) await Promise.all(Array.from({length:200},(_,i) => fs.writeFile(path.join(folder,'file-'+String(offset+i).padStart(5,'0')+'.txt'),'')));
   const panel=api.manager.open(undefined,{version:1,paths:{local:folder}});api.manager.diagnostics(true);
   const wait=async predicate => {const deadline=Date.now()+15000;while (!predicate()) {if (Date.now()>deadline) throw new Error('Webview geometry acceptance timeout: '+JSON.stringify(api.manager.status()));await new Promise(r => setTimeout(r,100));}};

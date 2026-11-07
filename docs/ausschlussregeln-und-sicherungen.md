@@ -1,6 +1,6 @@
 # Ausschlussregeln und Löschsicherungen
 
-Die Optionen findest du über das Zahnrad im FileTandem-Dateimanager, **FileTandem: Einstellungen öffnen** oder die VS-Code-Einstellungen unter `@ext:xscp-dev.xscp`. Alle Texte stehen auf Deutsch und Englisch zur Verfügung.
+Die Optionen findest du über das Zahnrad im FileTandem-Dateimanager, **FileTandem: Einstellungen öffnen** oder die VS-Code-Einstellungen unter `@ext:RootShellForge.xscp`. Alle Texte stehen auf Deutsch und Englisch zur Verfügung.
 
 ## Ausschlüsse
 

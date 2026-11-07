@@ -70,6 +70,8 @@ npm start
 
 `npm run quality` prüft den Code und baut die Erweiterung. `npm run package` erstellt die installierbare VSIX unter `out/`.
 
+Für jeden VSIX-Build gilt der [verbindliche Releaseablauf](docs/vsix-releaseprozess.md): Bei Änderungen der Oberfläche Screenshots auf GitHub und Website aktualisieren, bei Versionswechseln alle aktuellen Angaben prüfen und die zugehörigen Änderungen immer committen und pushen.
+
 ## Bilder öffnen
 
 Bilder (JPG/JPEG, PNG, GIF, WebP, BMP und ICO) öffnet FileTandem in der

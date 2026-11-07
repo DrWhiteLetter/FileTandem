@@ -6,7 +6,7 @@ const { spawnSync } = require('node:child_process');
 const delay = ms => new Promise(r => setTimeout(r, ms));
 const wait = async predicate => { const deadline = Date.now() + 10000; while (!await predicate()) { if (Date.now() > deadline) throw new Error('Editor state timeout'); await delay(100); } };
 exports.run = async () => {
-  const extension = vscode.extensions.getExtension('xscp-dev.xscp'); if (process.env.XSCP_INSTALLED_EDITOR_EXTENSIONS) assert.ok(extension.extensionPath.startsWith(process.env.XSCP_INSTALLED_EDITOR_EXTENSIONS));const api = await extension.activate();
+  const extension = vscode.extensions.getExtension('RootShellForge.xscp'); if (process.env.XSCP_INSTALLED_EDITOR_EXTENSIONS) assert.ok(extension.extensionPath.startsWith(process.env.XSCP_INSTALLED_EDITOR_EXTENSIONS));const api = await extension.activate();
   assert.equal(api.executionLocation().local, true);
   const remote = process.env.XSCP_EDITOR_REMOTE === 'yes';
   assert.equal(vscode.env.remoteName ?? 'local', remote ? 'ssh-remote' : 'local');

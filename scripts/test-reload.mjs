@@ -20,7 +20,7 @@ try {
     const v=require('vscode'),a=require('node:assert/strict'),fs=require('node:fs/promises'),path=require('node:path'),crypto=require('node:crypto');
     const root=process.env.XSCP_RELOAD_DIRECTORY,proofPath=path.join(root,'proof.json'),destination=path.join(root,'download'),target=path.join(destination,'server-marker.txt');
     try {
-      const extension=v.extensions.getExtension('xscp-dev.xscp');a.ok(extension.extensionPath.startsWith(path.join(root,'extensions')));
+      const extension=v.extensions.getExtension('RootShellForge.xscp');a.ok(extension.extensionPath.startsWith(path.join(root,'extensions')));
       const api=await extension.activate();await api.transfers.ready;let proof;try {proof=JSON.parse(await fs.readFile(proofPath,'utf8'));} catch(error) {if(error.code!=='ENOENT') throw error;}
       if (!proof) {
         const profile=await api.profiles.save({version:1,id:'m6-reload',name:'Disposable reload fixture',host:'127.0.0.1',port:Number(process.env.XSCP_RELOAD_PORT),username:'fixture',auth:'key',keyPath:process.env.XSCP_RELOAD_KEY,protocol:'sftp',localPath:destination,remotePath:'/data'});

@@ -27,7 +27,7 @@ try {
       const root=process.env.XSCP_WINDOWS_ROOT,index=Number(process.env.XSCP_WINDOWS_INDEX),shared=path.dirname(root),result=[];
       const wait=async predicate => {const end=Date.now()+30000;while(!await predicate()) {if(Date.now()>end) throw new Error('Two-window synchronization timeout');await new Promise(r => setTimeout(r,10));}};
       try {
-        const extension=v.extensions.getExtension('xscp-dev.xscp');a.ok(extension.extensionPath.startsWith(path.join(root,'extensions')));const api=await extension.activate();await api.transfers.ready;
+        const extension=v.extensions.getExtension('RootShellForge.xscp');a.ok(extension.extensionPath.startsWith(path.join(root,'extensions')));const api=await extension.activate();await api.transfers.ready;
         for (const [protocol,offset] of [['sftp',1],['scp',2]]) {
           const profile=await api.profiles.save({version:1,id:'m6-'+protocol,name:'Two window '+protocol,host:'127.0.0.1',port:Number(process.env.XSCP_WINDOWS_PORT)+offset,username:'fixture',auth:'key',keyPath:process.env.XSCP_WINDOWS_KEY,protocol,localPath:path.join(root,'source'),remotePath:'/data'});
           await api.probeSshAuthentication({host:profile.host,port:profile.port,username:profile.username,privateKey:await fs.readFile(profile.keyPath)},{confirmUnknown:async key => {a.equal(key.key,JSON.parse(process.env.XSCP_WINDOWS_KEYS)[protocol]);return true;}});
