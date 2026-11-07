@@ -2,12 +2,12 @@
 
 Ab 0.0.21: [Ausschlussregeln und Löschsicherungen](ausschlussregeln-und-sicherungen.md) beachten. Remote-Löschungen werden standardmäßig als `.bak` aufbewahrt; Aussagen über endgültige Löschungen gelten nur bei deaktivierter Sicherungsoption.
 
-Stand: 06.11.2026, Version **1.0.1** für GitHub Releases. Plattformnachweise und verbleibende Grenzen stehen in der [README](../README.md#getestete-desktop-umgebungen) und im [Release-Nachweis](nachweise/Release-1.0.1.md). Die Veröffentlichung im Marketplace ist ein separater, noch offener Schritt.
+Stand: 07.11.2026, Version **1.0.2** für den Marketplace. Plattformnachweise und verbleibende Grenzen stehen in der [README](../README.md#getestete-desktop-umgebungen) und im [Release-Nachweis](nachweise/Release-1.0.2.md). FileTandem ist unter `RootShellForge.xscp` im Marketplace veröffentlicht; der Uploadstatus dieses Updates steht im Release-Nachweis.
 
 ## Installation und erster Transfer
 
 1. VS Code Desktop ab 1.140.0 öffnen. Die konkret geprüften VS-Code-Versionen stehen im Release-Nachweis. Anwender benötigen kein separat installiertes Node/npm, Docker oder lokales SCP-Programm.
-2. Erweiterungen → Menü „…“ → **Aus VSIX installieren…** → die von [GitHub Releases](https://github.com/DrWhiteLetter/FileTandem/releases/latest) heruntergeladene `FileTandem-1.0.1.vsix` wählen; einen angebotenen Fenster-Reload durchführen.
+2. In den Erweiterungen nach `@id:RootShellForge.xscp` suchen und FileTandem von RootShellForge installieren. Alternativ eine verfügbare VSIX aus [GitHub Releases](https://github.com/DrWhiteLetter/FileTandem/releases/latest) über **Aus VSIX installieren…** auswählen; deren Version kann abweichen.
 3. FileTandem in der Activity Bar öffnen. Der Logo-Button oben in **Verbindungen** öffnet den Dateimanager; alternativ **FileTandem: Dateimanager öffnen** in der Befehlspalette.
 4. **Profil anlegen** wählen: Host, Port, Benutzer, lokalen und entfernten Startordner sowie Anmeldung eintragen. **SFTP** ist voreingestellt. Ein leerer lokaler Startordner verwendet dein Home-Verzeichnis.
 5. **Profil verbinden** wählen. Den SHA-256-Fingerprint des Host-Keys mit einer unabhängig beschafften Angabe vergleichen und ausdrücklich bestätigen. Ein geänderter bekannter Host-Key blockiert die Verbindung.
@@ -20,7 +20,7 @@ FileTandem migriert alte `xscp`-Einstellungen automatisch nach `filetandem`; ber
 
 ## Installation prüfen und aktualisieren
 
-Nach der Installation in der Erweiterungsansicht den Titel **FileTandem – SFTP & SCP File Manager** und Version **1.0.1** prüfen. Den Dateimanager öffnen und eine eigene kleine Testdatei in einen dafür angelegten Serverordner hochladen, wieder unter anderem lokalen Namen herunterladen und den Inhalt vergleichen. Erst danach mit wichtigen Dateien arbeiten. Die Queue muss den Auftrag als erfolgreich anzeigen; bei einem Fehler zunächst die Diagnose unten verwenden.
+Nach der Installation in der Erweiterungsansicht den Titel **FileTandem – SFTP & SCP File Manager** und Version **1.0.2** prüfen. Den Dateimanager öffnen und eine eigene kleine Testdatei in einen dafür angelegten Serverordner hochladen, wieder unter anderem lokalen Namen herunterladen und den Inhalt vergleichen. Erst danach mit wichtigen Dateien arbeiten. Die Queue muss den Auftrag als erfolgreich anzeigen; bei einem Fehler zunächst die Diagnose unten verwenden.
 
 Für ein Update laufende Transfers abschließen oder bewusst abbrechen, die neue VSIX über **Aus VSIX installieren…** installieren und den angebotenen Reload ausführen. Version und Testtransfer erneut prüfen. Ein Reload nimmt unterbrochene Aufträge nicht automatisch wieder auf. Eine ältere geprüfte VSIX aufbewahren; ein Downgrade ist keine Zusage der Kompatibilität zukünftiger Profil-/Journalformate.
 

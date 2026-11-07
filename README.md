@@ -4,11 +4,11 @@
 
 # FileTandem
 
-**Version 1.0.1** · SFTP- und SCP-Dateimanager für VS Code Desktop · MIT-Lizenz
+**Version 1.0.2** · SFTP- und SCP-Dateimanager für VS Code Desktop · MIT-Lizenz
 
 Lokale Dateien und Serverdateien nebeneinander – direkt in Visual Studio Code. Mit FileTandem verwaltest du Dateien über **SFTP und SCP**, überträgst ganze Ordner und bearbeitest Remote-Dateien im Editor.
 
-**[Aktuelle Version herunterladen](https://github.com/DrWhiteLetter/FileTandem/releases/latest)** · [Änderungen](CHANGELOG.md) · [Fehler melden](https://github.com/DrWhiteLetter/FileTandem/issues)
+**[Im Marketplace installieren](https://marketplace.visualstudio.com/items?itemName=RootShellForge.xscp)** · [Änderungen](CHANGELOG.md) · [Fehler melden](https://github.com/DrWhiteLetter/FileTandem/issues)
 
 ![FileTandem: lokale und entfernte Dateien mit Transferübersicht](media/filetandem-screenshot.png)
 
@@ -27,11 +27,13 @@ Lokale Dateien und Serverdateien nebeneinander – direkt in Visual Studio Code.
 
 ## Installation
 
-1. Unter **[Releases](https://github.com/DrWhiteLetter/FileTandem/releases/latest)** die Datei `FileTandem-<Version>.vsix` herunterladen.
-2. In VS Code die **Erweiterungen** öffnen und im Menü **… → Aus VSIX installieren …** die Datei auswählen.
+1. In VS Code die **Erweiterungen** öffnen und nach `@id:RootShellForge.xscp` suchen.
+2. **FileTandem – SFTP & SCP File Manager** von **RootShellForge** installieren.
 3. Über die Befehlspalette **FileTandem: Dateimanager öffnen** starten.
 
-Benötigt **VS Code Desktop ab 1.140.0**. Node.js ist für die Installation nicht nötig. Die Veröffentlichung erfolgt als VSIX über GitHub Releases; eine Veröffentlichung im VS Code Marketplace ist nicht Bestandteil dieses Releases.
+Benötigt **VS Code Desktop ab 1.140.0**. Node.js ist für die Installation nicht nötig. [Marketplace-Eintrag öffnen](https://marketplace.visualstudio.com/items?itemName=RootShellForge.xscp).
+
+Alternativ eine verfügbare VSIX aus den [GitHub Releases](https://github.com/DrWhiteLetter/FileTandem/releases/latest) herunterladen und über **Erweiterungen → … → Aus VSIX installieren …** installieren. Die dort angebotene Version kann vom Marketplace abweichen.
 
 ### Getestete Desktop-Umgebungen
 

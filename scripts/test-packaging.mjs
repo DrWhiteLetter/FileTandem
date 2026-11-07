@@ -28,7 +28,7 @@ let agent;
 try {
   await rm(join(runtime, 'packaging.json'), { force: true });
   run(process.execPath, ['scripts/build.mjs']);
-  run('npm', ['exec', '--yes', '--package=@vscode/vsce@4.0.0', '--', 'vsce', 'package', '--no-dependencies',  '--allow-missing-repository', '--no-rewrite-relative-links', '--out', vsix]);
+  run('npm', ['exec', '--yes', '--package=@vscode/vsce@4.0.0', '--', 'vsce', 'package', '--no-dependencies',  '--allow-missing-repository', '--githubBranch','main', '--out', vsix]);
   // Python's standard ZIP reader avoids a new runtime/npm/native dependency.
   const inspection = JSON.parse(run('python3', ['-c', `
 import json, pathlib, sys, zipfile

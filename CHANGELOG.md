@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.2 – 07.11.2026
+
+- Bild- und Dokumentationslinks beim VSIX-Bau für den Marketplace in absolute HTTPS-Adressen umwandeln.
+- Paketprüfung weist relative README-Bildverweise zurück.
+- Installationsanleitung auf den veröffentlichten Marketplace-Eintrag umstellen; Oberfläche und Laufzeitverhalten bleiben unverändert.
+
 ## 1.0.1 – 06.11.2026
 
 - Optionale, standardmäßig deaktivierte Eigentümerprüfung bei Uploads: Eigentümer-/Gruppenwechsel vor dem Ersetzen erkennen und betroffene Datei stoppen. Bestehende Metadatenabfragen für SFTP/SCP wiederverwenden.

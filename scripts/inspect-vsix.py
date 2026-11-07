@@ -1,6 +1,8 @@
 """Inspect the ZIP independently of the VSIX packager; do not print secrets."""
 import json
 import pathlib
+import re
+from urllib.parse import urlparse
 import struct
 import sys
 import zipfile
@@ -27,6 +29,12 @@ with zipfile.ZipFile(sys.argv[1]) as archive:
     for required in ('LICENSE.txt','package.json','package.nls.json','package.nls.de.json','dist/extension.cjs','dist/webview.js','dist/webview.css','THIRD_PARTY_NOTICES.md','media/CODICONS-LICENSE.txt','l10n/bundle.l10n.json','l10n/bundle.l10n.de.json'):
         assert 'extension/'+required in names, 'Missing runtime artifact or notice'
     assert any(name.endswith('.ttf') for name in names), 'Missing local icon font'
+    readme = archive.read(next(name for name in names if name.lower() == 'extension/readme.md')).decode('utf-8')
+    images = re.findall(r'<img\b[^>]*\bsrc=["\']([^"\']+)', readme, re.I)
+    images += re.findall(r'!\[[^\]]*\]\(([^\s)]+)', readme)
+    assert len(images) >= 2, 'Missing README logo or screenshot'
+    assert all(urlparse(url).scheme == 'https' and urlparse(url).netloc for url in images), 'README images must use absolute HTTPS URLs'
+    print(f'README-Bildlinks geprüft: {len(images)} absolute HTTPS-Adressen.')
     manifest = json.loads(archive.read('extension/package.json'))
     source_manifest = json.loads(pathlib.Path('package.json').read_text())
     identity = ElementTree.fromstring(archive.read('extension.vsixmanifest')).find('.//{*}Identity')
