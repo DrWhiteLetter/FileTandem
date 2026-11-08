@@ -35,12 +35,12 @@ test('OpenSSH/PAM auth matrix: password, Ed25519/RSA and encrypted OpenSSH keys'
   for (const options of [{ password: 'intentionally-wrong-fixture-password' }, { privateKey: material.encryptedEd25519, passphrase: 'wrong-fixture-passphrase' }, { privateKey: material.encryptedRsa }, {}]) {
     await assert.rejects(connectSsh(config(options), policy(material)));
   }
-  const context = process.env.XSCP_DOCKER_CONTEXT ? ['--context', process.env.XSCP_DOCKER_CONTEXT] : [];
+  const context = process.env.FILETANDEM_DOCKER_CONTEXT ? ['--context', process.env.FILETANDEM_DOCKER_CONTEXT] : [];
   // OpenSSH defaults exclude RSA/SHA-1. Verify server policy independently.
   const root = join(runtime, '..') + '/';
   const { createHash } = await import('node:crypto');
   const owner = createHash('sha256').update(root).digest('hex').slice(0, 12);
-  const result = spawnSync('docker', [...context, 'exec', `xscp-ssh-${owner}-auth`, 'sshd', '-T'], { encoding: 'utf8', timeout: 10000 });
+  const result = spawnSync('docker', [...context, 'exec', `filetandem-ssh-${owner}-auth`, 'sshd', '-T'], { encoding: 'utf8', timeout: 10000 });
   assert.equal(result.status, 0, result.stderr);
   const algorithms = result.stdout.match(/^pubkeyacceptedalgorithms (.+)$/m)[1].split(',');
   assert.ok(algorithms.includes('rsa-sha2-256')); assert.ok(algorithms.includes('rsa-sha2-512')); assert.ok(!algorithms.includes('ssh-rsa'));

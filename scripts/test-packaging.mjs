@@ -13,7 +13,7 @@ if (!executable) throw new Error('Packaging-Abnahme benötigt VSCODE_TEST_EXECUT
 const cli = process.env.VSCODE_CLI ?? (process.platform === 'darwin'
   ? join(dirname(executable), '../Resources/app/bin/code') : 'code');
 const root = fileURLToPath(new URL('../', import.meta.url));
-const directory = await mkdtemp(join(tmpdir(), 'xscp-package-'));
+const directory = await mkdtemp(join(tmpdir(), 'filetandem-package-'));
 const vsix = join(directory, 'FileTandem.vsix');
 const extensions = join(directory, 'extensions');
 const user = join(directory, 'user');
@@ -60,14 +60,14 @@ with zipfile.ZipFile(package) as archive:
     print(json.dumps({'files': len(names), 'bytes': pathlib.Path(package).stat().st_size, 'fixtureSecretsExcluded': True, 'nativeFilesExcluded': True}))
 `, vsix, runtime]));
   await mkdir(harness, { recursive: true });
-  await writeFile(join(harness, 'package.json'), JSON.stringify({ name: 'xscp-package-test-harness', publisher: 'xscp-test', version: '0.0.1', engines: { vscode: '^1.140.0' } }));
+  await writeFile(join(harness, 'package.json'), JSON.stringify({ name: 'filetandem-package-test-harness', publisher: 'filetandem-test', version: '0.0.1', engines: { vscode: '^1.140.0' } }));
   run(cli, ['--user-data-dir', user, '--extensions-dir', extensions, '--install-extension', vsix, '--force']);
   const material = await authMaterial(); agent = await startTestAgent(material); agent.loadKey('encrypted_ed25519');
   await runTests({ vscodeExecutablePath: executable,
     extensionDevelopmentPath: harness,
     extensionTestsPath: fileURLToPath(new URL('../test/extension/packaging.cjs', import.meta.url)),
-    extensionTestsEnv: { XSCP_PACKAGE_EXTENSIONS: extensions, XSCP_PACKAGE_AGENT: agent.socket,
-      XSCP_PACKAGE_ROOT: root, XSCP_PACKAGE_RESULT: hostResult, XSCP_SSH_PORT_BASE: process.env.XSCP_SSH_PORT_BASE ?? '22220' },
+    extensionTestsEnv: { FILETANDEM_PACKAGE_EXTENSIONS: extensions, FILETANDEM_PACKAGE_AGENT: agent.socket,
+      FILETANDEM_PACKAGE_ROOT: root, FILETANDEM_PACKAGE_RESULT: hostResult, FILETANDEM_SSH_PORT_BASE: process.env.FILETANDEM_SSH_PORT_BASE ?? '22220' },
     launchArgs: ['--user-data-dir', user, '--extensions-dir', extensions,
       '--skip-welcome', '--skip-release-notes', '--disable-workspace-trust'],
   });

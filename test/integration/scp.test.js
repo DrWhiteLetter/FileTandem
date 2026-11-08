@@ -18,7 +18,7 @@ import { hostBundleOptions } from '../../scripts/build-options.mjs';
 
 const runtime = fileURLToPath(new URL('../fixtures/ssh/.runtime/', import.meta.url));
 const root = fileURLToPath(new URL('../../', import.meta.url));
-const base = Number(process.env.XSCP_SSH_PORT_BASE ?? 22220);
+const base = Number(process.env.FILETANDEM_SSH_PORT_BASE ?? 22220);
 const size = 16 * 1024 * 1024 + 137;
 async function digest(path) {
   const hash = createHash('sha256');
@@ -34,7 +34,7 @@ async function connection(index = 2, api = { connectSsh, HostKeyStore }) {
   });
 }
 function independent(command) {
-  const result = spawnSync('ssh', ['-F', join(runtime, 'ssh_config'), 'xscp-fixture-scp', command], { encoding: 'utf8', timeout: 30000 });
+  const result = spawnSync('ssh', ['-F', join(runtime, 'ssh_config'), 'filetandem-fixture-scp', command], { encoding: 'utf8', timeout: 30000 });
   assert.equal(result.status, 0, result.stderr); return result.stdout;
 }
 function observe(session) {
@@ -56,7 +56,7 @@ function cleanupChecked(probe) {
 }
 
 test('real legacy SCP without SFTP: hashes, quoted names, listing, collisions and abort', { timeout: 120000 }, async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'xscp-scp-'));
+  const directory = await mkdtemp(join(tmpdir(), 'filetandem-scp-'));
   const remoteDir = `/data/SCP ä ' " $() ; ${randomUUID()}`;
   const name = "payload ' \" $(touch INJECTION) `touch INJECTION2` ; [*].bin";
   const remote = `${remoteDir}/${name}`;
@@ -85,7 +85,7 @@ test('real legacy SCP without SFTP: hashes, quoted names, listing, collisions an
     assert.equal(independentHash, expected);
     independent(`cp -- ${shellQuote(remote)} ${shellQuote(cliRemote)}`);
     const cliCopy = join(directory, 'legacy-cli.bin');
-    const cli = spawnSync('scp', ['-O', '-F', join(runtime, 'ssh_config'), `xscp-fixture-scp:${cliRemote}`, cliCopy], { encoding: 'utf8', timeout: 30000 });
+    const cli = spawnSync('scp', ['-O', '-F', join(runtime, 'ssh_config'), `filetandem-fixture-scp:${cliRemote}`, cliCopy], { encoding: 'utf8', timeout: 30000 });
     assert.equal(cli.status, 0, cli.stderr); assert.equal(await digest(cliCopy), expected);
     // No expansions or injected commands ran; all metacharacters are literal.
     independent('test ! -e /home/fixture/INJECTION && test ! -e /home/fixture/INJECTION2');
@@ -135,7 +135,7 @@ test('real legacy SCP without SFTP: hashes, quoted names, listing, collisions an
 });
 
 test('SFTP-only rejects SCP and GNU listing, no fallback; cancelled and timed-out Exec closes', { timeout: 15000 }, async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'xscp-scp-negative-'));
+  const directory = await mkdtemp(join(tmpdir(), 'filetandem-scp-negative-'));
   try {
     const source = join(directory, 'file'); await writeFile(source, 'probe');
     for (const kind of ['transfer', 'listing']) {
@@ -161,7 +161,7 @@ test('SFTP-only rejects SCP and GNU listing, no fallback; cancelled and timed-ou
 });
 
 test('bundled SCP and GNU-list adapter work outside node_modules', { timeout: 30000 }, async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'xscp-scp-bundle-')); const remote = `/data/scp-bundle-${randomUUID()}`;
+  const directory = await mkdtemp(join(tmpdir(), 'filetandem-scp-bundle-')); const remote = `/data/scp-bundle-${randomUUID()}`;
   try {
     const output = join(directory, 'scp.cjs');
     await build({ ...hostBundleOptions, bundle: true, outfile: output, stdin: { resolveDir: root,
@@ -174,7 +174,7 @@ test('bundled SCP and GNU-list adapter work outside node_modules', { timeout: 30
   } finally { independent(`rm -f -- ${shellQuote(remote)}`); await rm(directory, { recursive: true, force: true }); }
 });
 test('production SCP owns its channel, streams empty/binary files and cancellation preserves shared transport', {timeout:30000},async () => {
- const {streamScpFile}=await import('../../src/adapters/scp/transfer.js');const {withExec}=await import('../../src/adapters/scp/exec.js');const directory=await mkdtemp(join(tmpdir(),'xscp-m4-scp-')),session=await connection(),observed=observe(session),remote='/data/m4-'+randomUUID();
+ const {streamScpFile}=await import('../../src/adapters/scp/transfer.js');const {withExec}=await import('../../src/adapters/scp/exec.js');const directory=await mkdtemp(join(tmpdir(),'filetandem-m4-scp-')),session=await connection(),observed=observe(session),remote='/data/m4-'+randomUUID();
  try {
  const source=join(directory,'source');await writeFile(source,randomBytes(1024*1024+17));const upload=await streamScpFile(observed.session,{direction:'upload',local:source,remote});const download=await streamScpFile(observed.session,{direction:'download',local:join(directory,'copy'),remote});assert.deepEqual(upload,download);assert.equal(observed.closed,false);
  const controller=new AbortController();await assert.rejects(streamScpFile(observed.session,{direction:'upload',local:source,remote:remote+'-abort',signal:controller.signal,onProgress:() => controller.abort()}));assert.equal(observed.closed,false);

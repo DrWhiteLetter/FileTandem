@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 export const runtime = fileURLToPath(new URL('../fixtures/ssh/.runtime/', import.meta.url));
-export const authPort = Number(process.env.XSCP_SSH_PORT_BASE ?? 22220) + 3;
+export const authPort = Number(process.env.FILETANDEM_SSH_PORT_BASE ?? 22220) + 3;
 export async function authMaterial() {
   const root = join(runtime, 'auth');
   return { ...JSON.parse(await readFile(join(root, 'credentials.json'), 'utf8')),
@@ -21,7 +21,7 @@ export async function startTestAgent(material) {
   const directory = await mkdtemp(join(tmpdir(), 'xa-'));
   const socket = join(directory, 'a');
   const askpass = join(directory, 'askpass');
-  await writeFile(askpass, '#!/bin/sh\nprintf \'%s\\n\' "$XSCP_TEST_PASSPHRASE"\n', { mode: 0o700 });
+  await writeFile(askpass, '#!/bin/sh\nprintf \'%s\\n\' "$FILETANDEM_TEST_PASSPHRASE"\n', { mode: 0o700 });
   const child = spawn('ssh-agent', ['-D', '-a', socket], { stdio: ['ignore', 'ignore', 'pipe'] });
   let error;
   let exited = false;
@@ -38,7 +38,7 @@ export async function startTestAgent(material) {
       await new Promise(resolve => setTimeout(resolve, 50));
     }
     if (!ready) throw new Error('Dedicated test agent did not create socket.');
-    const env = { ...process.env, SSH_AUTH_SOCK: socket, SSH_ASKPASS: askpass, SSH_ASKPASS_REQUIRE: 'force', DISPLAY: 'xscp-test:0', XSCP_TEST_PASSPHRASE: material.passphrase };
+    const env = { ...process.env, SSH_AUTH_SOCK: socket, SSH_ASKPASS: askpass, SSH_ASKPASS_REQUIRE: 'force', DISPLAY: 'filetandem-test:0', FILETANDEM_TEST_PASSPHRASE: material.passphrase };
     const loadKey = filename => {
       for (const args of [['-D'], [join(runtime, 'auth', filename)]]) {
         const result = spawnSync('ssh-add', args, { env, encoding: 'utf8', timeout: 10000 });

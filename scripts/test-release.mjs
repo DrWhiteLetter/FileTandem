@@ -11,14 +11,14 @@ const manifestVersion=JSON.parse(await readFile('package.json','utf8')).version;
 const report={started:new Date().toISOString(),version:manifestVersion,platform:platform(),architecture:arch(),os:release(),node:process.version,steps:[]};
 const env=Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('VSCODE_') && key!=='ELECTRON_RUN_AS_NODE'));
 const minimum=process.env.VSCODE_TEST_EXECUTABLE ?? await downloadAndUnzipVSCode('1.140.0');
-const stable=process.env.XSCP_STABLE_EXECUTABLE ?? await downloadAndUnzipVSCode(process.env.XSCP_STABLE_VERSION ?? 'stable');
+const stable=process.env.FILETANDEM_STABLE_EXECUTABLE ?? await downloadAndUnzipVSCode(process.env.FILETANDEM_STABLE_VERSION ?? 'stable');
 async function installedVersion(executable) {
   const manifest=resolve(dirname(executable),process.platform==='darwin' ? '../Resources/app/package.json':'resources/app/package.json');
   return JSON.parse(await readFile(manifest,'utf8')).version;
 }
 report.vscode={minimum:await installedVersion(minimum),stable:await installedVersion(stable)};
 if (report.vscode.minimum!=='1.140.0') throw new Error(`Minimum test installation is ${report.vscode.minimum}, expected 1.140.0. Refresh the test cache.`);
-if (process.env.XSCP_STABLE_VERSION && report.vscode.stable!==process.env.XSCP_STABLE_VERSION) throw new Error(`Stable test installation is ${report.vscode.stable}, expected ${process.env.XSCP_STABLE_VERSION}. Refresh the test cache.`);
+if (process.env.FILETANDEM_STABLE_VERSION && report.vscode.stable!==process.env.FILETANDEM_STABLE_VERSION) throw new Error(`Stable test installation is ${report.vscode.stable}, expected ${process.env.FILETANDEM_STABLE_VERSION}. Refresh the test cache.`);
 
 async function run(name,args,extra={}) {
   const logPath=join(reportDirectory,name+'.log');const started=Date.now();let log='';

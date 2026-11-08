@@ -20,14 +20,14 @@ try {
  await writeFile(marker,content,{mode:0o600});
  await writeFile(join(harness,'package.json'),JSON.stringify({name:'localization',publisher:'filetandem-test',version:'0.0.1',engines:{vscode:'^1.140.0'},main:'./main.cjs',activationEvents:['onStartupFinished'],extensionKind:['ui']}));
  await copyFile(fileURLToPath(new URL('../test/extension/smoke.cjs',import.meta.url)),join(harness,'smoke.cjs'));
- await writeFile(join(harness,'main.cjs'),`exports.activate=async()=>{const fs=require('node:fs/promises');try{await require('./smoke.cjs').run();await fs.writeFile(process.env.XSCP_TEST_RESULT,JSON.stringify({ok:true,locale:require('vscode').env.language}));}catch(error){await fs.writeFile(process.env.XSCP_TEST_RESULT,JSON.stringify({ok:false,error:error.stack}));}};`);
+ await writeFile(join(harness,'main.cjs'),`exports.activate=async()=>{const fs=require('node:fs/promises');try{await require('./smoke.cjs').run();await fs.writeFile(process.env.FILETANDEM_TEST_RESULT,JSON.stringify({ok:true,locale:require('vscode').env.language}));}catch(error){await fs.writeFile(process.env.FILETANDEM_TEST_RESULT,JSON.stringify({ok:false,error:error.stack}));}};`);
  for (const extension of ['MS-CEINTL.vscode-language-pack-de',join('out',`FileTandem-${manifest.version}.vsix`)]) {
   const result=spawnSync(cli,['--user-data-dir',user,'--extensions-dir',extensions,'--install-extension',extension,'--force'],{env:environment,encoding:'utf8',timeout:120000,shell:process.platform==='win32'});
   if (result.error || result.status!==0) throw result.error ?? new Error(result.stderr);
  }
  for (const locale of ['en','de']) {
   const resultPath=join(directory,locale+'.json');
-  child=spawn(executable,[`--locale=${locale}`,'--user-data-dir',user,'--extensions-dir',extensions,'--new-window','--skip-welcome','--skip-release-notes'],{env:{...environment,XSCP_TEST_RESULT:resultPath,XSCP_EXPECT_LOCALE:locale,XSCP_PROOF_FILE:marker,XSCP_PROOF_SHA256:createHash('sha256').update(content).digest('hex'),XSCP_PROOF_HOST:hostname(),XSCP_EXPECT_REMOTE:'local',XSCP_INSTALLED_EXTENSIONS:extensions},stdio:'ignore'});
+  child=spawn(executable,[`--locale=${locale}`,'--user-data-dir',user,'--extensions-dir',extensions,'--new-window','--skip-welcome','--skip-release-notes'],{env:{...environment,FILETANDEM_TEST_RESULT:resultPath,FILETANDEM_EXPECT_LOCALE:locale,FILETANDEM_PROOF_FILE:marker,FILETANDEM_PROOF_SHA256:createHash('sha256').update(content).digest('hex'),FILETANDEM_PROOF_HOST:hostname(),FILETANDEM_EXPECT_REMOTE:'local',FILETANDEM_INSTALLED_EXTENSIONS:extensions},stdio:'ignore'});
   let exited=false,spawnError;const closed=new Promise(resolve=>child.once('close',()=>{exited=true;resolve();}));child.on('error',error=>{spawnError=error;});
   try {
    let result;const deadline=Date.now()+45000;

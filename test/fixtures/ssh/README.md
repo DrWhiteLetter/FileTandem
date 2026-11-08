@@ -1,14 +1,14 @@
 # Isolierte SSH-Testumgebungen
 
-M0-03 stellt drei lokale OpenSSH-Protokoll-Container bereit; M0-07 ergänzt eine separate Authentifizierungs-Fixture. Sie sind Testmaterial für xScp und benötigen keinen VS Code Server. Alle Zugänge sind ausschließlich auf `127.0.0.1` veröffentlicht.
+M0-03 stellt drei lokale OpenSSH-Protokoll-Container bereit; M0-07 ergänzt eine separate Authentifizierungs-Fixture. Sie sind Testmaterial für FileTandem und benötigen keinen VS Code Server. Alle Zugänge sind ausschließlich auf `127.0.0.1` veröffentlicht.
 
 | Alias in generierter SSH-Konfiguration | Port | SFTP | Shell / Exec | Echtes SCP |
 | --- | ---: | --- | --- | --- |
-| `xscp-fixture-sftp` | 22220 | Ja | Ja | Möglich |
-| `xscp-fixture-sftp-only` | 22221 | Ja | Durch `ForceCommand internal-sftp` blockiert | Blockiert |
-| `xscp-fixture-scp` | 22222 | Kein SFTP-Subsystem | Ja, GNU find/coreutils | Ja, `scp -O` |
-| `xscp-fixture-auth` (M0-07) | 22223 | Ja | Ja | Möglich |
-| `xscp-fixture-remote` (M0-08) | 22224 | Ja | Ja, begrenztes lokales TCP-Forwarding | Möglich |
+| `filetandem-fixture-sftp` | 22220 | Ja | Ja | Möglich |
+| `filetandem-fixture-sftp-only` | 22221 | Ja | Durch `ForceCommand internal-sftp` blockiert | Blockiert |
+| `filetandem-fixture-scp` | 22222 | Kein SFTP-Subsystem | Ja, GNU find/coreutils | Ja, `scp -O` |
+| `filetandem-fixture-auth` (M0-07) | 22223 | Ja | Ja | Möglich |
+| `filetandem-fixture-remote` (M0-08) | 22224 | Ja | Ja, begrenztes lokales TCP-Forwarding | Möglich |
 
 Benutzer: `fixture`. Die drei Protokoll-Fixtures erlauben ausschließlich den lokal generierten Ed25519-Testschlüssel. Nur die Auth-Fixture erlaubt zusätzlich Passwort, RSA/verschlüsselte Testkeys und Keyboard-Interactive über PAM. Datenbereich: `/data`; jeder Start erzeugt frische Container und verwirft zuvor dort geschriebene Testdaten. Der SFTP-Startordner ist `/data`. Der Shell-Login startet im Home-Verzeichnis; für Shell-/SCP-Tests absolute `/data/...`-Pfade benutzen.
 
@@ -23,10 +23,10 @@ brew install --formula colima docker
 # Vom Repository-Root: nur den Fixture-Ordner in die separate VM einbinden.
 colima start xscp --vm-type vz --cpu 2 --memory 2 --disk 10 --root-disk 10 \
   --mount "$PWD/test/fixtures/ssh" --activate=false
-export XSCP_DOCKER_CONTEXT=colima-xscp
+export FILETANDEM_DOCKER_CONTEXT=colima-xscp
 ```
 
-Der Standard-Docker-Kontext wird hierbei nicht gewechselt. Eine andere vorhandene lokale Docker-Laufzeit ist ebenfalls möglich; `XSCP_DOCKER_CONTEXT` dann weglassen oder passend setzen. Docker Desktop kann eine Dateifreigabe des Fixture-Ordners benötigen. Windows wurde noch nicht geprüft; Linux-Docker und macOS/Apple Silicon sind die vorgesehenen Entwicklungsumgebungen.
+Der Standard-Docker-Kontext wird hierbei nicht gewechselt. Eine andere vorhandene lokale Docker-Laufzeit ist ebenfalls möglich; `FILETANDEM_DOCKER_CONTEXT` dann weglassen oder passend setzen. Docker Desktop kann eine Dateifreigabe des Fixture-Ordners benötigen. Windows wurde noch nicht geprüft; Linux-Docker und macOS/Apple Silicon sind die vorgesehenen Entwicklungsumgebungen.
 
 ## Start, Prüfung und Stop
 
@@ -39,7 +39,7 @@ npm run fixtures:status
 npm run fixtures:stop    # entfernt nur Container/Netzwerk dieses Checkouts
 ```
 
-`fixtures:start` kann erneut ausgeführt werden: vorhandene eigene Container werden neu erstellt, Testdaten gehen verloren, die Testschlüssel bleiben stabil. Container-/Netzwerknamen enthalten einen Hash des Checkout-Pfads; Ownership-Labels verhindern das Entfernen fremder Objekte. Bei Startfehlern werden eigene teilweise gestartete Container wieder entfernt. Andere Projekte müssen eigene Ports verwenden, zum Beispiel `XSCP_SSH_PORT_BASE=22320`; diese Einstellung für Start/Prüfung konsistent verwenden.
+`fixtures:start` kann erneut ausgeführt werden: vorhandene eigene Container werden neu erstellt, Testdaten gehen verloren, die Testschlüssel bleiben stabil. Container-/Netzwerknamen enthalten einen Hash des Checkout-Pfads; Ownership-Labels verhindern das Entfernen fremder Objekte. Bei Startfehlern werden eigene teilweise gestartete Container wieder entfernt. Andere Projekte müssen eigene Ports verwenden, zum Beispiel `FILETANDEM_SSH_PORT_BASE=22320`; diese Einstellung für Start/Prüfung konsistent verwenden.
 
 Nach Abschluss bei Colima zusätzlich `colima stop xscp` ausführen. Die VM und das gebaute Image bleiben für einen schnelleren nächsten Start vorhanden. Kein Autostart-Dienst wird eingerichtet.
 
@@ -67,11 +67,11 @@ Generierte Dateien liegen unter `test/fixtures/ssh/.runtime/`:
 
 ```sh
 ssh-keygen -lf test/fixtures/ssh/.runtime/servers/sftp/host_ed25519.pub
-ssh -F test/fixtures/ssh/.runtime/ssh_config xscp-fixture-sftp 'ls -la /data'
-sftp -F test/fixtures/ssh/.runtime/ssh_config xscp-fixture-sftp-only
+ssh -F test/fixtures/ssh/.runtime/ssh_config filetandem-fixture-sftp 'ls -la /data'
+sftp -F test/fixtures/ssh/.runtime/ssh_config filetandem-fixture-sftp-only
 # Echtes SCP explizit erzwingen; heutiges OpenSSH scp verwendet sonst SFTP:
 scp -O -F test/fixtures/ssh/.runtime/ssh_config ./README.md \
-  xscp-fixture-scp:/data/readme-probe.md
+  filetandem-fixture-scp:/data/readme-probe.md
 ```
 
 Die App-Host-Key-Prüfung ist in M0-04 implementiert; `npm run test:host-keys` nutzt diese Fixtures für echte Key-Wechsel. Die Container-Konfiguration wird auch beim Daemon-Neustart aus der unveränderten Basis neu erstellt. Hier prüfen OpenSSH-Clients die kontrollierten Fixture-Hostidentitäten. Testkeys nie für andere Server verwenden. Die privaten Client-Keys werden nicht in das Container-Image oder in Servercontainer kopiert; nur der jeweilige Host-Key und öffentliche Authorized Keys sowie bei Auth der Testpassworthash werden read-only eingebunden.
@@ -84,7 +84,7 @@ Die App-Host-Key-Prüfung ist in M0-04 implementiert; `npm run test:host-keys` n
 4. SCP: SFTP-Subsystem ausdrücklich abgewiesen; Upload und Download mit `scp -O` bytegleich; GNU find/coreutils vorhanden.
 5. Jede Variante weist einen anderen, ebenfalls nur für Tests erzeugten Client-Key mit einem konkreten Public-Key-Authentifizierungsfehler zurück.
 
-Dies ist ein Fixture-Smoke-Test mit den OpenSSH-Clients. Die xScp-/ssh2-Host-Key-Prüfung ist in M0-04 geprüft; `npm run test:sftp` weist Streaming/Abbruch in M0-05 nach. `npm run test:scp` weist in M0-06 den eigenen SCP-Sender/Empfänger und GNU-find-Auflistung auf der Variante ohne SFTP nach. Die Authentifizierungsmatrix ist in M0-07 geprüft; vollständige SCP-Härtung folgt in M4.
+Dies ist ein Fixture-Smoke-Test mit den OpenSSH-Clients. Die FileTandem-/ssh2-Host-Key-Prüfung ist in M0-04 geprüft; `npm run test:sftp` weist Streaming/Abbruch in M0-05 nach. `npm run test:scp` weist in M0-06 den eigenen SCP-Sender/Empfänger und GNU-find-Auflistung auf der Variante ohne SFTP nach. Die Authentifizierungsmatrix ist in M0-07 geprüft; vollständige SCP-Härtung folgt in M4.
 
 ## Isolation und Packaging
 

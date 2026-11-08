@@ -7,16 +7,16 @@ import { join } from 'node:path';
 const fixtureRoot = fileURLToPath(new URL('../test/fixtures/ssh/', import.meta.url));
 const runtime = join(fixtureRoot, '.runtime');
 const owner = createHash('sha256').update(fixtureRoot).digest('hex').slice(0, 12);
-const prefix = `xscp-ssh-${owner}`;
+const prefix = `filetandem-ssh-${owner}`;
 const modes = ['sftp', 'sftp-only', 'scp', 'auth', 'remote'];
-const base = Number(process.env.XSCP_SSH_PORT_BASE ?? 22220);
-if (!Number.isInteger(base) || base < 1024 || base > 65531) throw new Error('XSCP_SSH_PORT_BASE must be 1024..65531.');
-const context = process.env.XSCP_DOCKER_CONTEXT;
+const base = Number(process.env.FILETANDEM_SSH_PORT_BASE ?? 22220);
+if (!Number.isInteger(base) || base < 1024 || base > 65531) throw new Error('FILETANDEM_SSH_PORT_BASE must be 1024..65531.');
+const context = process.env.FILETANDEM_DOCKER_CONTEXT;
 const dockerPrefix = context ? ['--context', context] : [];
 const image = `${prefix}:m0`;
 const network = `${prefix}-network`;
 const name = mode => `${prefix}-${mode}`;
-const label = 'de.xscp.fixture-owner';
+const label = 'de.filetandem.fixture-owner';
 
 function run(command, args, { input, allowFailure = false, timeout = 30000, inherit = false } = {}) {
   const result = spawnSync(command, args, { encoding: 'utf8', input, timeout,
@@ -28,8 +28,8 @@ function run(command, args, { input, allowFailure = false, timeout = 30000, inhe
   return result;
 }
 const docker = (args, options) => run('docker', [...dockerPrefix, ...args], options);
-const ssh = (mode, args, options) => run('ssh', ['-F', join(runtime, 'ssh_config'), `xscp-fixture-${mode}`, ...args], options);
-const sftp = (mode, input, allowFailure = false) => run('sftp', ['-F', join(runtime, 'ssh_config'), '-b', '-', `xscp-fixture-${mode}`], { input, allowFailure });
+const ssh = (mode, args, options) => run('ssh', ['-F', join(runtime, 'ssh_config'), `filetandem-fixture-${mode}`, ...args], options);
+const sftp = (mode, input, allowFailure = false) => run('sftp', ['-F', join(runtime, 'ssh_config'), '-b', '-', `filetandem-fixture-${mode}`], { input, allowFailure });
 const scp = (mode, args, allowFailure = false) => run('scp', ['-F', join(runtime, 'ssh_config'), ...args], { allowFailure });
 const quoted = value => `"${value.replaceAll('\\', '/').replaceAll('"', '\\"')}"`;
 
@@ -37,7 +37,7 @@ async function exists(path) {
   try { await access(path); return true; } catch (error) { if (error.code === 'ENOENT') return false; throw error; }
 }
 async function key(path) {
-  if (!await exists(path)) run('ssh-keygen', ['-q', '-t', 'ed25519', '-N', '', '-C', 'xScp disposable fixture ONLY', '-f', path]);
+  if (!await exists(path)) run('ssh-keygen', ['-q', '-t', 'ed25519', '-N', '', '-C', 'FileTandem disposable fixture ONLY', '-f', path]);
   await chmod(path, 0o600);
 }
 async function init() {
@@ -55,7 +55,7 @@ async function init() {
   for (const [filename, type, encrypted] of [['encrypted_ed25519', 'ed25519', true], ['client_rsa', 'rsa', false], ['encrypted_rsa', 'rsa', true]]) {
     const path = join(authRoot, filename);
     if (!await exists(path)) run('ssh-keygen', ['-q', '-t', type, ...(type === 'rsa' ? ['-b', '3072'] : []),
-      '-N', encrypted ? credentials.passphrase : '', '-C', 'xScp auth fixture ONLY', '-f', path]);
+      '-N', encrypted ? credentials.passphrase : '', '-C', 'FileTandem auth fixture ONLY', '-f', path]);
     await chmod(path, 0o600);
   }
   let knownHosts = '';
@@ -72,7 +72,7 @@ async function init() {
     }
     await writeFile(join(directory, 'authorized_keys'), authorized, { mode: 0o644 });
     knownHosts += `[127.0.0.1]:${base + index} ${await readFile(join(directory, 'host_ed25519.pub'), 'utf8')}`;
-    config += `Host xscp-fixture-${mode}\n  HostName 127.0.0.1\n  Port ${base + index}\n  User fixture\n  IdentityFile ${quoted(join(runtime, 'client_ed25519'))}\n  UserKnownHostsFile ${quoted(join(runtime, 'known_hosts'))}\n  StrictHostKeyChecking yes\n  IdentitiesOnly yes\n  IdentityAgent none\n  BatchMode yes\n  PasswordAuthentication no\n  KbdInteractiveAuthentication no\n  RequestTTY no\n  LogLevel ERROR\n  ConnectTimeout 5\n\n`;
+    config += `Host filetandem-fixture-${mode}\n  HostName 127.0.0.1\n  Port ${base + index}\n  User fixture\n  IdentityFile ${quoted(join(runtime, 'client_ed25519'))}\n  UserKnownHostsFile ${quoted(join(runtime, 'known_hosts'))}\n  StrictHostKeyChecking yes\n  IdentitiesOnly yes\n  IdentityAgent none\n  BatchMode yes\n  PasswordAuthentication no\n  KbdInteractiveAuthentication no\n  RequestTTY no\n  LogLevel ERROR\n  ConnectTimeout 5\n\n`;
   }
   await writeFile(join(runtime, 'known_hosts'), knownHosts, { mode: 0o600 });
   await writeFile(join(runtime, 'ssh_config'), config, { mode: 0o600 });
@@ -144,7 +144,7 @@ async function verify() {
   if (!await exists(join(runtime, 'ssh_config'))) throw new Error('Run npm run fixtures:start first.');
   await rm(join(runtime, 'verification.json'), { force: true });
   const source = join(runtime, 'probe.txt');
-  const payload = Buffer.from('xScp M0-03 disposable protocol probe\n');
+  const payload = Buffer.from('FileTandem M0-03 disposable protocol probe\n');
   await writeFile(source, payload, { mode: 0o600 });
   const results = [];
   const assert = (condition, message) => { if (!condition) throw new Error(message); };
@@ -154,24 +154,24 @@ async function verify() {
       assert(container?.State.Running, `${mode} fixture is not running.`);
       const destination = join(runtime, `download-${mode}.txt`);
       await rm(destination, { force: true });
-      const shell = ssh(mode, ['printf XSCP_SHELL_OK'], { allowFailure: true });
+      const shell = ssh(mode, ['printf FILETANDEM_SHELL_OK'], { allowFailure: true });
       if (mode === 'sftp-only') {
-        assert(!shell.stdout.includes('XSCP_SHELL_OK'), 'SFTP-only unexpectedly executed a shell command.');
-      } else assert(shell.status === 0 && shell.stdout === 'XSCP_SHELL_OK', `${mode}: shell failed.`);
+        assert(!shell.stdout.includes('FILETANDEM_SHELL_OK'), 'SFTP-only unexpectedly executed a shell command.');
+      } else assert(shell.status === 0 && shell.stdout === 'FILETANDEM_SHELL_OK', `${mode}: shell failed.`);
       if (mode !== 'scp') {
         sftp(mode, `put ${quoted(source)} /data/probe.txt\nget /data/probe.txt ${quoted(destination)}\nrm /data/probe.txt\nquit\n`);
       } else {
         const failure = sftp(mode, 'pwd\nquit\n', true);
         assert(failure.status !== 0 && /subsystem request failed/i.test(failure.stderr), 'SCP fixture did not explicitly reject the SFTP subsystem.');
         // -O is essential: OpenSSH scp defaults to SFTP on current clients.
-        scp(mode, ['-O', source, `xscp-fixture-${mode}:/data/probe.txt`]);
-        scp(mode, ['-O', `xscp-fixture-${mode}:/data/probe.txt`, destination]);
+        scp(mode, ['-O', source, `filetandem-fixture-${mode}:/data/probe.txt`]);
+        scp(mode, ['-O', `filetandem-fixture-${mode}:/data/probe.txt`, destination]);
         ssh(mode, ['rm /data/probe.txt']);
         assert(ssh(mode, ['find --version; stat --version']).stdout.includes('GNU'), 'GNU tools missing.');
       }
       assert((await readFile(destination)).equals(payload), `${mode}: round-trip content differs.`);
       if (mode === 'sftp-only') {
-        const legacy = scp(mode, ['-O', source, 'xscp-fixture-sftp-only:/data/unexpected-scp.txt'], true);
+        const legacy = scp(mode, ['-O', source, 'filetandem-fixture-sftp-only:/data/unexpected-scp.txt'], true);
         assert(legacy.status !== 0, 'SFTP-only unexpectedly accepted legacy SCP.');
       }
       // Wrong-key failures must be authentication failures, not connection errors.

@@ -3,12 +3,12 @@ const vscode=require('vscode');
 const fs=require('node:fs/promises');
 const path=require('node:path');
 exports.run=async api => {
-  const id='m2-native-fixture';const local=path.join(path.dirname(process.env.XSCP_PROOF_FILE),'browser');
-  const port=Number(process.env.XSCP_M2_PORT);
-  if (process.env.XSCP_M2_PHASE === 'write') {
+  const id='m2-native-fixture';const local=path.join(path.dirname(process.env.FILETANDEM_PROOF_FILE),'browser');
+  const port=Number(process.env.FILETANDEM_M2_PORT);
+  if (process.env.FILETANDEM_M2_PHASE === 'write') {
     await fs.mkdir(local);await fs.mkdir(path.join(local,'child'));await fs.writeFile(path.join(local,'own.txt'),'test');
-    await api.profiles.save({version:1,id,name:'M2 native SFTP-only',host:'127.0.0.1',port,username:'fixture',auth:'key',keyPath:process.env.XSCP_M2_KEY,protocol:'sftp',localPath:local,remotePath:'/data'});
-    await api.probeSshAuthentication({host:'127.0.0.1',port,username:'fixture',privateKey:await fs.readFile(process.env.XSCP_M2_KEY)},{confirmUnknown:async key => {assert.equal(key.key,process.env.XSCP_M2_EXPECTED_KEY);return true;}});
+    await api.profiles.save({version:1,id,name:'M2 native SFTP-only',host:'127.0.0.1',port,username:'fixture',auth:'key',keyPath:process.env.FILETANDEM_M2_KEY,protocol:'sftp',localPath:local,remotePath:'/data'});
+    await api.probeSshAuthentication({host:'127.0.0.1',port,username:'fixture',privateKey:await fs.readFile(process.env.FILETANDEM_M2_KEY)},{confirmUnknown:async key => {assert.equal(key.key,process.env.FILETANDEM_M2_EXPECTED_KEY);return true;}});
     await vscode.commands.executeCommand('filetandem.favoriteProfile',{profileId:id});
   }
   assert.equal(api.profiles.get(id).favorite,true,'Profile persisted across actual application restart');
@@ -28,5 +28,5 @@ exports.run=async api => {
   await vscode.workspace.fs.delete(existing,{recursive:true,useTrash:true});
   await require('./protocols.cjs').run(api,local);
   await require('./transfers.cjs').run(api,id,local);
-  console.log(`M2-09 ${process.env.XSCP_M2_PHASE}: persisted favorite/profile/trust, SFTP-only Commander, disconnect/reconnect, local rename conflict and real OS trash passed.`);
+  console.log(`M2-09 ${process.env.FILETANDEM_M2_PHASE}: persisted favorite/profile/trust, SFTP-only Commander, disconnect/reconnect, local rename conflict and real OS trash passed.`);
 };

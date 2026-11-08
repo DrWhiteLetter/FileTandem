@@ -11,7 +11,7 @@ const manifestVersion=JSON.parse(await readFile('package.json','utf8')).version;
 const report={started:new Date().toISOString(),version:manifestVersion,platform:platform(),architecture:arch(),os:release(),node:process.version,systemSuspendResume:"notRun",steps:[]};
 const env=Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('VSCODE_') && key!=='ELECTRON_RUN_AS_NODE'));
 const minimum=process.env.VSCODE_TEST_EXECUTABLE ?? await downloadAndUnzipVSCode('1.140.0');
-const stable=process.env.XSCP_STABLE_EXECUTABLE ?? await downloadAndUnzipVSCode(process.env.XSCP_STABLE_VERSION ?? 'stable');
+const stable=process.env.FILETANDEM_STABLE_EXECUTABLE ?? await downloadAndUnzipVSCode(process.env.FILETANDEM_STABLE_VERSION ?? 'stable');
 async function run(name,args,extra={}) {
   const logPath=join(reportDirectory,name+'.log');const started=Date.now();let log='';
   console.log(`M6: ${name}`);

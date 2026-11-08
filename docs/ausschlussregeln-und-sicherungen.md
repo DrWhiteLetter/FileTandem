@@ -1,6 +1,6 @@
 # Ausschlussregeln und Löschsicherungen
 
-Die Optionen findest du über das Zahnrad im FileTandem-Dateimanager, **FileTandem: Einstellungen öffnen** oder die VS-Code-Einstellungen unter `@ext:RootShellForge.xscp`. Alle Texte stehen auf Deutsch und Englisch zur Verfügung.
+Die Optionen findest du über das Zahnrad im FileTandem-Dateimanager, **FileTandem: Einstellungen öffnen** oder die VS-Code-Einstellungen unter `@ext:RootShellForge.filetandem`. Alle Texte stehen auf Deutsch und Englisch zur Verfügung.
 
 ## Ausschlüsse
 
@@ -24,7 +24,7 @@ Beispiel in den VS-Code-Einstellungen:
 }
 ```
 
-Die Regeln gelten für Uploads und Downloads, auch aus dem Explorer, rekursive Transfers, Ordnerabgleich und automatische Überwachung. Beim Spiegeln bleiben ausgeschlossene Remote-Einträge erhalten. Vorhandene `.bak`- und `.bak.N`-Sicherungen sowie eigene `.xscp-….part`-Transferdateien sind immer ausgeschlossen, auch bei ansonsten leeren Regeln.
+Die Regeln gelten für Uploads und Downloads, auch aus dem Explorer, rekursive Transfers, Ordnerabgleich und automatische Überwachung. Beim Spiegeln bleiben ausgeschlossene Remote-Einträge erhalten. Vorhandene `.bak`- und `.bak.N`-Sicherungen sowie eigene `.filetandem-….part`-Transferdateien (einschließlich alter `.xscp-….part`-Dateien) sind immer ausgeschlossen, auch bei ansonsten leeren Regeln.
 
 Die Einträge bleiben im Dateimanager sichtbar und werden mit **Ausgeschlossen** gekennzeichnet. Der Schalter **Versteckte Dateien** ändert nur die Anzeige, nicht die Ausschlussregeln. Direkt ausgeschlossene Einträge können nicht übertragen werden; ausgeschlossene Unterordner werden nicht durchlaufen.
 

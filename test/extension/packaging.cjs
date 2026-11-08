@@ -4,14 +4,14 @@ const path = require('node:path');
 const fs = require('node:fs/promises');
 const { pathToFileURL } = require('node:url');
 exports.run = async () => {
-  const extension = vscode.extensions.getExtension('RootShellForge.xscp');
+  const extension = vscode.extensions.getExtension('RootShellForge.filetandem');
   assert.ok(extension, 'Installed VSIX found');
-  assert.ok(extension.extensionUri.fsPath.startsWith(process.env.XSCP_PACKAGE_EXTENSIONS + path.sep), 'Loaded from isolated installed extensions, not development checkout');
+  assert.ok(extension.extensionUri.fsPath.startsWith(process.env.FILETANDEM_PACKAGE_EXTENSIONS + path.sep), 'Loaded from isolated installed extensions, not development checkout');
   assert.equal(extension.extensionKind, vscode.ExtensionKind.UI);
   assert.equal(extension.packageJSON.dependencies.ssh2, '1.17.0');
   for (const name of ['node_modules', 'test', 'scripts']) await assert.rejects(fs.access(path.join(extension.extensionUri.fsPath, name)), { code: 'ENOENT' });
   await extension.activate(); assert.ok(extension.isActive);
-  const { authMaterial, authPort } = await import(pathToFileURL(path.join(process.env.XSCP_PACKAGE_ROOT, 'test/helpers/auth.mjs')).href);
+  const { authMaterial, authPort } = await import(pathToFileURL(path.join(process.env.FILETANDEM_PACKAGE_ROOT, 'test/helpers/auth.mjs')).href);
   const material = await authMaterial();
   const base = { host: '127.0.0.1', port: authPort, username: 'fixture', readyTimeout: 5000 };
   assert.equal(typeof extension.exports.editorProof.open, 'function', 'Installed bundle registers the editor API');
@@ -26,7 +26,7 @@ exports.run = async () => {
     ['RSA-3072', { privateKey: material.rsa }],
     ['encrypted Ed25519', { privateKey: material.encryptedEd25519, passphrase: material.passphrase }],
     ['encrypted RSA-3072', { privateKey: material.encryptedRsa, passphrase: material.passphrase }],
-    ['Unix agent', { agent: process.env.XSCP_PACKAGE_AGENT }],
+    ['Unix agent', { agent: process.env.FILETANDEM_PACKAGE_AGENT }],
     ['PAM keyboard-interactive', { keyboardInteractive: request => {
       prompts++; assert.equal(request.prompts[0].echo, false); return request.prompts.map(() => material.password);
     } }],
@@ -45,6 +45,6 @@ exports.run = async () => {
   const visible = () => vscode.window.tabGroups.all.flatMap(group => group.tabs).some(tab => tab.label === 'FileTandem' && tab.input instanceof vscode.TabInputWebview);
   while (!visible() && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 50));
   assert.ok(visible(), 'Installed webview assets load');
-  await fs.writeFile(process.env.XSCP_PACKAGE_RESULT, JSON.stringify({ vscode: vscode.version, extensionHostNode: process.version, electron: process.versions.electron }));
+  await fs.writeFile(process.env.FILETANDEM_PACKAGE_RESULT, JSON.stringify({ vscode: vscode.version, extensionHostNode: process.version, electron: process.versions.electron }));
   console.log(`Installed VSIX: VS Code ${vscode.version}, host Node ${process.version}; actual bundled SSH, native optional fallback, host-key rejection and webview activation passed.`);
 };

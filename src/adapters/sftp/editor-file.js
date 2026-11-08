@@ -45,7 +45,7 @@ export async function openEditorFile(session,path,{closeSession=true,allowCreate
         if (value && !overwrite) throw Object.assign(new Error('Datei existiert bereits.'),{code:'EEXIST'});
         if (!value && !create) throw Object.assign(new Error('Datei nicht gefunden.'),{code:'ENOENT'});
         if ((value ? hash(value.data):null)!==reference) throw failure('Remote-Datei wurde geändert. Speichern abgelehnt; Änderungen vergleichen.');
-        const temporary=posix.join(posix.dirname(path),`.xscp-editor-${randomUUID()}.part`);let handle;
+        const temporary=posix.join(posix.dirname(path),`.filetandem-editor-${randomUUID()}.part`);let handle;
         try {
           handle=await call('open',temporary,'wx',0o600);
           for (let offset=0;offset<data.length;offset+=65536) await call('write',handle,data,offset,Math.min(65536,data.length-offset),offset);

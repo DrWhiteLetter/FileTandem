@@ -23,7 +23,7 @@ Stand: 7. Oktober 2026, Abschluss M0. Diese Matrix beschreibt **Prototypnachweis
 | esbuild / test-electron | 0.28.2 / 3.1.0 | Entwicklungsabhängigkeiten |
 | VS-Code-Typen | 1.138.0 | Entwicklungsunterstützung, keine Runtime-/Mindestversionszusage |
 | vsce | 4.0.0 | Im Packaging-Script exakt angefordert; nicht Runtime-Bestandteil |
-| Remote-SSH / Remote-SSH-Edit | 0.128.0 / 0.87.0 | Nur Abnahme des Remote-Arbeitsfensters, keine xScp-Transferabhängigkeit |
+| Remote-SSH / Remote-SSH-Edit | 0.128.0 / 0.87.0 | Nur Abnahme des Remote-Arbeitsfensters, keine FileTandem-Transferabhängigkeit |
 | Testserver | Debian 12, glibc 2.36, OpenSSH 9.2p1 | Linux arm64, Docker Engine 29.5.2, Colima 0.10.3; Image-Basis per Digest fixiert |
 
 VS Code 1.139.1 bestand in M0-01 nur den Start-Smoke; 1.139.0 war eine vorläufige Manifestangabe. Beide werden nach M0-09 nicht als Produktbaseline angeboten. Die höhere Untergrenze ist eine konservative Abnahmeentscheidung, keine Behauptung, dass alle benutzten APIs erst seit 1.140 existieren. Manifest, Lockfile und Teststarter sind darauf abgestimmt.
@@ -33,7 +33,7 @@ VS Code 1.139.1 bestand in M0-01 nur den Start-Smoke; 1.139.0 war eine vorläufi
 | Desktop / Fenster | Status nach M0 | Freigabe / nächste Prüfung |
 | --- | --- | --- |
 | macOS 26.6.2 / Darwin 25.6, Apple Silicon | Geprüft: Build, lokale Datei, Auth, SFTP/SCP, installierte VSIX | Grundlage für spätere macOS-Alpha; Produktmodule fehlen noch |
-| macOS mit echtem Remote-SSH nach Linux arm64 | Geprüft: Desktop-Marker, erreichbarer Remote-Workspace, Editor, Auto Save, Cross-Host-Lesen | xScp bleibt lokal; [M0-08](nachweise/M0-08.md) |
+| macOS mit echtem Remote-SSH nach Linux arm64 | Geprüft: Desktop-Marker, erreichbarer Remote-Workspace, Editor, Auto Save, Cross-Host-Lesen | FileTandem bleibt lokal; [M0-08](nachweise/M0-08.md) |
 | macOS Intel | Nicht geprüft | Eigener Plattformlauf vor Zusage |
 | Linux Desktop | Nicht geprüft; Linux-Server beweist keinen Desktop | M6-02: Installation, Dateipfade, Rechte, Agent und Desktop-Host |
 | Windows Desktop / OpenSSH-Agent | Nicht geprüft; Pipe-Syntax nur Unit-Test | M6-02/M4-07: echte Named-Pipe-Verbindung, Laufwerke/UNC/Namen |
@@ -53,9 +53,9 @@ Start ohne Workspace und tatsächlicher Extension-Host-Smoke sind vorhanden; nat
 | Echtes SCP | Exec, POSIX-Shell, serverseitiges `scp`; keine SFTP-Abhängigkeit | Einzeltransfer auf Server mit deaktiviertem SFTP geprüft |
 | SCP-Dateibrowser | Linux/POSIX/GNU-Profil, GNU find/coreutils, verwendetes grep | NUL-Metadaten und Quotierung geprüft; Capability-Probe wird M4-03 integrieren |
 | SCP auf BSD/macOS/BusyBox/Windows-Ziel | Separates Shell-/Werkzeugprofil | Nicht zugesagt; falls vorhanden SFTP ausdrücklich wählen |
-| VS-Code-Remote-Arbeitsfenster | Unabhängig von xScp: kompatibler VS Code Server und Remote-SSH | Nur für dieses Arbeitsfenster, nicht für die Verbindung zum Datei-Zielserver |
+| VS-Code-Remote-Arbeitsfenster | Unabhängig von FileTandem: kompatibler VS Code Server und Remote-SSH | Nur für dieses Arbeitsfenster, nicht für die Verbindung zum Datei-Zielserver |
 
-Die offiziellen [Remote-Linux-Voraussetzungen](https://code.visualstudio.com/docs/remote/linux) nennen unter anderem Kernel ≥4.18, glibc ≥2.28, libstdc++ mit GLIBCXX ≥3.4.25, tar und SSH/bash/curl oder wget. Sie betreffen den VS Code Server. Der frühere Testhost mit Ubuntu 18.04/glibc 2.27 scheiterte daran, obwohl SSH-Anmeldung möglich war. Daraus folgt **keine glibc-Untergrenze für den xScp-SFTP-Zielserver**. Andere Server werden anhand ihrer Protokollfähigkeiten bewertet; eine universelle Zusage für jeden SSH-Server wäre unbelegt.
+Die offiziellen [Remote-Linux-Voraussetzungen](https://code.visualstudio.com/docs/remote/linux) nennen unter anderem Kernel ≥4.18, glibc ≥2.28, libstdc++ mit GLIBCXX ≥3.4.25, tar und SSH/bash/curl oder wget. Sie betreffen den VS Code Server. Der frühere Testhost mit Ubuntu 18.04/glibc 2.27 scheiterte daran, obwohl SSH-Anmeldung möglich war. Daraus folgt **keine glibc-Untergrenze für den FileTandem-SFTP-Zielserver**. Andere Server werden anhand ihrer Protokollfähigkeiten bewertet; eine universelle Zusage für jeden SSH-Server wäre unbelegt.
 
 Der Digest fixiert das Debian-Basisimage, nicht sämtliche anschließend per apt installierten Sicherheitsupdates. Reproduzierbar sind Fixture-Aufbau und Protokollgrenzen; bitidentische Neubauten werden nicht zugesagt. Image-ID und tatsächlich installierte Versionen werden im Prüflauf protokolliert; nach einem Neubau ist die Protokollmatrix erneut auszuführen.
 
@@ -95,7 +95,7 @@ Jede M0-Unsicherheit hat einen Nachweis oder einen konkreten begrenzten Ersatzwe
 | Risiko | Nachweis / aktueller Befund | Festgelegter Ersatz oder Gate |
 | --- | --- | --- |
 | Falscher Extension Host | M0-02/08: Desktop-Marker und anderer Workspace-Host | Lokal installieren; Hostoverride abweisen; keine Remote-Datei als lokale Quelle |
-| Nicht kompatibler VS Code Server | Remote-Fixture besteht; früherer Server scheitert | Normales Desktopfenster mit direktem SFTP/SCP; kein Serverupgrade durch xScp |
+| Nicht kompatibler VS Code Server | Remote-Fixture besteht; früherer Server scheitert | Normales Desktopfenster mit direktem SFTP/SCP; kein Serverupgrade durch FileTandem |
 | Ungeprüfter/geänderter Host Key | M0-04: Ablehnung und Rotation | Verbindung blockieren, unabhängige Prüfung und bewusster M2-Trust-Workflow |
 | Shell/SFTP fehlt | M0-03/05/06 trennen beide Fähigkeiten | Betroffene Funktion ablehnen; expliziter Protokollwechsel nur wenn verfügbar |
 | SCP-Parser/Quotierung | M0-06: ACK/Größen/Namen/Quotes/Abort | M4-01/03/08 harte Negativ-/Fuzzing-Gates; alternativ expliziter CLI-Adapter mit neuer Abnahme |

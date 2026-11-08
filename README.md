@@ -4,11 +4,11 @@
 
 # FileTandem
 
-**Version 1.0.2** · SFTP- und SCP-Dateimanager für VS Code Desktop · MIT-Lizenz
+**Version 1.0.3** · SFTP- und SCP-Dateimanager für VS Code Desktop · MIT-Lizenz
 
 Lokale Dateien und Serverdateien nebeneinander – direkt in Visual Studio Code. Mit FileTandem verwaltest du Dateien über **SFTP und SCP**, überträgst ganze Ordner und bearbeitest Remote-Dateien im Editor.
 
-**[Im Marketplace installieren](https://marketplace.visualstudio.com/items?itemName=RootShellForge.xscp)** · [Änderungen](CHANGELOG.md) · [Fehler melden](https://github.com/DrWhiteLetter/FileTandem/issues)
+**[Im Marketplace installieren](https://marketplace.visualstudio.com/items?itemName=RootShellForge.filetandem)** · [Änderungen](CHANGELOG.md) · [Fehler melden](https://github.com/DrWhiteLetter/FileTandem/issues)
 
 ![FileTandem: lokale und entfernte Dateien mit Transferübersicht](media/filetandem-screenshot.png)
 
@@ -27,11 +27,13 @@ Lokale Dateien und Serverdateien nebeneinander – direkt in Visual Studio Code.
 
 ## Installation
 
-1. In VS Code die **Erweiterungen** öffnen und nach `@id:RootShellForge.xscp` suchen.
+Ab Version 1.0.3 lautet die Extension-ID `RootShellForge.filetandem`. Frühere Pakete behalten ihre alte Identität. Vor dem Umstieg [Hinweise zum Identitätswechsel](docs/identitaetswechsel-filetandem.md) beachten.
+
+1. In VS Code die **Erweiterungen** öffnen und nach `@id:RootShellForge.filetandem` suchen.
 2. **FileTandem – SFTP & SCP File Manager** von **RootShellForge** installieren.
 3. Über die Befehlspalette **FileTandem: Dateimanager öffnen** starten.
 
-Benötigt **VS Code Desktop ab 1.140.0**. Node.js ist für die Installation nicht nötig. [Marketplace-Eintrag öffnen](https://marketplace.visualstudio.com/items?itemName=RootShellForge.xscp).
+Benötigt **VS Code Desktop ab 1.140.0**. Node.js ist für die Installation nicht nötig. [Marketplace-Eintrag öffnen](https://marketplace.visualstudio.com/items?itemName=RootShellForge.filetandem).
 
 Alternativ eine verfügbare VSIX aus den [GitHub Releases](https://github.com/DrWhiteLetter/FileTandem/releases/latest) herunterladen und über **Erweiterungen → … → Aus VSIX installieren …** installieren. Die dort angebotene Version kann vom Marketplace abweichen.
 

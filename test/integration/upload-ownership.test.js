@@ -4,9 +4,9 @@ import {releaseFixture,fixturePort} from '../helpers/release-fixture.mjs';
 import {openRemoteFiles,targetFor} from '../../src/application/remote-files.js';
 import {TransferEngine} from '../../src/application/transfer-engine.js';
 for(const protocol of ['sftp','scp']) test(`${protocol}: optional ownership guard blocks replacement of a root-owned file, default mode preserves existing behavior`,{timeout:30000},async()=>{
- const fixtureRoot=fileURLToPath(new URL('../fixtures/ssh/',import.meta.url)),owner=createHash('sha256').update(fixtureRoot).digest('hex').slice(0,12),container=`xscp-ssh-${owner}-${protocol==='scp'?'scp':'sftp-only'}`;
- const docker=args=>{const result=spawnSync('docker',[...(process.env.XSCP_DOCKER_CONTEXT?['--context',process.env.XSCP_DOCKER_CONTEXT]:[]),...args],{encoding:'utf8',timeout:15000});assert.equal(result.status,0,result.stderr);return result.stdout.trim();};
- assert.equal(docker(['inspect','--format','{{index .Config.Labels "de.xscp.fixture-owner"}}',container]),owner);
+ const fixtureRoot=fileURLToPath(new URL('../fixtures/ssh/',import.meta.url)),owner=createHash('sha256').update(fixtureRoot).digest('hex').slice(0,12),container=`filetandem-ssh-${owner}-${protocol==='scp'?'scp':'sftp-only'}`;
+ const docker=args=>{const result=spawnSync('docker',[...(process.env.FILETANDEM_DOCKER_CONTEXT?['--context',process.env.FILETANDEM_DOCKER_CONTEXT]:[]),...args],{encoding:'utf8',timeout:15000});assert.equal(result.status,0,result.stderr);return result.stdout.trim();};
+ assert.equal(docker(['inspect','--format','{{index .Config.Labels "de.filetandem.fixture-owner"}}',container]),owner);
  const session=await releaseFixture(protocol),files=await openRemoteFiles(session,protocol),target=targetFor(files),directory=await mkdtemp(join(tmpdir(),'filetandem-owner-')),name='owner-'+randomUUID(),local=join(directory,name),remote='/data/'+name;
  const profile={id:'ownership-test',host:'127.0.0.1',port:fixturePort(protocol),username:'fixture',protocol};let enabled=true;
  const engine=new TransferEngine({getCheckUploadOwnership:()=>enabled,sessions:{transport:()=>session},profiles:{get:()=>profile},choose:async()=>({choice:'replace'})});

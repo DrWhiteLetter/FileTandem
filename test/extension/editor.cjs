@@ -6,18 +6,18 @@ const { spawnSync } = require('node:child_process');
 const delay = ms => new Promise(r => setTimeout(r, ms));
 const wait = async predicate => { const deadline = Date.now() + 10000; while (!await predicate()) { if (Date.now() > deadline) throw new Error('Editor state timeout'); await delay(100); } };
 exports.run = async () => {
-  const extension = vscode.extensions.getExtension('RootShellForge.xscp'); if (process.env.XSCP_INSTALLED_EDITOR_EXTENSIONS) assert.ok(extension.extensionPath.startsWith(process.env.XSCP_INSTALLED_EDITOR_EXTENSIONS));const api = await extension.activate();
+  const extension = vscode.extensions.getExtension('RootShellForge.filetandem'); if (process.env.FILETANDEM_INSTALLED_EDITOR_EXTENSIONS) assert.ok(extension.extensionPath.startsWith(process.env.FILETANDEM_INSTALLED_EDITOR_EXTENSIONS));const api = await extension.activate();
   assert.equal(api.executionLocation().local, true);
-  const remote = process.env.XSCP_EDITOR_REMOTE === 'yes';
+  const remote = process.env.FILETANDEM_EDITOR_REMOTE === 'yes';
   assert.equal(vscode.env.remoteName ?? 'local', remote ? 'ssh-remote' : 'local');
   if (remote) assert.ok((await vscode.workspace.fs.stat(vscode.workspace.workspaceFolders[0].uri)).type & vscode.FileType.Directory);
-  const proof = await api.verifyLocalFile(vscode.Uri.file(process.env.XSCP_EDITOR_MARKER));
-  assert.equal(proof.sha256, process.env.XSCP_EDITOR_MARKER_HASH);
-  assert.equal(proof.hostName, process.env.XSCP_EDITOR_HOST);
+  const proof = await api.verifyLocalFile(vscode.Uri.file(process.env.FILETANDEM_EDITOR_MARKER));
+  assert.equal(proof.sha256, process.env.FILETANDEM_EDITOR_MARKER_HASH);
+  assert.equal(proof.hostName, process.env.FILETANDEM_EDITOR_HOST);
   assert.equal(proof.windowRemoteName ?? 'local', remote ? 'ssh-remote' : 'local');
-  const runtime = process.env.XSCP_EDITOR_RUNTIME;
-  const server = () => { const p = spawnSync('ssh', ['-F', join(runtime, 'ssh_config'), 'xscp-fixture-remote', 'cat /data/editor-proof.txt'], { encoding: 'utf8' }); assert.equal(p.status, 0, p.stderr); return p.stdout; };
-  const config = { host: '127.0.0.1', port: Number(process.env.XSCP_SSH_PORT_BASE) + 4, username: 'fixture', privateKey: await readFile(join(runtime, 'client_ed25519')) };
+  const runtime = process.env.FILETANDEM_EDITOR_RUNTIME;
+  const server = () => { const p = spawnSync('ssh', ['-F', join(runtime, 'ssh_config'), 'filetandem-fixture-remote', 'cat /data/editor-proof.txt'], { encoding: 'utf8' }); assert.equal(p.status, 0, p.stderr); return p.stdout; };
+  const config = { host: '127.0.0.1', port: Number(process.env.FILETANDEM_SSH_PORT_BASE) + 4, username: 'fixture', privateKey: await readFile(join(runtime, 'client_ed25519')) };
   console.log('M5: opening proof');
   const uri = await api.editorProof.open(config, '/data/editor-proof.txt', { confirmUnknown: async () => true });
   console.log('M5: profile save');
@@ -29,9 +29,9 @@ exports.run = async () => {
   const views=api.manager.status().views.slice(-2);assert.equal(views.length,2);assert.notEqual(views[0].sessionId,views[1].sessionId);
   await api.manager.navigate(views[0].sessionId,'remote','/');await api.manager.navigate(views[1].sessionId,'remote','/data');
   assert.equal(api.manager.status().views.find(v => v.sessionId===views[0].sessionId).remote.path,'/');assert.equal(api.manager.status().views.find(v => v.sessionId===views[1].sessionId).remote.path,'/data');
-  await api.transfers.ready;api.transfers.pause(true);const batch=await api.transfers.submit(profile.id,'download',['/data/editor-proof.txt'],require('node:path').dirname(process.env.XSCP_EDITOR_MARKER));
+  await api.transfers.ready;api.transfers.pause(true);const batch=await api.transfers.submit(profile.id,'download',['/data/editor-proof.txt'],require('node:path').dirname(process.env.FILETANDEM_EDITOR_MARKER));
   tabA.dispose();tabB.dispose();assert.equal(api.transfers.list().find(j => j.id===batch.ids[0]).state,'queued');api.transfers.pause(false);
-  await wait(() => api.transfers.list().find(j => j.id===batch.ids[0]).state==='completed');assert.equal(await readFile(join(require('node:path').dirname(process.env.XSCP_EDITOR_MARKER),'editor-proof.txt'),'utf8'),'editor-initial');
+  await wait(() => api.transfers.list().find(j => j.id===batch.ids[0]).state==='completed');assert.equal(await readFile(join(require('node:path').dirname(process.env.FILETANDEM_EDITOR_MARKER),'editor-proof.txt'),'utf8'),'editor-initial');
   console.log('M5-05: two independent same-profile paths; queued download completes after both tabs close.');assert.equal(api.manager.status().views.some(v => views.some(old => old.sessionId===v.sessionId)),false);
   const production=await api.editor.open(profile,'/data/editor-proof.txt');
   assert.equal(production.scheme,'filetandem');
@@ -39,7 +39,7 @@ exports.run = async () => {
   assert.ok((await vscode.workspace.fs.readDirectory(production.with({path:'/data'}))).some(([name]) => name==='editor-proof.txt'));
   assert.equal(Buffer.from(await vscode.workspace.fs.readFile(production)).toString(),'editor-initial');
   await assert.rejects(vscode.workspace.fs.writeFile(production,Buffer.from('blocked')));
-  if (remote) {const result=await vscode.commands.executeCommand('filetandem.test.remoteEditorRead',production.toString(),process.env.XSCP_EDITOR_MARKER);assert.equal(result.content,'editor-initial');assert.notEqual(result.host,process.env.XSCP_EDITOR_HOST);assert.equal(result.localMarkerExists,false);}
+  if (remote) {const result=await vscode.commands.executeCommand('filetandem.test.remoteEditorRead',production.toString(),process.env.FILETANDEM_EDITOR_MARKER);assert.equal(result.content,'editor-initial');assert.notEqual(result.host,process.env.FILETANDEM_EDITOR_HOST);assert.equal(result.localMarkerExists,false);}
   const autoDoc=await vscode.workspace.openTextDocument(production);let autoEditor=await vscode.window.showTextDocument(autoDoc);
   await vscode.workspace.getConfiguration('files').update('autoSaveDelay',300,vscode.ConfigurationTarget.Global);await vscode.workspace.getConfiguration('files').update('autoSave','afterDelay',vscode.ConfigurationTarget.Global);
   const accepted=await autoEditor.edit(b => b.insert(new vscode.Position(0,0),'blocked-'));await delay(800);assert.equal(server(),'editor-initial');await vscode.workspace.getConfiguration('files').update('autoSave','off',vscode.ConfigurationTarget.Global);if (accepted && autoDoc.isDirty) {assert.equal(await autoDoc.save(),false);await vscode.commands.executeCommand('workbench.action.files.revert');}else assert.equal(autoDoc.getText(),'editor-initial');
@@ -57,8 +57,8 @@ exports.run = async () => {
   await api.editor.write(created,Buffer.from('new'),{create:true,overwrite:false});
   assert.equal(Buffer.from(await vscode.workspace.fs.readFile(created)).toString(),'new');
   await assert.rejects(api.editor.write(created,Buffer.from('duplicate'),{create:true,overwrite:false}));
-  const remove=spawnSync('ssh',['-F',join(runtime,'ssh_config'),'xscp-fixture-remote','rm -- '+created.path]);assert.equal(remove.status,0);
-  const mutate=value => {const result=spawnSync('ssh',['-F',join(runtime,'ssh_config'),'xscp-fixture-remote','printf '+value+' > /data/editor-proof.txt']);assert.equal(result.status,0);};
+  const remove=spawnSync('ssh',['-F',join(runtime,'ssh_config'),'filetandem-fixture-remote','rm -- '+created.path]);assert.equal(remove.status,0);
+  const mutate=value => {const result=spawnSync('ssh',['-F',join(runtime,'ssh_config'),'filetandem-fixture-remote','printf '+value+' > /data/editor-proof.txt']);assert.equal(result.status,0);};
   await vscode.window.showTextDocument(await vscode.workspace.openTextDocument({content:'consumer-read safety check'}));
   mutate('consumer-read');assert.equal(Buffer.from(await vscode.workspace.fs.readFile(production)).toString(),'consumer-read');assert.notEqual(autoDoc.getText(),'consumer-read');await assert.rejects(vscode.workspace.fs.writeFile(production,Buffer.from('stale-editor')));assert.equal(server(),'consumer-read');
   mutate('external');await assert.rejects(vscode.workspace.fs.writeFile(production,Buffer.from('lost-update')));assert.equal(server(),'external');
@@ -86,8 +86,8 @@ exports.run = async () => {
     await assert.rejects(vscode.workspace.fs.writeFile(uri, Buffer.from('blocked')));
     assert.equal(server(), 'editor-initial');
     if (remote) {
-      const result = await vscode.commands.executeCommand('filetandem.test.remoteEditorRead', uri.toString(), process.env.XSCP_EDITOR_MARKER);
-      assert.notEqual(result.host, process.env.XSCP_EDITOR_HOST, 'Workspace extension runs on another host');
+      const result = await vscode.commands.executeCommand('filetandem.test.remoteEditorRead', uri.toString(), process.env.FILETANDEM_EDITOR_MARKER);
+      assert.notEqual(result.host, process.env.FILETANDEM_EDITOR_HOST, 'Workspace extension runs on another host');
       assert.equal(result.localMarkerExists, false, 'Desktop marker is absent on remote host');
       assert.equal(result.content, 'editor-initial', 'Remote workspace extension can read the local UI provider');
       console.log('M0-02 / M0-08: Desktop marker hash and actual remote-host provider access verified.');
@@ -116,7 +116,7 @@ exports.run = async () => {
     assert.equal(await editor.edit(b => b.replace(new vscode.Range(0, 0, document.lineCount, 0), 'automatic-save')), true);
     await wait(() => !document.isDirty && server() === 'automatic-save');
     await vscode.workspace.getConfiguration('files').update('autoSave', 'off', vscode.ConfigurationTarget.Global);
-    const mutation = spawnSync('ssh', ['-F', join(runtime, 'ssh_config'), 'xscp-fixture-remote', 'printf external-change > /data/editor-proof.txt']); assert.equal(mutation.status, 0);
+    const mutation = spawnSync('ssh', ['-F', join(runtime, 'ssh_config'), 'filetandem-fixture-remote', 'printf external-change > /data/editor-proof.txt']); assert.equal(mutation.status, 0);
     await editor.edit(b => b.replace(new vscode.Range(0, 0, document.lineCount, 0), 'conflicting-save'));
     assert.equal(await document.save(), false); assert.equal(document.isDirty, true); assert.equal(server(), 'external-change');
     api.editorProof.lock(uri); await assert.rejects(vscode.workspace.fs.writeFile(uri, Buffer.from('locked')));

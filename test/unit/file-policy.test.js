@@ -10,7 +10,7 @@ test('exclusions cover extensions, dotfiles, name globs and descendants without 
 });
 test('backup and partial names stay excluded even if all configurable rules are cleared',()=>{
  const rules=filePolicy({excludedNames:[],excludedExtensions:[],excludeHidden:false});
- for(const path of ['/site/config.php.bak','/site/config.php.bak.1','/site/old.BAK.23/a.js','/site/.xscp-owned-123.part']) assert.equal(rules.excludes(path),true,path);
+ for(const path of ['/site/config.php.bak','/site/config.php.bak.1','/site/old.BAK.23/a.js','/site/.filetandem-owned-123.part','/site/.xscp-owned-123.part','/site/.filetandem-editor-123.part']) assert.equal(rules.excludes(path),true,path);
  assert.equal(isBackupPath('/site/file.bak.2'),true);assert.equal(isBackupPath('/site/file.bak.js'),false);
  assert.equal(rules.excludes('/site/.env'),false,'user-controlled exclusions can be removed explicitly');
 });

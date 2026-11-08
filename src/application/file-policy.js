@@ -10,7 +10,7 @@ export function filePolicy({excludedExtensions=[],excludedNames=DEFAULT_EXCLUDED
   const names=excludedNames.map(value => new RegExp('^'+value.trim().split(/([*?])/).map(part => part==='*' ? '.*':part==='?' ? '.':escape(part)).join('')+'$','i'));
   const excludes=(path,kind='file') => {
     const parts=String(path).replaceAll('\\','/').split('/').filter(Boolean);
-    if (parts.some(name => isBackupPath(name) || /^\.xscp-[a-zA-Z0-9-]+\.part$/.test(name) || (excludeHidden && name.startsWith('.')) || names.some(pattern => pattern.test(name)))) return true;
+    if (parts.some(name => isBackupPath(name) || /^\.(?:filetandem|xscp)-[a-zA-Z0-9-]+\.part$/.test(name) || (excludeHidden && name.startsWith('.')) || names.some(pattern => pattern.test(name)))) return true;
     return kind!=='directory' && extensions.some(extension => (parts.at(-1) ?? '').toLowerCase().endsWith(extension));
   };
   return Object.freeze({excludes,backupRemoteDeletes:backupRemoteDeletes===true,signature:JSON.stringify([extensions,excludedNames,excludeHidden===true,backupRemoteDeletes===true])});

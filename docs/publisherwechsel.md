@@ -1,5 +1,7 @@
 # Wechsel zum Marketplace-Publisher RootShellForge
 
+> Historischer Stand des Publisherwechsels. Der anschließende, lokal vorbereitete Paketnamenswechsel ist unter [Technische Umbenennung](identitaetswechsel-filetandem.md) dokumentiert.
+
 Stand: 07.11.2026. Der Benutzer hat die Publisher-ID `RootShellForge` vorgegeben. Das Manifest verwendet diese ID; der Paketname `xscp` und der sichtbare Produktname FileTandem bleiben erhalten. Die Version bleibt 1.0.1. Das neu gebaute Paket ist für den Upload unter dem neuen Publisher bestimmt; bereits veröffentlichte GitHub-Assets werden dadurch nicht geändert.
 
 ## Auswirkungen auf vorhandene Installationen

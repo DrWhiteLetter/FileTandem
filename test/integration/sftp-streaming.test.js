@@ -16,7 +16,7 @@ import { transferSftp, TRANSFER_BUFFER_BYTES } from '../../src/adapters/sftp/tra
 
 const runtime = fileURLToPath(new URL('../fixtures/ssh/.runtime/', import.meta.url));
 const root = fileURLToPath(new URL('../../', import.meta.url));
-const base = Number(process.env.XSCP_SSH_PORT_BASE ?? 22220);
+const base = Number(process.env.FILETANDEM_SSH_PORT_BASE ?? 22220);
 const size = 32 * 1024 * 1024 + 137;
 async function digest(path) {
   const hash = createHash('sha256');
@@ -73,7 +73,7 @@ async function remoteRemove(index, paths) {
 }
 
 for (const index of [0, 1]) test(`${index === 0 ? 'SFTP' : 'SFTP-only'}: streamed hashes, empty files, abort both ways and errors`, { timeout: 120000 }, async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'xscp-sftp-'));
+  const directory = await mkdtemp(join(tmpdir(), 'filetandem-sftp-'));
   const remote = `/data/Streaming ä ' quote ${randomUUID()}.bin`;
   const partial = `${remote}.partial`;
   try {
@@ -92,7 +92,7 @@ for (const index of [0, 1]) test(`${index === 0 ? 'SFTP' : 'SFTP-only'}: streame
     assert.equal(await digest(join(directory, 'download.bin')), expected);
     // Independent OpenSSH SFTP client reads the actual remote file.
     const independent = join(directory, 'independent.bin');
-    const result = spawnSync('sftp', ['-q', '-F', join(runtime, 'ssh_config'), '-b', '-', index === 0 ? 'xscp-fixture-sftp' : 'xscp-fixture-sftp-only'], {
+    const result = spawnSync('sftp', ['-q', '-F', join(runtime, 'ssh_config'), '-b', '-', index === 0 ? 'filetandem-fixture-sftp' : 'filetandem-fixture-sftp-only'], {
       input: `get "${remote}" "${independent}"\n`, encoding: 'utf8', timeout: 30000,
     });
     assert.equal(result.status, 0, result.stderr);
@@ -151,7 +151,7 @@ for (const index of [0, 1]) test(`${index === 0 ? 'SFTP' : 'SFTP-only'}: streame
 });
 
 test('bundled SFTP adapter works without node_modules', { timeout: 30000 }, async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'xscp-sftp-bundle-'));
+  const directory = await mkdtemp(join(tmpdir(), 'filetandem-sftp-bundle-'));
   try {
     const output = join(directory, 'sftp.cjs');
     await build({ ...hostBundleOptions, bundle: true, outfile: output, stdin: { resolveDir: root,
@@ -169,7 +169,7 @@ test('bundled SFTP adapter works without node_modules', { timeout: 30000 }, asyn
 });
 
 test('SCP-only rejects SFTP without shell fallback and closes SSH', { timeout: 10000 }, async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'xscp-no-sftp-'));
+  const directory = await mkdtemp(join(tmpdir(), 'filetandem-no-sftp-'));
   const observed = observe(await connection(2));
   try {
     await assert.rejects(transferSftp(observed.session, { direction: 'download', localPath: join(directory, 'file'), remotePath: '/data/file' }), /subsystem/i);

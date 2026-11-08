@@ -8,7 +8,7 @@ Festlegung: `extensionKind: ["ui"]`, Node-Einstieg `main`, kein Browser-Einstieg
 
 | Weg | Vorteile | Nachteile / Entscheidung |
 | --- | --- | --- |
-| Lokaler UI-Host | Lokale Dateien und Agenten, keine zusätzliche Serverinstallation für xScp | Remote-Workspace-Dateien sind keine lokalen Uploadquellen; gewählt |
+| Lokaler UI-Host | Lokale Dateien und Agenten, keine zusätzliche Serverinstallation für FileTandem | Remote-Workspace-Dateien sind keine lokalen Uploadquellen; gewählt |
 | Workspace-Host | Direkter Zugriff auf Workspace-Umgebung | Linke Dateiquelle/Agent wären remote; verworfen |
 | Browser mit Gateway | Nutzung in vscode.dev denkbar | Zusätzlicher Dienst und anderes Vertrauensmodell; außerhalb 1.0 |
 
@@ -82,7 +82,7 @@ VS-Code-Untergrenze **1.140.0**: Diese Version trägt die vollständige M0-Matri
 
 Versionen bleiben wie geprüft, nicht automatisch auf den neuesten Stand gehoben. `@types/vscode` 1.138.0 ist ausschließlich eine konservative Entwicklungsbeschreibung stabiler APIs, keine Aussage über unterstützte VS-Code-Versionen. JavaScript wird auf Node 22 gebündelt; tatsächlicher Host Node 24.21.0 ist geprüft. Anwender brauchen kein separates Node/npm/OpenSSH für den normalen Transferweg.
 
-Eine universelle VSIX ohne native SSH-Pflichtmodule wird beibehalten. Entwicklungs-`node_modules` können optionale Addons enthalten; im Runtime-Paket sind sie ausgeschlossen. Langsame Pure-JS-Performance wird zuerst gemessen; native Plattformpakete nur bei nachgewiesener Notwendigkeit. Private VSIX zuerst; kein automatisches Publish. xScp / `xscp-dev.xscp` bleibt Entwicklungsidentität, kein behauptetes Marketplace-Konto. Eigene Lizenzentscheidung für die spätere Auslieferung: MIT, ergänzt um bestehende Drittanbieterhinweise; Lizenzdatei/Release-Metadaten folgen in M6. MIT erlaubt breite Weiterverwendung bei Erhalt der Hinweise, erzwingt keine Veröffentlichung abgeleiteter Änderungen. [MIT-Lizenzbedingungen](https://opensource.org/license/mit).
+Eine universelle VSIX ohne native SSH-Pflichtmodule wird beibehalten. Entwicklungs-`node_modules` können optionale Addons enthalten; im Runtime-Paket sind sie ausgeschlossen. Langsame Pure-JS-Performance wird zuerst gemessen; native Plattformpakete nur bei nachgewiesener Notwendigkeit. Private VSIX zuerst; kein automatisches Publish. Die frühere Entwicklungsidentität war `xscp-dev.xscp`. Der aktuelle Quellstand verwendet `RootShellForge.filetandem`; siehe [Identitätswechsel](identitaetswechsel-filetandem.md). Eigene Lizenzentscheidung für die spätere Auslieferung: MIT, ergänzt um bestehende Drittanbieterhinweise; Lizenzdatei/Release-Metadaten folgen in M6. MIT erlaubt breite Weiterverwendung bei Erhalt der Hinweise, erzwingt keine Veröffentlichung abgeleiteter Änderungen. [MIT-Lizenzbedingungen](https://opensource.org/license/mit).
 
 ## D09 – Tests und Release-Grenzen
 

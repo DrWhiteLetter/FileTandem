@@ -7,7 +7,7 @@ import { LocalFiles,localFileUri } from '../../src/adapters/local/files.js';
 import { DirectoryBrowser } from '../../src/application/directory-browser.js';
 const uri=fsPath => ({scheme:'file',fsPath});
 test('local browser without workspace: stat, symlinks, history, invalid URIs and missing paths',async () => {
-  const root=await mkdtemp(join(tmpdir(),'xscp-browser-'));try {
+  const root=await mkdtemp(join(tmpdir(),'filetandem-browser-'));try {
     await mkdir(join(root,'child'));await writeFile(join(root,'a.txt'),'a');let hasLink=true;try {await symlink('a.txt',join(root,'link'));} catch(error) {if (process.platform !== 'win32' || !['EPERM','EACCES'].includes(error.code)) throw error;hasLink=false;}
     const files=new LocalFiles();const browser=new DirectoryBrowser({start:root,parent:value => join(value,'..'),list:path => files.list(uri(path))});
     await browser.refresh();if (hasLink) assert.equal(browser.state.entries.find(e => e.name === 'link').kind,'symlink');assert.equal((await files.stat(uri(join(root,'a.txt')))).size,1);

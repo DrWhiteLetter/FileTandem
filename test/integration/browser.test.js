@@ -14,7 +14,7 @@ import { credentialsFor } from '../../src/application/credentials.js';
 import { authMaterial,runtime,authPort } from '../helpers/auth.mjs';
 const trust=() => {const records=new Map();return new HostKeyStore({read:async id => records.get(id),write:async (id,v) => records.set(id,v)});};
 test('SFTP-only browsing without shell and real credential/session lifecycle', {timeout:30000},async () => {
-  const session=await connectSsh({host:'127.0.0.1',port:Number(process.env.XSCP_SSH_PORT_BASE ?? 22220)+1,username:'fixture',privateKey:await readFile(join(runtime,'client_ed25519')),readyTimeout:5000},{trust:trust(),confirmUnknown:async () => true});
+  const session=await connectSsh({host:'127.0.0.1',port:Number(process.env.FILETANDEM_SSH_PORT_BASE ?? 22220)+1,username:'fixture',privateKey:await readFile(join(runtime,'client_ed25519')),readyTimeout:5000},{trust:trust(),confirmUnknown:async () => true});
   try {const files=await RemoteFiles.open(session);const result=await files.list('/data');assert.ok(result.entries.some(e => e.name === 'server-marker.txt'));assert.equal((await files.stat('/data/server-marker.txt')).kind,'file');await assert.rejects(files.list('/missing'));files.close();} finally {await session.close();}
   const material=await authMaterial();
   for (const auth of ['password','key']) {
@@ -25,7 +25,7 @@ test('SFTP-only browsing without shell and real credential/session lifecycle', {
 });
 
 test('real SFTP mkdir and rename preserve conflicts and special-character names', {timeout:20000},async () => {
-  const session=await connectSsh({host:'127.0.0.1',port:Number(process.env.XSCP_SSH_PORT_BASE ?? 22220)+1,username:'fixture',privateKey:await readFile(join(runtime,'client_ed25519')),readyTimeout:5000},{trust:trust(),confirmUnknown:async () => true});
+  const session=await connectSsh({host:'127.0.0.1',port:Number(process.env.FILETANDEM_SSH_PORT_BASE ?? 22220)+1,username:'fixture',privateKey:await readFile(join(runtime,'client_ed25519')),readyTimeout:5000},{trust:trust(),confirmUnknown:async () => true});
   const files=await RemoteFiles.open(session);const name=`m2-${randomUUID()}`;const root=`/data/${name}`;
   try {
     await createFolder(files,'/data',name,{join:posix.join});

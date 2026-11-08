@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.3 – 08.11.2026
+
+- Paketname und Ziel-ID auf `filetandem` / `RootShellForge.filetandem` umstellen; Installationshinweise und Testwerkzeuge nachziehen. Dieser Identitätswechsel übernimmt Profile und Secrets nicht automatisch aus bisherigen Installationen.
+- Neue Transfer- und Editor-Teil-Dateien verwenden `.filetandem-`; alte Teil-Dateien bleiben von Transfers ausgeschlossen.
+
 ## 1.0.2 – 07.11.2026
 
 - Bild- und Dokumentationslinks beim VSIX-Bau für den Marketplace in absolute HTTPS-Adressen umwandeln.

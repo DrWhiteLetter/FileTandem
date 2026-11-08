@@ -20,7 +20,7 @@
       "request": "launch",
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}",
-        "--folder-uri=vscode-remote://ssh-remote+${input:xscpTestHost}${input:xscpTestFolder}"
+        "--folder-uri=vscode-remote://ssh-remote+${input:filetandemTestHost}${input:filetandemTestFolder}"
       ],
       "outFiles": [
         "${workspaceFolder}/dist/**/*.cjs"
@@ -30,12 +30,12 @@
   ],
   "inputs": [
     {
-      "id": "xscpTestHost",
+      "id": "filetandemTestHost",
       "type": "promptString",
       "description": "SSH-Hostalias eines freigegebenen isolierten Testservers"
     },
     {
-      "id": "xscpTestFolder",
+      "id": "filetandemTestFolder",
       "type": "promptString",
       "description": "Existierender absoluter POSIX-Testordner auf dem SSH-Testserver",
       "default": "/tmp"

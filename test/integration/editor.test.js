@@ -9,7 +9,7 @@ import { openEditorFile, EDITOR_LIMIT } from '../../src/adapters/sftp/editor-fil
 const runtime = fileURLToPath(new URL('../fixtures/ssh/.runtime/', import.meta.url));
 async function connect() {
   const records = new Map();
-  return connectSsh({ host: '127.0.0.1', port: Number(process.env.XSCP_SSH_PORT_BASE ?? 22220) + 1, username: 'fixture', privateKey: await readFile(runtime + 'client_ed25519') }, { trust: new HostKeyStore({ read: async k => records.get(k), write: async (k,v) => records.set(k,v) }), confirmUnknown: async k => {
+  return connectSsh({ host: '127.0.0.1', port: Number(process.env.FILETANDEM_SSH_PORT_BASE ?? 22220) + 1, username: 'fixture', privateKey: await readFile(runtime + 'client_ed25519') }, { trust: new HostKeyStore({ read: async k => records.get(k), write: async (k,v) => records.set(k,v) }), confirmUnknown: async k => {
     assert.equal(k.key, (await readFile(runtime + 'servers/sftp-only/host_ed25519.pub','utf8')).split(' ')[1]); return true;
   } });
 }
@@ -38,7 +38,7 @@ test('SFTP-only editor: bounded files, exclusive temporary writes, serial saves,
     await assert.rejects(file.write(Buffer.from('conflict'),() => allowed), /Remote-Datei wurde geändert/);
     assert.equal((await file.read()).toString(),'external');
     allowed = false; await assert.rejects(file.write(Buffer.from('revoked'),() => allowed), /schreibgeschützt/);
-    assert.equal((await call('readdir','/data')).some(f => f.filename.startsWith('.xscp-editor-')),false);
+    assert.equal((await call('readdir','/data')).some(f => f.filename.startsWith('.filetandem-editor-')),false);
     const large = await call('open',path+'.large','w'); await call('fsetstat',large,{size:EDITOR_LIMIT+1}); await call('close',large);
     await assert.rejects(openEditorFile(session,path+'.large'), /10 MiB/);
   } finally {

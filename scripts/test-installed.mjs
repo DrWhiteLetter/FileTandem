@@ -11,12 +11,12 @@ delete process.env.VSCODE_NLS_CONFIG;
 const executable = process.env.VSCODE_TEST_EXECUTABLE ?? await downloadAndUnzipVSCode('1.140.0');
 const manifest=JSON.parse(await readFile(fileURLToPath(new URL('../package.json',import.meta.url)),'utf8'));
 const vsix=join('out',`FileTandem-${manifest.version}.vsix`);
-const directory = await mkdtemp(join(tmpdir(),'xscp-installed-'));
+const directory = await mkdtemp(join(tmpdir(),'filetandem-installed-'));
 const user=join(directory,'user'), extensions=join(directory,'extensions'), harness=join(directory,'harness');
 const marker=join(directory,'desktop-marker.txt'); const content=randomBytes(128);
 try {
   await mkdir(harness,{recursive:true});
-  await writeFile(join(harness,'package.json'),JSON.stringify({name:'xscp-installed-harness',publisher:'xscp-test',version:'0.0.1',engines:{vscode:'^1.140.0'}}));
+  await writeFile(join(harness,'package.json'),JSON.stringify({name:'filetandem-installed-harness',publisher:'filetandem-test',version:'0.0.1',engines:{vscode:'^1.140.0'}}));
   await writeFile(marker,content,{mode:0o600});
   const [resolved,...prefix] = resolveCliArgsFromVSCodeExecutablePath(executable);
   const cli = process.env.VSCODE_CLI ?? (process.platform === 'darwin' ? join(dirname(executable),'../Resources/app/bin/code') : resolved);
@@ -24,7 +24,7 @@ try {
   if (installed.error || installed.status !== 0) throw installed.error ?? new Error(installed.stderr);
   await runTests({vscodeExecutablePath:executable,extensionDevelopmentPath:harness,
     extensionTestsPath:fileURLToPath(new URL('../test/extension/smoke.cjs',import.meta.url)),
-    extensionTestsEnv:{XSCP_EXPECT_LOCALE:process.argv.includes('--english') ? 'en':'',XSCP_PROOF_FILE:marker,XSCP_PROOF_SHA256:createHash('sha256').update(content).digest('hex'),XSCP_PROOF_HOST:hostname(),XSCP_EXPECT_REMOTE:'local',XSCP_INSTALLED_EXTENSIONS:extensions},
+    extensionTestsEnv:{FILETANDEM_EXPECT_LOCALE:process.argv.includes('--english') ? 'en':'',FILETANDEM_PROOF_FILE:marker,FILETANDEM_PROOF_SHA256:createHash('sha256').update(content).digest('hex'),FILETANDEM_PROOF_HOST:hostname(),FILETANDEM_EXPECT_REMOTE:'local',FILETANDEM_INSTALLED_EXTENSIONS:extensions},
     launchArgs:[...(process.argv.includes('--english') ? ['--locale=en']:[]),'--user-data-dir',user,'--extensions-dir',extensions,'--skip-welcome','--skip-release-notes','--disable-workspace-trust'],
   });
   console.log('M1-07: installierte VSIX in sauberem Profil aktiviert; echter Commander-Handshake bestanden.');

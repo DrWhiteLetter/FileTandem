@@ -5,7 +5,7 @@ import { createServer,connect } from 'node:net';
 import { runtime } from './auth.mjs';
 import { connectSsh } from '../../src/adapters/ssh/connect.js';
 import { HostKeyStore } from '../../src/adapters/ssh/host-keys.js';
-export const fixturePort=protocol => Number(process.env.XSCP_SSH_PORT_BASE ?? 22220)+(protocol==='scp' ? 2:1);
+export const fixturePort=protocol => Number(process.env.FILETANDEM_SSH_PORT_BASE ?? 22220)+(protocol==='scp' ? 2:1);
 export async function releaseFixture(protocol,port=fixturePort(protocol),connect=connectSsh,KeyStore=HostKeyStore) {
   const mode=protocol==='scp' ? 'scp':'sftp-only';
   const expected=(await readFile(join(runtime,'servers',mode,'host_ed25519.pub'),'utf8')).split(' ')[1];

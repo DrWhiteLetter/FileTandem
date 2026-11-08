@@ -2,12 +2,12 @@
 
 Ab 0.0.21: [Ausschlussregeln und Löschsicherungen](ausschlussregeln-und-sicherungen.md) beachten. Remote-Löschungen werden standardmäßig als `.bak` aufbewahrt; Aussagen über endgültige Löschungen gelten nur bei deaktivierter Sicherungsoption.
 
-Stand: 07.11.2026, Version **1.0.2** für den Marketplace. Plattformnachweise und verbleibende Grenzen stehen in der [README](../README.md#getestete-desktop-umgebungen) und im [Release-Nachweis](nachweise/Release-1.0.2.md). FileTandem ist unter `RootShellForge.xscp` im Marketplace veröffentlicht; der Uploadstatus dieses Updates steht im Release-Nachweis.
+Stand: 08.11.2026, Version **1.0.3** für den Marketplace. Plattformnachweise und verbleibende Grenzen stehen in der [README](../README.md#getestete-desktop-umgebungen) und im [Release-Nachweis](nachweise/Release-1.0.3.md). Ab dieser Version lautet die Extension-ID `RootShellForge.filetandem`; der Veröffentlichungsstatus steht im Release-Nachweis. Siehe [Identitätswechsel](identitaetswechsel-filetandem.md).
 
 ## Installation und erster Transfer
 
 1. VS Code Desktop ab 1.140.0 öffnen. Die konkret geprüften VS-Code-Versionen stehen im Release-Nachweis. Anwender benötigen kein separat installiertes Node/npm, Docker oder lokales SCP-Programm.
-2. In den Erweiterungen nach `@id:RootShellForge.xscp` suchen und FileTandem von RootShellForge installieren. Alternativ eine verfügbare VSIX aus [GitHub Releases](https://github.com/DrWhiteLetter/FileTandem/releases/latest) über **Aus VSIX installieren…** auswählen; deren Version kann abweichen.
+2. In den Erweiterungen nach `@id:RootShellForge.filetandem` suchen und FileTandem von RootShellForge installieren. Alternativ eine verfügbare VSIX aus [GitHub Releases](https://github.com/DrWhiteLetter/FileTandem/releases/latest) über **Aus VSIX installieren…** auswählen; deren Version kann abweichen.
 3. FileTandem in der Activity Bar öffnen. Der Logo-Button oben in **Verbindungen** öffnet den Dateimanager; alternativ **FileTandem: Dateimanager öffnen** in der Befehlspalette.
 4. **Profil anlegen** wählen: Host, Port, Benutzer, lokalen und entfernten Startordner sowie Anmeldung eintragen. **SFTP** ist voreingestellt. Ein leerer lokaler Startordner verwendet dein Home-Verzeichnis.
 5. **Profil verbinden** wählen. Den SHA-256-Fingerprint des Host-Keys mit einer unabhängig beschafften Angabe vergleichen und ausdrücklich bestätigen. Ein geänderter bekannter Host-Key blockiert die Verbindung.
@@ -16,11 +16,11 @@ Stand: 07.11.2026, Version **1.0.2** für den Marketplace. Plattformnachweise un
 
 Passwort, Schlüssel mit optionaler Passphrase, expliziter SSH-Agent und Keyboard-Interactive werden unterstützt. Secrets werden in VS Code SecretStorage abgelegt, nicht in Webview-Nachrichten oder Profilexporten. Windows-Agent und konkrete MFA-/Hardwareverfahren benötigen eigene Abnahmen.
 
-FileTandem migriert alte `xscp`-Einstellungen automatisch nach `filetandem`; bereits gesetzte neue Werte bleiben erhalten. Für Commander-Tasten in den VS-Code-Einstellungen nach `@id:filetandem.commanderKeys` suchen. Alte Befehl-IDs bleiben für eigene Tastenkürzel kompatibel. Die Extension-ID bleibt vorerst gleich; nach dem Update offene Remote-Editoren erneut aus dem Dateimanager öffnen.
+FileTandem migriert alte `xscp`-Einstellungen automatisch nach `filetandem`; bereits gesetzte neue Werte bleiben erhalten. Für Commander-Tasten in den VS-Code-Einstellungen nach `@id:filetandem.commanderKeys` suchen. Alte Befehl-IDs bleiben für eigene Tastenkürzel kompatibel. Die neue Extension-ID übernimmt keinen Speicher der bisherigen Identität; nach dem Update offene Remote-Editoren erneut aus dem Dateimanager öffnen.
 
 ## Installation prüfen und aktualisieren
 
-Nach der Installation in der Erweiterungsansicht den Titel **FileTandem – SFTP & SCP File Manager** und Version **1.0.2** prüfen. Den Dateimanager öffnen und eine eigene kleine Testdatei in einen dafür angelegten Serverordner hochladen, wieder unter anderem lokalen Namen herunterladen und den Inhalt vergleichen. Erst danach mit wichtigen Dateien arbeiten. Die Queue muss den Auftrag als erfolgreich anzeigen; bei einem Fehler zunächst die Diagnose unten verwenden.
+Nach der Installation in der Erweiterungsansicht den Titel **FileTandem – SFTP & SCP File Manager** und Version **1.0.3** prüfen. Den Dateimanager öffnen und eine eigene kleine Testdatei in einen dafür angelegten Serverordner hochladen, wieder unter anderem lokalen Namen herunterladen und den Inhalt vergleichen. Erst danach mit wichtigen Dateien arbeiten. Die Queue muss den Auftrag als erfolgreich anzeigen; bei einem Fehler zunächst die Diagnose unten verwenden.
 
 Für ein Update laufende Transfers abschließen oder bewusst abbrechen, die neue VSIX über **Aus VSIX installieren…** installieren und den angebotenen Reload ausführen. Version und Testtransfer erneut prüfen. Ein Reload nimmt unterbrochene Aufträge nicht automatisch wieder auf. Eine ältere geprüfte VSIX aufbewahren; ein Downgrade ist keine Zusage der Kompatibilität zukünftiger Profil-/Journalformate.
 
@@ -38,7 +38,7 @@ SCP-Bearbeitung verwendet eine lokale private Kopie. Auto Save speichert diese a
 
 **Queue pausieren** verhindert neue Starts, stoppt aber keine aktiven Streams. **Abbrechen** betrifft den gewählten Auftrag. Nach Reload/Neustart werden frühere laufende oder wartende Aufträge als unterbrochen wiederhergestellt und starten nicht automatisch. **Erneut starten** beginnt bewusst neu; **Fortsetzen** ist nur für geprüfte SFTP-Teil-Dateien verfügbar. Geänderte Quelle, falsches Präfix oder geändertes Profil blockieren Fortsetzung. SCP startet eine Datei neu.
 
-Übertragungen schreiben zunächst eigene `.xscp-<id>.part`-Dateien. Je nach Transferart werden Größe oder SHA-256 geprüft, bevor das endgültige Ziel veröffentlicht wird. Manuelle SFTP-Uploads verwenden standardmäßig SSH + Größe; SHA-256 ist optional. Fortsetzungen, automatische Uploads und geprüfte Editor-Uploads verwenden SHA-256. Bei Fehlern können eigene Teil-Dateien zurückbleiben. **Teil-Datei bereinigen** prüft die Auftrags-/Profilzuordnung; fremde Teil-Dateien werden nicht pauschal gelöscht. Bei beschädigtem Journal bleibt eine `.corrupt-…`-Sicherung erhalten. Die Integrität des produktiven Journals wird mit einem SecretStorage-Schlüssel geprüft.
+Übertragungen schreiben zunächst eigene `.filetandem-<id>.part`-Dateien. Je nach Transferart werden Größe oder SHA-256 geprüft, bevor das endgültige Ziel veröffentlicht wird. Manuelle SFTP-Uploads verwenden standardmäßig SSH + Größe; SHA-256 ist optional. Fortsetzungen, automatische Uploads und geprüfte Editor-Uploads verwenden SHA-256. Bei Fehlern können eigene Teil-Dateien zurückbleiben. **Teil-Datei bereinigen** prüft die Auftrags-/Profilzuordnung; fremde Teil-Dateien werden nicht pauschal gelöscht. Bei beschädigtem Journal bleibt eine `.corrupt-…`-Sicherung erhalten. Die Integrität des produktiven Journals wird mit einem SecretStorage-Schlüssel geprüft.
 
 Serveroperationen bieten kein globales Undo. Manuelles Remote-Löschen verlangt eine Bestätigung von Zielpfad/Umfang. Standardmäßig werden `.bak`-Sicherungen angelegt; ohne Sicherungsoption ist die Löschung endgültig. Lokal wird nach Möglichkeit der Papierkorb verwendet. Server-CAS, Erhalt von Eigentümer/ACLs/Xattrs/Hardlinks und Remote-fsync-Dauerhaftigkeit sind nicht zugesagt. Gleichzeitige externe Schreiber können zwischen Abschlussprüfung und Rename eingreifen.
 
@@ -68,7 +68,7 @@ npm run quality
 # Nur die eigenen lokalen SSH-Fixtures starten:
 DOCKER_CONTEXT=colima-xscp npm run fixtures:start
 DOCKER_CONTEXT=colima-xscp \
-  XSCP_STABLE_VERSION=1.145.0 \
+  FILETANDEM_STABLE_VERSION=1.145.0 \
   npm run test:release
 # Benchmark separat ausführen; nicht parallel zu Protokolltests mit Host-Key-Rotation:
 DOCKER_CONTEXT=colima-xscp npm run benchmark:release
@@ -81,7 +81,7 @@ Gezielt nur Fehler-/Integritätsfälle erneut prüfen: mit laufenden eigenen Fix
 
 Seit 0.0.11 führt der M6-Runner zusätzlich den installierten Migrationstest aus (seit 0.0.11 zusätzlich native F5-Prüfung je VS-Code-Version; 26 Schritte auf macOS). `npm run test:migration` kann ihn separat in eigenen Profilen wiederholen.
 
-Der M6-Runner erzeugt `out/m6/regression.json` und Schrittlogs; der Benchmark erzeugt `out/m6/performance.json`. Die tatsächlichen Installationsversionen werden vor dem Lauf geprüft und im Ergebnis erfasst; ein zwischenzeitlich aktualisierter Mindestversions-Cache wird abgelehnt. Stable wird isoliert unter `.vscode-test/` heruntergeladen. `XSCP_STABLE_VERSION` erlaubt einen reproduzierbaren konkreten Stable-Stand; `XSCP_STABLE_EXECUTABLE` eine bereits vorhandene Testinstallation. Die Runner verändern keine persönlichen VS-Code- oder SSH-Einstellungen. Protokolltests mit Host-Key-Rotation und Benchmarks müssen nacheinander laufen. Benchmarks benötigen mindestens 5 GiB freien Platz im Fixture-Dateisystem und etwa 10 GiB lokalen Arbeitsraum; Auftragsgröße 4 GiB plus 1 MiB, 1.000 kleine Dateien und 10.000 Einträge.
+Der M6-Runner erzeugt `out/m6/regression.json` und Schrittlogs; der Benchmark erzeugt `out/m6/performance.json`. Die tatsächlichen Installationsversionen werden vor dem Lauf geprüft und im Ergebnis erfasst; ein zwischenzeitlich aktualisierter Mindestversions-Cache wird abgelehnt. Stable wird isoliert unter `.vscode-test/` heruntergeladen. `FILETANDEM_STABLE_VERSION` erlaubt einen reproduzierbaren konkreten Stable-Stand; `FILETANDEM_STABLE_EXECUTABLE` eine bereits vorhandene Testinstallation. Die Runner verändern keine persönlichen VS-Code- oder SSH-Einstellungen. Protokolltests mit Host-Key-Rotation und Benchmarks müssen nacheinander laufen. Benchmarks benötigen mindestens 5 GiB freien Platz im Fixture-Dateisystem und etwa 10 GiB lokalen Arbeitsraum; Auftragsgröße 4 GiB plus 1 MiB, 1.000 kleine Dateien und 10.000 Einträge.
 
 `npm run package` baut die VSIX und prüft ihren ZIP-Inhalt unabhängig. Für Anwender ist nur die VSIX erforderlich; test-only SSH-/Docker-/hdiutil-Helfer werden nicht mitgeliefert. Quelltexte enthalten keine produktiven Zugangsdaten. [MIT-Lizenz](../LICENSE) und [Drittanbieterhinweise](../THIRD_PARTY_NOTICES.md) gehören zum Paket.
 
@@ -89,7 +89,7 @@ Der M6-Runner erzeugt `out/m6/regression.json` und Schrittlogs; der Benchmark er
 
 Vor Änderungen `npm ci` mit dem eingecheckten Lockfile verwenden. Bei Bibliotheksupdates Versionen und Lockfile gemeinsam ändern, `npm audit`, `npm run quality` sowie die betroffenen realen Protokoll-/Editorprüfungen ausführen und `THIRD_PARTY_NOTICES.md` mit den tatsächlich gebündelten Lizenzen abgleichen. Vor einem neuen Kandidaten die komplette M6-Regression ausführen, `CHANGELOG.md` und Versionsnummer in Manifest/Lockfile aktualisieren und mit `npm run package` neu paketieren. Die SHA-256-Datei neben der VSIX muss zum ausgelieferten Paket passen; nach jeder mitpaketierten Dokumentationsänderung neu bauen.
 
-Fehler über [GitHub Issues](https://github.com/DrWhiteLetter/FileTandem/issues) mit den oben genannten anonymisierten Angaben melden. Vertrauliche Sicherheitsmeldungen: [SECURITY.md](../SECURITY.md). Die Publisher-ID für neu gebaute Pakete lautet `RootShellForge`, die Extension-ID `RootShellForge.xscp`. Beim Wechsel von `xscp-dev.xscp` werden Profile und gespeicherte Zugangsdaten nicht automatisch übernommen; siehe [Publisherwechsel](publisherwechsel.md). `private: true` im npm-Manifest verhindert versehentliche npm-Veröffentlichungen und betrifft nicht die Sichtbarkeit des GitHub-Repositorys.
+Fehler über [GitHub Issues](https://github.com/DrWhiteLetter/FileTandem/issues) mit den oben genannten anonymisierten Angaben melden. Vertrauliche Sicherheitsmeldungen: [SECURITY.md](../SECURITY.md). Die Publisher-ID für neu gebaute Pakete lautet `RootShellForge`, die Extension-ID `RootShellForge.filetandem`. Beim Wechsel von bisherigen Erweiterungsidentitäten werden Profile und gespeicherte Zugangsdaten nicht automatisch übernommen; siehe [Identitätswechsel](identitaetswechsel-filetandem.md). `private: true` im npm-Manifest verhindert versehentliche npm-Veröffentlichungen und betrifft nicht die Sichtbarkeit des GitHub-Repositorys.
 
 ## Bewusste Grenzen
 

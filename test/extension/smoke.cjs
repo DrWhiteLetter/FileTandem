@@ -2,9 +2,9 @@ const assert = require('node:assert/strict');
 const vscode = require('vscode');
 
 exports.run = async () => {
-  const extension = vscode.extensions.getExtension('RootShellForge.xscp');
+  const extension = vscode.extensions.getExtension('RootShellForge.filetandem');
   assert.ok(extension, 'Extension aus dem Checkout gefunden');
-  if (process.env.XSCP_INSTALLED_EXTENSIONS) assert.ok(extension.extensionPath.startsWith(process.env.XSCP_INSTALLED_EXTENSIONS), 'Test loads installed VSIX, not checkout');
+  if (process.env.FILETANDEM_INSTALLED_EXTENSIONS) assert.ok(extension.extensionPath.startsWith(process.env.FILETANDEM_INSTALLED_EXTENSIONS), 'Test loads installed VSIX, not checkout');
   await extension.activate();
   assert.ok(extension.isActive, 'Host-Bundle aktiviert');
   for (const [key, property] of Object.entries(Object.assign({},...extension.packageJSON.contributes.configuration.map(category=>category.properties)))) {
@@ -25,7 +25,7 @@ exports.run = async () => {
   } finally {await verificationConfig.update('checkUploadOwnership',undefined,vscode.ConfigurationTarget.Global);}
   assert.equal(vscode.workspace.getConfiguration('filetandem').get('checkUploadOwnership'),false);
   const extensionApi=require('node:module').createRequire(require('node:path').join(extension.extensionPath,'dist/extension.cjs'))('vscode');
-  if (process.env.XSCP_EXPECT_LOCALE) assert.equal(extensionApi.env.language,process.env.XSCP_EXPECT_LOCALE,'requested editor locale is actually active');
+  if (process.env.FILETANDEM_EXPECT_LOCALE) assert.equal(extensionApi.env.language,process.env.FILETANDEM_EXPECT_LOCALE,'requested editor locale is actually active');
   const german=extensionApi.env.language.toLowerCase().startsWith('de');
   assert.equal(extensionApi.l10n.t('Password'),german ? 'Passwort':'Password','installed extension loads its native VS Code language bundle');
   assert.equal(extensionApi.l10n.t('SSH host key changed: {0}','example.test:22'),german ? 'SSH-Host-Key geändert: example.test:22':'SSH host key changed: example.test:22','native localization preserves placeholders');
@@ -35,22 +35,22 @@ exports.run = async () => {
   assert.equal(extension.extensionKind, vscode.ExtensionKind.UI);
   const api = extension.exports;
   assert.equal(api.executionLocation().local, true);
-  assert.equal(vscode.env.remoteName ?? 'local', process.env.XSCP_EXPECT_REMOTE);
-  if (process.env.XSCP_EXPECT_REMOTE === 'ssh-remote') {
+  assert.equal(vscode.env.remoteName ?? 'local', process.env.FILETANDEM_EXPECT_REMOTE);
+  if (process.env.FILETANDEM_EXPECT_REMOTE === 'ssh-remote') {
     const remoteFolder = vscode.workspace.workspaceFolders?.find(folder => folder.uri.scheme === 'vscode-remote');
     assert.ok(remoteFolder, 'Remote-Workspace angefordert');
     const remoteStat = await vscode.workspace.fs.stat(remoteFolder.uri);
     assert.ok(remoteStat.type & vscode.FileType.Directory, 'Remote-Workspace tatsächlich erreichbar');
   }
-  const proof = await api.verifyLocalFile(vscode.Uri.file(process.env.XSCP_PROOF_FILE));
-  assert.equal(proof.sha256, process.env.XSCP_PROOF_SHA256, 'Desktop-Marker bytegleich gelesen');
+  const proof = await api.verifyLocalFile(vscode.Uri.file(process.env.FILETANDEM_PROOF_FILE));
+  assert.equal(proof.sha256, process.env.FILETANDEM_PROOF_SHA256, 'Desktop-Marker bytegleich gelesen');
   assert.equal(proof.bytesRead, 128);
-  assert.equal(proof.hostName, process.env.XSCP_PROOF_HOST, 'Host entspricht Desktop-Teststarter');
-  assert.equal(proof.windowRemoteName ?? 'local', process.env.XSCP_EXPECT_REMOTE);
+  assert.equal(proof.hostName, process.env.FILETANDEM_PROOF_HOST, 'Host entspricht Desktop-Teststarter');
+  assert.equal(proof.windowRemoteName ?? 'local', process.env.FILETANDEM_EXPECT_REMOTE);
   await assert.rejects(api.verifyLocalFile(vscode.Uri.parse('vscode-remote://ssh-remote+fixture/tmp/file')), /file:.*URIs/);
   await assert.rejects(api.verifyLocalFile(vscode.Uri.parse('file://other-host/tmp/file')), /file:.*URIs/);
-  await assert.rejects(api.verifyLocalFile(vscode.Uri.file('/xscp-nonexistent-test-file')), /ENOENT/);
-  await assert.rejects(api.verifyLocalFile(vscode.Uri.file(require('node:path').dirname(process.env.XSCP_PROOF_FILE))), /regular/);
+  await assert.rejects(api.verifyLocalFile(vscode.Uri.file('/filetandem-nonexistent-test-file')), /ENOENT/);
+  await assert.rejects(api.verifyLocalFile(vscode.Uri.file(require('node:path').dirname(process.env.FILETANDEM_PROOF_FILE))), /regular/);
   assert.ok((await vscode.commands.getCommands(true)).includes('filetandem.verifyLocalFile'));
   assert.ok((await vscode.commands.getCommands(true)).includes('filetandem.verifySshHostKey'));
   assert.equal(extension.packageJSON.dependencies.ssh2, '1.17.0');
@@ -61,10 +61,10 @@ exports.run = async () => {
     assert.ok(['filetandem.consumeCommanderKey', 'filetandem.copySelection'].includes(binding.command));
   }
   assert.ok(!extension.packageJSON.activationEvents.includes('*'));
-  assert.equal(vscode.workspace.workspaceFolders?.length ?? 0, process.env.XSCP_EXPECT_REMOTE === 'ssh-remote' ? 1 : 0);
+  assert.equal(vscode.workspace.workspaceFolders?.length ?? 0, process.env.FILETANDEM_EXPECT_REMOTE === 'ssh-remote' ? 1 : 0);
   assert.equal(vscode.workspace.getConfiguration('filetandem').get('showHiddenFiles'), false);
   await vscode.commands.executeCommand('filetandem.refreshConnections');
-  console.log(`M0-02: Desktop-Dateizugriff, SHA-256 und URI-Abgrenzung erfolgreich (${process.env.XSCP_EXPECT_REMOTE || 'lokales Fenster'}).`);
+  console.log(`M0-02: Desktop-Dateizugriff, SHA-256 und URI-Abgrenzung erfolgreich (${process.env.FILETANDEM_EXPECT_REMOTE || 'lokales Fenster'}).`);
   assert.ok((await vscode.commands.getCommands(true)).includes('filetandem.openManager'));
   await vscode.commands.executeCommand('filetandem.openManager');
   const hasTab = () => vscode.window.tabGroups.all.flatMap(group => group.tabs)
@@ -82,12 +82,12 @@ exports.run = async () => {
   while (!api.manager.status().views.some(v=>v.mode==='local' && v.local.status==='ready' && v.remote.status==='ready') && Date.now()<localDeadline) await new Promise(resolve=>setTimeout(resolve,50));
   const localView=api.manager.status().views.find(v=>v.mode==='local' && v.local.status==='ready' && v.remote.status==='ready');
   assert.ok(localView,'Local manager loads both local panes without an SSH profile');
-  const markerFolder=require('node:path').dirname(process.env.XSCP_PROOF_FILE),leftPath=localView.local.path;
+  const markerFolder=require('node:path').dirname(process.env.FILETANDEM_PROOF_FILE),leftPath=localView.local.path;
   await api.manager.navigate(localView.sessionId,'remote',markerFolder);
   const navigated=api.manager.status().views.find(v=>v.sessionId===localView.sessionId);
   assert.equal(navigated.local.path,leftPath,'Navigating the right local pane leaves the left path unchanged');
   assert.equal(navigated.remote.path,markerFolder);assert.equal(navigated.remote.status,'ready');assert.ok(navigated.remote.count>0);
   console.log('Local manager: both panes loaded; right local navigation is independent.');
-  if (process.env.XSCP_M2_PHASE) await require('./browser.cjs').run(api);
+  if (process.env.FILETANDEM_M2_PHASE) await require('./browser.cjs').run(api);
   console.log('M1-03: tatsächlicher Webview-Handshake und Hostaktivierung erfolgreich.');
 };

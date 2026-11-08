@@ -19,7 +19,7 @@ for (const protocol of ['sftp','scp']) {
   test(`${protocol}: real TCP loss preserves destination; queue fails visibly and cleans only owned partial`,{timeout:25000},async () => {
     const directory=await mkdtemp(join(tmpdir(),'filetandem-network-')),name=randomUUID(),source=join(directory,name);
     const direct=await releaseFixture(protocol),files=await openRemoteFiles(direct,protocol),target=targetFor(files);
-    const remote='/data/'+name,foreign='/data/.xscp-foreign-'+name+'.part';
+    const remote='/data/'+name,foreign='/data/.filetandem-foreign-'+name+'.part';
     const old=join(directory,'old'),foreignLocal=join(directory,'foreign');await writeFile(old,'old destination');await writeFile(foreignLocal,'foreign sentinel');await writeFile(source,Buffer.alloc(4*1024*1024,0x69));
     const stream=transferStream(protocol);await stream(direct,{direction:'upload',local:old,remote});await stream(direct,{direction:'upload',local:foreignLocal,remote:foreign});
     const proxy=await networkProxy(fixturePort(protocol));let transport=await releaseFixture(protocol,proxy.port),cut=false;

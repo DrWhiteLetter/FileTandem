@@ -16,8 +16,8 @@ import { HostKeyStore, serverIdentity } from '../../src/adapters/ssh/host-keys.j
 const fixtureRoot = fileURLToPath(new URL('../fixtures/ssh/', import.meta.url));
 const runtime = join(fixtureRoot, '.runtime');
 const owner = createHash('sha256').update(fixtureRoot).digest('hex').slice(0, 12);
-const base = Number(process.env.XSCP_SSH_PORT_BASE ?? 22220);
-const dockerArgs = process.env.XSCP_DOCKER_CONTEXT ? ['--context', process.env.XSCP_DOCKER_CONTEXT] : [];
+const base = Number(process.env.FILETANDEM_SSH_PORT_BASE ?? 22220);
+const dockerArgs = process.env.FILETANDEM_DOCKER_CONTEXT ? ['--context', process.env.FILETANDEM_DOCKER_CONTEXT] : [];
 function run(command, args) {
   const result = spawnSync(command, args, { encoding: 'utf8', timeout: 30000 });
   if (result.error || result.status !== 0) throw new Error(`${command} failed: ${result.error?.message ?? result.stderr}`);
@@ -48,9 +48,9 @@ async function ready(port) {
 for (const [index, mode] of ['sftp', 'sftp-only', 'scp'].entries()) {
   test(`${mode}: rejection, trust, reconnection and real changed-key blockade`, { timeout: 30000 }, async () => {
     const port = base + index;
-    const container = `xscp-ssh-${owner}-${mode}`;
+    const container = `filetandem-ssh-${owner}-${mode}`;
     const inspected = JSON.parse(docker(['container', 'inspect', container]))[0];
-    assert.equal(inspected.Config.Labels['de.xscp.fixture-owner'], owner, 'Only own fixture may be restarted');
+    assert.equal(inspected.Config.Labels['de.filetandem.fixture-owner'], owner, 'Only own fixture may be restarted');
     await ready(port);
     const privateKey = await readFile(join(runtime, 'client_ed25519'));
     const config = { host: '127.0.0.1', port, username: 'fixture', privateKey, readyTimeout: 5000 };
@@ -76,11 +76,11 @@ for (const [index, mode] of ['sftp', 'sftp-only', 'scp'].entries()) {
     assert.equal(records.size, 1);
     // Neither rejection nor missing UI callback may implicitly accept another port.
     await assert.rejects(connectSsh(config, { trust: memory().trust }), { code: 'HOST_KEY_REJECTED' });
-    const rotationPath = `/tmp/xscp-rotated-hostkey-${randomUUID()}`;
+    const rotationPath = `/tmp/filetandem-rotated-hostkey-${randomUUID()}`;
     // Rotate inside the owned container, not through a host/VM bind-mount cache.
     try {
       docker(['exec', container, 'sh', '-c',
-        `ssh-keygen -q -t ed25519 -N "" -C "xScp rotated TEST key" -f ${rotationPath} && install -m 600 ${rotationPath} /etc/ssh/ssh_host_ed25519_key && install -m 644 ${rotationPath}.pub /etc/ssh/ssh_host_ed25519_key.pub`]);
+        `ssh-keygen -q -t ed25519 -N "" -C "FileTandem rotated TEST key" -f ${rotationPath} && install -m 600 ${rotationPath} /etc/ssh/ssh_host_ed25519_key && install -m 644 ${rotationPath}.pub /etc/ssh/ssh_host_ed25519_key.pub`]);
       const rotatedFingerprint = docker(['exec', container, 'ssh-keygen', '-lf', `${rotationPath}.pub`]).split(' ')[1];
       docker(['kill', '--signal', 'HUP', container]);
       await ready(port);
@@ -124,7 +124,7 @@ test('SSH cancellation and timeout close pending verification without late persi
 });
 
 test('Host bundle authenticates with mandatory verification outside node_modules', { timeout: 10000 }, async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'xscp-host-key-bundle-'));
+  const directory = await mkdtemp(join(tmpdir(), 'filetandem-host-key-bundle-'));
   const output = join(directory, 'host-key.cjs');
   try {
     await build({ ...hostBundleOptions, bundle: true, outfile: output,

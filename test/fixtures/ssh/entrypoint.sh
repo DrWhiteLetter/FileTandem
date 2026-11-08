@@ -16,7 +16,7 @@ install -m 600 /fixtures/host_ed25519 /etc/ssh/ssh_host_ed25519_key
 install -m 644 /fixtures/host_ed25519.pub /etc/ssh/ssh_host_ed25519_key.pub
 chown fixture:fixture /home/fixture/.ssh
 install -o fixture -g fixture -m 600 /fixtures/authorized_keys /home/fixture/.ssh/authorized_keys
-printf 'xScp isolated %s fixture\n' "$FIXTURE_MODE" > /data/server-marker.txt
+printf 'FileTandem isolated %s fixture\n' "$FIXTURE_MODE" > /data/server-marker.txt
 chown fixture:fixture /data/server-marker.txt
 /usr/sbin/sshd -t
 exec /usr/sbin/sshd -D -e

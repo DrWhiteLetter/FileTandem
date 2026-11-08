@@ -1,6 +1,6 @@
 # FileTandem-Logo
 
-Erstellt am 08.10.2026 mit dem integrierten Imagegen-Tool. Transparenter PNG-Hintergrund, Original in `media/filetandem-logo.png`, auf 64 × 64 Pixel skalierte Button-Version in `media/filetandem-button.png`. Der Button ist in der Titelzeile der Verbindungen-Ansicht eingebunden und ruft `xscp.openManager` auf.
+Erstellt am 08.10.2026 mit dem integrierten Imagegen-Tool. Transparenter PNG-Hintergrund, Original in `media/filetandem-logo.png`, auf 64 × 64 Pixel skalierte Button-Version in `media/filetandem-button.png`. Der Button ist in der Titelzeile der Verbindungen-Ansicht eingebunden und ruft `filetandem.openManager` auf.
 
 ## Generierungsprompt
 

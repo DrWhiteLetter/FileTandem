@@ -3,7 +3,7 @@ exports.run=async (api,id,local) => {
  await api.transfers.ready;
  const marker=path.join(local,'transfer-proof.json');let proof;
  const wait=async ids => {const end=Date.now()+15000;while (Date.now()<end) {const jobs=api.transfers.list().filter(j => ids.includes(j.id));if (jobs.length===ids.length && jobs.every(j => ['completed','skipped','failed','cancelled'].includes(j.state))) {assert.ok(jobs.every(j => ['completed','skipped'].includes(j.state)),JSON.stringify(jobs.map(j => ({state:j.state,error:j.error}))));return jobs;}await new Promise(r => setTimeout(r,30));}throw new Error('Native transfer timeout');};
- if (process.env.XSCP_M2_PHASE==='write') {
+ if (process.env.FILETANDEM_M2_PHASE==='write') {
   const name='m3-native-'+crypto.randomUUID(),root=path.join(local,name);await fs.mkdir(path.join(root,'nested','empty'),{recursive:true});const content=crypto.randomBytes(8*1024*1024+13);await fs.writeFile(path.join(root,'nested','binary'),content);
   api.transfers.pause(true);const upload=await api.transfers.submit(id,'upload',[root],'/data');assert.ok(api.transfers.list().filter(j => upload.ids.includes(j.id)).every(j => j.state==='queued'));
   await vscode.commands.executeCommand('workbench.action.closeAllEditors');api.transfers.pause(false);const jobs=await wait(upload.ids);assert.equal(jobs.find(j => j.kind==='file').sha256,crypto.createHash('sha256').update(content).digest('hex'),'Installed upload hash');
