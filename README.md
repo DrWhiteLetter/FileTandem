@@ -30,7 +30,7 @@ Lokale Dateien und Serverdateien nebeneinander – direkt in Visual Studio Code.
 Ab Version 1.0.3 lautet die Extension-ID `RootShellForge.filetandem`. Frühere Pakete behalten ihre alte Identität. Vor dem Umstieg [Hinweise zum Identitätswechsel](docs/identitaetswechsel-filetandem.md) beachten.
 
 1. In VS Code die **Erweiterungen** öffnen und nach `@id:RootShellForge.filetandem` suchen.
-2. **FileTandem – SFTP & SCP File Manager** von **RootShellForge** installieren.
+2. **FileTandem – SFTP/SCP File Manager** von **RootShellForge** installieren.
 3. Über die Befehlspalette **FileTandem: Dateimanager öffnen** starten.
 
 Benötigt **VS Code Desktop ab 1.140.0**. Node.js ist für die Installation nicht nötig. [Marketplace-Eintrag öffnen](https://marketplace.visualstudio.com/items?itemName=RootShellForge.filetandem).

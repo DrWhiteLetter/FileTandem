@@ -1,6 +1,6 @@
 {
   "name": "filetandem",
-  "displayName": "FileTandem – SFTP & SCP File Manager",
+  "displayName": "FileTandem – SFTP/SCP File Manager",
   "description": "%description%",
   "version": "1.0.3",
   "private": true,
