@@ -29,7 +29,7 @@ VS-Code-Anzeigesprache deutsch erscheinen. `filetandem.language` steuert diese
 Manifest-Texte nicht.
 
 Falls auch die Beschreibungen englisch bleiben, zunächst nach dem Beenden laufender
-Transfers **Developer: Reload Window / Entwickler: Fenster neu laden** ausführen.
+Transfers **Developer: Reload Window / Entwickler: Fenster erneut laden** ausführen.
 Bleibt das Problem bestehen, VS-Code-Version, FileTandem-Version und Startart
 (normales Fenster oder Extension Development Host) für die Untersuchung notieren.
 Keine Profile oder gespeicherten Zugangsdaten zur Fehlerbehebung löschen.
@@ -40,3 +40,14 @@ Durchläufe bestanden einschließlich der neu ergänzten Prüfung aller überset
 Manifest-Beiträge (Einstellungsbeschreibungen, Kategorien, Befehle und Auswahllabels).
 Das erklärt noch nicht den beobachteten englischen Zustand im vorhandenen Nutzerfenster;
 ein Cache-/Ladezustand ist eine Hypothese, kein nachgewiesener Fehlergrund.
+
+
+Am 09.11.2026 wurde der gemischte Sprachzustand auch im vorhandenen Nutzerfenster
+beobachtet: VS Code zeigte Deutsch als aktuelle Anzeigesprache, FileTandems
+Manifest-Aktionen und die Ansichtsüberschrift waren jedoch englisch. Nach
+„Entwickler: Fenster erneut laden“ waren „Verbindungen“, „Profil löschen“,
+„Profil bearbeiten“, „Profil öffnen“, „Wiederverbinden“ und „Profilfavorit
+umschalten“ im tatsächlichen Kontextmenü deutsch. Dafür war keine Änderung am
+Erweiterungscode oder Paket erforderlich. Der genaue interne Auslöser des alten
+Ladezustands wurde nicht nachgewiesen. Ein Neuladen trennt bestehende Verbindungen;
+laufende Transfers daher vorher abschließen oder bewusst abbrechen.
