@@ -1,0 +1,31 @@
+name: First-transfer feedback / Feedback zum ersten Transfer
+description: Tell us what worked and where you got stuck. Deutsch willkommen.
+title: "[Feedback] "
+body:
+  - type: markdown
+    attributes:
+      value: "Thanks for trying FileTandem. Please omit credentials, private keys, hostnames and sensitive paths. Antworten auf Deutsch sind willkommen."
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment / Umgebung
+      description: FileTandem version, VS Code version, OS, architecture, SFTP or SCP.
+    validations:
+      required: true
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Your task / Dein Anwendungsfall
+      description: What did you want to do? Did connection, upload, download and editing work?
+    validations:
+      required: true
+  - type: textarea
+    id: friction
+    attributes:
+      label: What was unclear? / Was war unklar?
+      description: Describe the step, what you expected and what actually happened.
+  - type: textarea
+    id: reuse
+    attributes:
+      label: Would you use it again? / Würdest du es wieder nutzen?
+      description: For which task? What is missing or getting in the way?

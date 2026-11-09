@@ -2,7 +2,7 @@
 
 Ab 0.0.21: [Ausschlussregeln und Löschsicherungen](ausschlussregeln-und-sicherungen.md) beachten. Remote-Löschungen werden standardmäßig als `.bak` aufbewahrt; Aussagen über endgültige Löschungen gelten nur bei deaktivierter Sicherungsoption.
 
-Stand: 08.11.2026, Version **1.0.3** für den Marketplace. Plattformnachweise und verbleibende Grenzen stehen in der [README](../README.md#getestete-desktop-umgebungen) und im [Release-Nachweis](nachweise/Release-1.0.3.md). Ab dieser Version lautet die Extension-ID `RootShellForge.filetandem`; der Veröffentlichungsstatus steht im Release-Nachweis. Siehe [Identitätswechsel](identitaetswechsel-filetandem.md).
+Stand: 09.11.2026, Version **1.0.4** für den Marketplace. Plattformnachweise und verbleibende Grenzen stehen in der [README](../README.de.md#getestete-desktop-umgebungen) und im [Release-Nachweis](nachweise/Release-1.0.4.md). Seit Version 1.0.3 lautet die Extension-ID `RootShellForge.filetandem`; der Veröffentlichungsstatus steht im Release-Nachweis. Siehe [Identitätswechsel](identitaetswechsel-filetandem.md).
 
 ## Installation und erster Transfer
 
@@ -20,7 +20,7 @@ FileTandem migriert alte `xscp`-Einstellungen automatisch nach `filetandem`; ber
 
 ## Installation prüfen und aktualisieren
 
-Nach der Installation in der Erweiterungsansicht den Titel **FileTandem – SFTP/SCP File Manager** und Version **1.0.3** prüfen. Den Dateimanager öffnen und eine eigene kleine Testdatei in einen dafür angelegten Serverordner hochladen, wieder unter anderem lokalen Namen herunterladen und den Inhalt vergleichen. Erst danach mit wichtigen Dateien arbeiten. Die Queue muss den Auftrag als erfolgreich anzeigen; bei einem Fehler zunächst die Diagnose unten verwenden.
+Nach der Installation in der Erweiterungsansicht den Titel **FileTandem – SFTP/SCP File Manager** und Version **1.0.4** prüfen. Den Dateimanager öffnen und eine eigene kleine Testdatei in einen dafür angelegten Serverordner hochladen, wieder unter anderem lokalen Namen herunterladen und den Inhalt vergleichen. Erst danach mit wichtigen Dateien arbeiten. Die Queue muss den Auftrag als erfolgreich anzeigen; bei einem Fehler zunächst die Diagnose unten verwenden.
 
 Für ein Update laufende Transfers abschließen oder bewusst abbrechen, die neue VSIX über **Aus VSIX installieren…** installieren und den angebotenen Reload ausführen. Version und Testtransfer erneut prüfen. Ein Reload nimmt unterbrochene Aufträge nicht automatisch wieder auf. Eine ältere geprüfte VSIX aufbewahren; ein Downgrade ist keine Zusage der Kompatibilität zukünftiger Profil-/Journalformate.
 

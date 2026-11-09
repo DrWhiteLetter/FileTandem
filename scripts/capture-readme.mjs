@@ -16,7 +16,7 @@ try {
  for(const directory of [harness,join(user,'User'),extensions])await mkdir(directory,{recursive:true});
  await cp('dist',join(harness,'dist'),{recursive:true});await copyFile('test/extension/ui-preview.cjs',join(harness,'main.cjs'));
  await writeFile(join(harness,'package.json'),JSON.stringify({name:'readme-preview',publisher:'filetandem-test',version:'0.0.1',engines:{vscode:'^1.140.0'},main:'main.cjs',activationEvents:['onStartupFinished']}));
- await writeFile(join(harness,'control.json'),JSON.stringify({theme:'Default Dark Modern',scenario:'release',locale:'de'}));
+ await writeFile(join(harness,'control.json'),JSON.stringify({theme:'Default Dark Modern',scenario:process.env.FILETANDEM_CAPTURE_SCENARIO??'release',locale:process.env.FILETANDEM_CAPTURE_LOCALE??'de'}));
  await writeFile(join(user,'User/settings.json'),JSON.stringify({'workbench.startupEditor':'none','window.restoreWindows':'none','security.workspace.trust.enabled':false,'workbench.colorTheme':'Default Dark Modern','window.zoomLevel':0,'workbench.activityBar.location':'hidden','workbench.statusBar.visible':false,'update.mode':'none'}));
  child=spawn(executable,['--user-data-dir',user,'--extensions-dir',extensions,'--extensionDevelopmentPath='+harness,'--new-window','--skip-welcome','--skip-release-notes','--disable-updates','--remote-debugging-port=0'],{env,stdio:'ignore'});closed=new Promise(resolve=>child.once('exit',resolve));
  const port=await wait(async()=>{try{return Number((await readFile(join(user,'DevToolsActivePort'),'utf8')).split('\n')[0]);}catch{return;}});
@@ -25,8 +25,8 @@ try {
  let next=0;const pending=new Map();
  ws.addEventListener('message',event=>{const message=JSON.parse(event.data);const call=pending.get(message.id);if(!call)return;pending.delete(message.id);message.error?call.reject(new Error(JSON.stringify(message.error))):call.resolve(message.result);});
  const call=(method,params={})=>new Promise((resolve,reject)=>{const id=++next;pending.set(id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});
- await call('Emulation.setDeviceMetricsOverride',{width:1920,height:1200,deviceScaleFactor:1,mobile:false});
- await wait(async()=>{try{const probe=JSON.parse(await readFile(join(harness,'probe.json'),'utf8'));return probe.width>=1400&&probe.rows.length>0&&probe;}catch{return;}});
+ await call('Emulation.setDeviceMetricsOverride',{width:Number(process.env.FILETANDEM_CAPTURE_WIDTH??1920),height:1200,deviceScaleFactor:1,mobile:false});
+ await wait(async()=>{try{const probe=JSON.parse(await readFile(join(harness,'probe.json'),'utf8'));return probe.width>=Number(process.env.FILETANDEM_CAPTURE_WIDTH??1920)-400&&probe.rows.length>0&&probe;}catch{return;}});
  // Read the fixture frame bounds and capture pixels; no UI input is injected.
  const bounds=await call('Runtime.evaluate',{expression:"(()=>{const frame=[...document.querySelectorAll('iframe')].find(frame=>frame.src.startsWith('vscode-webview:'));if(!frame)return null;const r=frame.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,scale:1};})()",returnByValue:true});
  assert.ok(bounds.result.value,'Production webview frame is visible');

@@ -25,3 +25,6 @@ AGENTS.md
 
 # Separate project website and its source repository
 sites/**
+
+# Local outreach drafts and preparation notes are not runtime documentation.
+docs/marketing/**

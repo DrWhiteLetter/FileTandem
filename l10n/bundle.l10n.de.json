@@ -676,5 +676,13 @@
   "Clear history": "Verlauf leeren",
   "Only finished entries for this profile are removed from the history in all sessions. Running and queued transfers remain. Files and partial files are not deleted. Retry and partial-file cleanup actions for removed entries will no longer be available.": "Nur beendete Einträge dieses Profils werden in allen Sitzungen aus dem Verlauf entfernt. Laufende und wartende Transfers bleiben erhalten. Dateien und Teil-Dateien werden nicht gelöscht. Wiederholen und Teil-Dateien bereinigen sind für entfernte Einträge anschließend nicht mehr verfügbar.",
   "Ownership check unavailable: Owner and group IDs are incomplete. The existing file is preserved. Restart the upload or check the login and server; clean up the transfer’s partial file if needed.": "Eigentümerprüfung nicht möglich: Die Eigentümer- und Gruppenangaben sind unvollständig. Die bestehende Datei bleibt erhalten. Upload neu starten oder Anmeldung und Server prüfen; eigene Teil-Datei bei Bedarf bereinigen.",
-  "Upload stopped: Replacing the file would change its owner or group. The existing file is preserved. Connect as the appropriate server user or check server permissions; clean up the transfer’s partial file if needed.": "Upload gestoppt: Eigentümer oder Gruppe würde sich beim Ersetzen ändern. Die bestehende Datei bleibt erhalten. Mit dem passenden Serverbenutzer verbinden oder die Serverrechte prüfen; eigene Teil-Datei bei Bedarf bereinigen."
+  "Upload stopped: Replacing the file would change its owner or group. The existing file is preserved. Connect as the appropriate server user or check server permissions; clean up the transfer’s partial file if needed.": "Upload gestoppt: Eigentümer oder Gruppe würde sich beim Ersetzen ändern. Die bestehende Datei bleibt erhalten. Mit dem passenden Serverbenutzer verbinden oder die Serverrechte prüfen; eigene Teil-Datei bei Bedarf bereinigen.",
+  "Transfer controls": "Transfersteuerung",
+  "Resume queue globally": "Warteschlange global fortsetzen",
+  "Pause new starts globally; active transfers continue.": "Neue Starts global pausieren; laufende Transfers werden fortgesetzt.",
+  "Stop automatic uploads before retrying.": "Automatische Uploads vor dem Wiederholen beenden.",
+  "Retry failed, interrupted or cancelled transfers.": "Fehlgeschlagene, unterbrochene oder abgebrochene Transfers wiederholen.",
+  "{0} retryable transfers": "{0} erneut versuchen",
+  "History": "Verlauf",
+  "Hide successful entries": "Erfolgreiche Einträge ausblenden"
 }

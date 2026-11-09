@@ -1,5 +1,5 @@
 {
-  "description": "Dual-pane SFTP and SCP file manager for VS Code Desktop, with a transfer queue and guarded remote editing.",
+  "description": "Local files and your server, side by side in VS Code. Transfer folders over SFTP/SCP and edit remote files. No VS Code Server required for SFTP.",
   "filetandem.openManager.title": "FileTandem: Open file manager",
   "filetandem.verifyLocalFile.title": "FileTandem: Verify local file access",
   "filetandem.verifySshHostKey.title": "FileTandem: Verify SSH host key",

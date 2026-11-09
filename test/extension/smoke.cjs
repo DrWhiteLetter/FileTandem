@@ -27,6 +27,23 @@ exports.run = async () => {
   const extensionApi=require('node:module').createRequire(require('node:path').join(extension.extensionPath,'dist/extension.cjs'))('vscode');
   if (process.env.FILETANDEM_EXPECT_LOCALE) assert.equal(extensionApi.env.language,process.env.FILETANDEM_EXPECT_LOCALE,'requested editor locale is actually active');
   const german=extensionApi.env.language.toLowerCase().startsWith('de');
+  if (process.env.FILETANDEM_EXPECT_LOCALE) {
+    const fs=require('node:fs');
+    const path=require('node:path');
+    const messages=JSON.parse(fs.readFileSync(path.join(extension.extensionPath,german ? 'package.nls.de.json':'package.nls.json'),'utf8'));
+    const raw=JSON.parse(fs.readFileSync(path.join(extension.extensionPath,'package.json'),'utf8'));
+    const check=(source,resolved,location) => {
+      if (typeof source==='string' && /^%[^%]+%$/.test(source)) {
+        const key=source.slice(1,-1);
+        // VS Code preserves the original command title alongside its translation.
+        const value=resolved && typeof resolved==='object' ? resolved.value:resolved;
+        assert.equal(value,messages[key],`Installed manifest localization: ${location}`);
+      } else if (source && typeof source==='object') {
+        for (const [key,value] of Object.entries(source)) check(value,resolved?.[key],`${location}.${key}`);
+      }
+    };
+    check(raw.contributes,extension.packageJSON.contributes,'contributes');
+  }
   assert.equal(extensionApi.l10n.t('Password'),german ? 'Passwort':'Password','installed extension loads its native VS Code language bundle');
   assert.equal(extensionApi.l10n.t('SSH host key changed: {0}','example.test:22'),german ? 'SSH-Host-Key geändert: example.test:22':'SSH host key changed: example.test:22','native localization preserves placeholders');
   console.log('Native localization: '+extensionApi.env.language+'; bundle loaded: '+Boolean(extensionApi.l10n.bundle));

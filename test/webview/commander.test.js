@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { build } from 'esbuild';
 import { JSDOM } from 'jsdom';
+import { transferView } from '../../src/shared/transfer-view.js';
 const result = await build({ entryPoints:['test/webview/harness.jsx'],bundle:true,outdir:'out/webview-test',write:false,format:'iife',jsx:'automatic',platform:'browser' });
 test('Rendered Commander: selection, folders, filter, safe names, queue and all demo states', async () => {
   const dom = new JSDOM('<html lang="de"><meta name="filetandem-session" content="demo-session"><div id="root"></div>',{runScripts:'outside-only',url:'https://filetandem.test'});
@@ -57,12 +58,12 @@ test('Real browser selection survives refresh; per-pane filters, symlinks and pr
   await act(() => button('Hochladen →').click());assert.equal(messages.at(-1).type,'transfer');assert.equal(messages.at(-1).side,'local');assert.deepEqual(JSON.parse(JSON.stringify(messages.at(-1).ids)),['/tmp/a.txt']);
   await act(() => doc.querySelector('.pane:last-child tbody tr').click());await act(() => button('Download nach …').click());assert.equal(messages.at(-1).destination,'choose');assert.equal(messages.at(-1).side,'remote');
   model.queue=[{id:'running',source:'/a',target:'/b',direction:'upload',state:'running',bytes:12,rate:10},{id:'failed',source:'/a',target:'/c',direction:'upload',protocol:'sftp',attempt:{part:'/own-part'},state:'failed',bytes:0,rate:0},{id:'success',source:'/a',target:'/d',direction:'upload',state:'completed',bytes:12,rate:10}];await render();
-  assert.equal(button('Erfolgreiche entfernen').disabled,false);assert.equal(button('Transferverlauf leeren …').disabled,false);
-  await act(() => button('Erfolgreiche entfernen').click());assert.equal(messages.at(-1).type,'queueClear');assert.equal(messages.at(-1).mode,'successful');
+  assert.equal(button('Erfolgreiche Einträge ausblenden').disabled,false);assert.equal(button('Transferverlauf leeren …').disabled,false);
+  await act(() => button('Erfolgreiche Einträge ausblenden').click());assert.equal(messages.at(-1).type,'queueClear');assert.equal(messages.at(-1).mode,'successful');
   await act(() => button('Transferverlauf leeren …').click());assert.equal(messages.at(-1).mode,'all');
-  await act(() => button('Queue pausieren').click());assert.equal(messages.at(-1).type,'queuePause');assert.equal(messages.at(-1).paused,true);
+  await act(() => doc.querySelector('.queue-pause').click());assert.equal(messages.at(-1).type,'queuePause');assert.equal(messages.at(-1).paused,true);
   await act(() => button('Abbrechen').click());assert.deepEqual(JSON.parse(JSON.stringify(messages.at(-1).ids)),['running']);
-  await act(() => button('Fehlgeschlagene erneut starten').click());assert.deepEqual(JSON.parse(JSON.stringify(messages.at(-1).ids)),['failed']);
+  await act(() => doc.querySelector('.queue-retry').click());assert.deepEqual(JSON.parse(JSON.stringify(messages.at(-1).ids)),['failed']);
   await act(() => button('Geprüft fortsetzen').click());assert.equal(messages.at(-1).action,'resume');assert.deepEqual(JSON.parse(JSON.stringify(messages.at(-1).ids)),['failed']);
   await act(() => button('Teil-Datei bereinigen').click());assert.equal(messages.at(-1).action,'cleanup');
   const localRow=doc.querySelector('.pane tbody tr');const targetPane=doc.querySelector('.pane:last-child');
@@ -111,7 +112,7 @@ test('English Commander and switching back localize labels, menus, errors and ac
  const dom=new JSDOM('<html lang="en"><div id="root"></div></html>',{runScripts:'outside-only',url:'https://filetandem.test'});dom.window.MessageChannel=class {constructor(){this.port1={onmessage:null};this.port2={postMessage:()=>setTimeout(()=>this.port1.onmessage?.(),0)};}};dom.window.IS_REACT_ACT_ENVIRONMENT=true;dom.window.eval(result.outputFiles.find(f=>f.path.endsWith('.js')).text);const messages=[];await dom.window.testMountBrowser({postMessage:m=>messages.push(m)},'english-session');
  const act=action=>dom.window.testAct(action);const model={version:1,type:'browserModel',sessionId:'english-session',locale:'en',connection:{state:'disconnected',protocol:'sftp'},local:{path:'/tmp',status:'error',error:'Keine Berechtigung für diesen Ordner.',entries:[]},remote:{path:'/',status:'disconnected',entries:[]},queue:[{id:'failed',source:'/a',target:'/b',state:'failed',direction:'upload',bytes:0,rate:0,error:'Transfer fehlgeschlagen; Quelle/Ziel und Verbindung prüfen.'}],autoUpload:{active:false,error:'Remote-Datei wurde geändert; keine automatische Löschung.'}};
  const render=()=>act(()=>dom.window.dispatchEvent(new dom.window.MessageEvent('message',{data:dom.window.JSON.parse(JSON.stringify(model))})));await render();const doc=dom.window.document;
- for (const text of ['Connect profile','New session','Hidden files','Permission denied for this folder.','Retry failed jobs','Transfer failed; check source/destination and connection.','No server','Remote file was changed; automatic deletion was prevented.']) assert.ok(doc.body.textContent.includes(text),text);
+ for (const text of ['Connect profile','New session','Hidden files','Permission denied for this folder.','1 retryable transfers','Transfer failed; check source/destination and connection.','No server','Remote file was changed; automatic deletion was prevented.']) assert.ok(doc.body.textContent.includes(text),text);
  assert.ok(doc.querySelector('input[aria-label="Local: Name filter"]'));assert.ok(doc.querySelector('table[aria-label="Local: File list"]'));assert.equal(doc.documentElement.lang,'en');assert.ok(!/Versteckte|Namensfilter|Herunterladen|Dateiliste|Nicht verbunden/.test(doc.body.textContent));
  model.locale='de';await render();assert.ok(doc.body.textContent.includes('Profil verbinden'));assert.ok(doc.body.textContent.includes('Fehlgeschlagen'));assert.equal(doc.documentElement.lang,'de');model.connection.name='Password';await render();assert.equal(doc.querySelector('.connection-status strong').textContent,'Password','user profile names are not translated');assert.equal(messages[0].type,'ready');dom.window.close();
 });
@@ -251,7 +252,7 @@ test('compact transfer updates preserve file panes and retry jobs outside the vi
  const data={version:1,type:'transferModel',sessionId:'polish',queuePaused:false,queue:[{id:'latest',source:'/local/file',target:'/remote/file',direction:'upload',state:'completed',bytes:4,rate:0}],queueSummary:{total:1500,active:400,failures:1,retryIds:['old-failed'],progress:{total:500,settled:100,completed:99,failed:1,skipped:0,cancelled:0,running:4,bytes:1048576,rate:1024}},autoUpload:{active:false}};
  await act(()=>dom.window.dispatchEvent(new dom.window.MessageEvent('message',{data:dom.window.JSON.parse(JSON.stringify(data))})));
  assert.equal(doc.querySelector('.pane tr[data-entry-id]'),row);assert.ok(doc.querySelector('.queue-toggle').textContent.includes('1500'));assert.ok(doc.querySelector('.queue-summary').textContent.includes('400'));
- const retry=[...doc.querySelectorAll('.queue button')].find(b=>b.textContent.includes('Fehlgeschlagene'));
+ const retry=[...doc.querySelectorAll('.queue button')].find(b=>b.classList.contains('queue-retry'));
  assert.ok(retry);await act(()=>retry.click());assert.deepEqual(Array.from(messages.at(-1).ids),['old-failed']);
  await act(()=>dom.window.dispatchEvent(new dom.window.MessageEvent('message',{data:dom.window.JSON.parse(JSON.stringify({...data,sessionId:'foreign',queueSummary:{...data.queueSummary,total:9999}}))})));
  assert.ok(doc.querySelector('.queue-toggle').textContent.includes('1500'));assert.equal(model.local.path,'/local');
@@ -263,6 +264,31 @@ test('history controls use full-profile totals and disable after cleared updates
  const {dom,doc,act}=await polishFixture(t,{saved:{version:1,queueOpen:true}});
  const data={version:1,type:'transferModel',sessionId:'polish',queuePaused:false,queue:[],queueSummary:{total:400,active:200,failures:0,successful:200,settled:200,retryIds:[]}};
  const render=()=>act(()=>dom.window.dispatchEvent(new dom.window.MessageEvent('message',{data:dom.window.JSON.parse(JSON.stringify(data))})));
- await render();let buttons=doc.querySelectorAll('.queue-history-toolbar button');assert.equal(buttons[0].disabled,false);assert.equal(buttons[1].disabled,false);
- data.queueSummary={total:200,active:200,failures:0,successful:0,settled:0,retryIds:[]};await render();buttons=doc.querySelectorAll('.queue-history-toolbar button');assert.equal(buttons[0].disabled,true);assert.equal(buttons[1].disabled,true);
+ await render();let buttons=doc.querySelectorAll('.queue-history-panel button');assert.equal(buttons[0].disabled,false);assert.equal(buttons[1].disabled,false);
+ data.queueSummary={total:200,active:200,failures:0,successful:0,settled:0,retryIds:[]};await render();buttons=doc.querySelectorAll('.queue-history-panel button');assert.equal(buttons.length,0);
+});
+
+test('transfer toolbar follows state and history actions remain keyboard accessible',async t=>{
+ const {dom,doc,act,messages}=await polishFixture(t,{saved:{version:1,queueOpen:true}});
+ const job={id:'done',source:'/local/a',target:'/remote/a',direction:'upload',state:'completed',bytes:41943040,rate:0};
+ const data={version:1,type:'transferModel',sessionId:'polish',queuePaused:false,queue:[job]};
+ const render=()=>act(()=>dom.window.dispatchEvent(new dom.window.MessageEvent('message',{data:dom.window.JSON.parse(JSON.stringify({...data,...transferView(data.queue)}))})));
+ await render();
+ assert.equal(doc.querySelector('.queue-progress'),null);
+ assert.equal(doc.querySelector('.queue-pause'),null);
+ assert.equal(doc.querySelector('.queue-retry'),null);
+ assert.match(doc.querySelector('.queue-outcome').textContent,/1 erfolgreich.*40.0 MiB/);
+ const menu=doc.querySelector('.queue-history');menu.open=true;
+ await act(()=>menu.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
+ assert.equal(menu.open,false);assert.equal(doc.activeElement,menu.querySelector('summary'));
+ menu.open=true;await act(()=>menu.querySelector('button').click());
+ assert.equal(menu.open,false);assert.equal(messages.at(-1).type,'queueClear');assert.equal(messages.at(-1).mode,'successful');
+ menu.open=true;await act(()=>doc.body.dispatchEvent(new dom.window.Event('pointerdown',{bubbles:true})));assert.equal(menu.open,false);
+ data.queuePaused=true;await render();assert.match(doc.querySelector('.queue-pause').getAttribute('aria-label'),/fortsetzen/);
+ await act(()=>doc.querySelector('.queue-pause').click());assert.equal(messages.at(-1).paused,false);
+ data.queuePaused=false;data.queue=[{...job,state:'running',rate:1024}];await render();
+ assert.ok(doc.querySelector('.queue-progress progress'));assert.ok(doc.querySelector('.queue-pause'));assert.equal(doc.querySelector('.queue-history'),null);
+ data.queue=[{...job,state:'failed'}];data.autoUpload={active:true};await render();
+ assert.ok(doc.querySelector('.queue-retry').disabled);assert.match(doc.querySelector('.queue-outcome').textContent,/fehlgeschlagen/);
+ dom.window.close();
 });

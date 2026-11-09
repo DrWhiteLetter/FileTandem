@@ -1,5 +1,5 @@
 {
-  "description": "Zwei-Fenster-Dateimanager für SFTP und SCP in VS Code Desktop, mit Transferwarteschlange und kontrollierter Remote-Bearbeitung.",
+  "description": "Lokale Dateien und Serverdateien nebeneinander in VS Code. Ordner per SFTP/SCP übertragen und Remote-Dateien bearbeiten. Für SFTP ohne VS Code Server.",
   "filetandem.openManager.title": "FileTandem: Dateimanager öffnen",
   "filetandem.verifyLocalFile.title": "FileTandem: Lokalen Dateizugriff nachweisen",
   "filetandem.verifySshHostKey.title": "FileTandem: SSH-Host-Key prüfen",

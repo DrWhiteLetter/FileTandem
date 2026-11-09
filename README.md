@@ -1,125 +1,72 @@
 <p>
-  <img src="media/filetandem-logo.png" alt="FileTandem-Logo" width="112" height="112">
+  <img src="media/filetandem-logo.png" alt="FileTandem logo" width="112" height="112">
 </p>
 
-# FileTandem
+# FileTandem — SFTP/SCP File Manager
 
-**Version 1.0.3** · SFTP- und SCP-Dateimanager für VS Code Desktop · MIT-Lizenz
+**Local files and your server, side by side in VS Code.**
 
-Lokale Dateien und Serverdateien nebeneinander – direkt in Visual Studio Code. Mit FileTandem verwaltest du Dateien über **SFTP und SCP**, überträgst ganze Ordner und bearbeitest Remote-Dateien im Editor.
+Transfer folders over SFTP/SCP, compare changes and edit remote files without leaving your editor. For SFTP, an SFTP account is enough — no VS Code Server required.
 
-**[Im Marketplace installieren](https://marketplace.visualstudio.com/items?itemName=RootShellForge.filetandem)** · [Änderungen](CHANGELOG.md) · [Fehler melden](https://github.com/DrWhiteLetter/FileTandem/issues)
+**[Install from Marketplace](https://marketplace.visualstudio.com/items?itemName=RootShellForge.filetandem)** · [Deutsche Anleitung](README.de.md) · [Changes](CHANGELOG.md) · [Report an issue](https://github.com/DrWhiteLetter/FileTandem/issues)
 
-![FileTandem: lokale und entfernte Dateien mit Transferübersicht](media/filetandem-screenshot.png)
+Free and open source · MIT licence · English and German interface · Version 1.0.4
 
-*FileTandem 1.0.1 mit Beispieldaten in einer isolierten UI-Vorschau; kein echter Transfer.*
+![FileTandem 1.0.4: compact transfer controls and history menu](media/filetandem-1.0.4.png)
 
-## Was kann FileTandem?
+*Current interface with synthetic test data; no real transfer in this screenshot.*
 
-- Zwei Dateibereiche mit Filtern, Sortierung, Mehrfachauswahl und Pfadfavoriten.
-- Ohne Serverprofil zwei lokale Ordner unabhängig öffnen und Dateien oder Ordner in beide Richtungen kopieren.
-- Dateien und Ordner hoch- und herunterladen, mit Fortschrittsanzeige, aufräumbarem Transferverlauf und geprüfter SFTP-Fortsetzung.
-- Serverprofile speichern; Anmeldung per Passwort, SSH-Schlüssel oder SSH-Agent.
-- Remote-Dateien öffnen, Änderungen vergleichen und Bearbeitung gezielt freigeben.
-- Ordner mit Vorschau abgleichen oder lokale Änderungen automatisch hochladen.
-- Ausschlussregeln für Dateiendungen, Namen und Punktdateien; Remote-Löschsicherungen als `.bak`.
-- Deutsche und englische Oberfläche passend zur VS-Code-Anzeigesprache, helle und dunkle Themes.
+![FileTandem quick tour: connection, upload and remote editor on an isolated test server](media/filetandem-quick-tour.gif)
 
-## Installation
+*Historical 27-second silent montage from the real FileTandem 1.0.1 recording (transfer toolbar predates 1.0.4) on an isolated test server. German interface; cuts between connection, upload and editor scenes. [Text walkthrough](docs/first-transfer-feedback.md).*
 
-Ab Version 1.0.3 lautet die Extension-ID `RootShellForge.filetandem`. Frühere Pakete behalten ihre alte Identität. Vor dem Umstieg [Hinweise zum Identitätswechsel](docs/identitaetswechsel-filetandem.md) beachten.
+## Why FileTandem?
 
-1. In VS Code die **Erweiterungen** öffnen und nach `@id:RootShellForge.filetandem` suchen.
-2. **FileTandem – SFTP/SCP File Manager** von **RootShellForge** installieren.
-3. Über die Befehlspalette **FileTandem: Dateimanager öffnen** starten.
+- **Two panes, one workspace.** Browse local and remote folders side by side, select files and upload or download them with a visible transfer queue.
+- **Use your existing SFTP access.** Connect with a password, SSH key or SSH agent. No VS Code Server installation on the target is needed for SFTP.
+- **Review changes and control editing.** Preview folder comparisons, compare editor contents with the server and explicitly enable remote editing.
 
-Benötigt **VS Code Desktop ab 1.140.0**. Node.js ist für die Installation nicht nötig. [Marketplace-Eintrag öffnen](https://marketplace.visualstudio.com/items?itemName=RootShellForge.filetandem).
+Useful when you maintain a website or move project files to a server and want the file manager inside VS Code. You can also copy between two local folders without a server profile.
 
-Alternativ eine verfügbare VSIX aus den [GitHub Releases](https://github.com/DrWhiteLetter/FileTandem/releases/latest) herunterladen und über **Erweiterungen → … → Aus VSIX installieren …** installieren. Die dort angebotene Version kann vom Marketplace abweichen.
+## Your first transfer
 
-### Getestete Desktop-Umgebungen
+1. Install **FileTandem – SFTP/SCP File Manager** by **RootShellForge**. In VS Code Extensions, search for `@id:RootShellForge.filetandem`.
+2. Run **FileTandem: Open file manager** from the Command Palette. Create a server profile and choose your local and remote start folders.
+3. Connect and verify the SSH fingerprint against a trusted value from your administrator or hosting provider.
+4. Select a disposable test file on the left and choose **Upload →**. Check the destination and transfer result before working with project files.
 
-| Plattform | Nachweis |
-| --- | --- |
-| macOS mit Apple Silicon | Automatisierte lokale Release- und Installationstests; Details im [Release-Nachweis](docs/nachweise/Release-1.0.1.md). |
-| Windows | Erfolgreicher manueller Desktop-Test, vom Projektinhaber bestätigt. OS-/VS-Code-Version und Architektur wurden nicht gesondert dokumentiert. [Nachweis](docs/nachweise/Windows-Desktop.md). |
-| Debian 13.7, Xfce, ARM64 | Erfolgreicher manueller Test mit VS Code 1.145.0 (`code_1.145.0-1793748906_arm64.deb`), vom Projektinhaber bestätigt. [Nachweis](docs/nachweise/Linux-Desktop.md). |
+Requires **VS Code Desktop 1.140.0 or later**. Node.js is not required for installation. SFTP needs an SFTP account; SCP needs a GNU/Linux server with a shell and `scp` installed.
 
-Diese Nachweise sind keine Zusage für jede Distribution, Architektur oder Remote-Umgebung. macOS Intel, weitere Linux-Desktops sowie spezielle WSL-/Container-/UNC-Kombinationen sind nicht pauschal abgenommen. Eine vollständige manuelle Screenreader-Abnahme steht noch aus.
+## Remote editing and folder transfers
 
-## Lokal arbeiten
+Remote files open read-only initially. Enable editing deliberately: saving an SFTP file writes to the server, including when Auto Save is enabled. With SCP, edit a local copy and explicitly upload it again.
 
-**Lokalen Dateimanager öffnen** zeigt zwei lokale Ordner. Öffne links und rechts die gewünschten Pfade, markiere Dateien oder Ordner und wähle **Kopieren →** beziehungsweise **← Kopieren**. Kontextmenü und Drag-and-drop funktionieren ebenfalls; bei aktivierten Commander-Tasten kopiert F5 die Auswahl in den gegenüberliegenden Ordner. Bestehende Zieldateien verwenden die normalen Konfliktdialoge.
+Folder comparison offers a preview. **Keep remote folder up to date** mirrors local changes, including removals; check source and destination before starting. Exclusion rules and backups are respected. Remote deletions use `.bak` backups by default; on web servers, prevent these backups from being downloaded publicly.
 
-## Erste Verbindung
+Manual SFTP uploads check SSH transport, source consistency and file size by default. Optional SHA-256 verification reads the uploaded file back. Resumed SFTP uploads, automatic uploads and verified editor uploads use SHA-256. These checks do not replace backups.
 
-1. Über die Befehlspalette **FileTandem: Profil anlegen** ein Serverprofil mit Host, Benutzer und Anmeldeverfahren erstellen. Danach im Dateimanager **Profil verbinden** wählen.
-2. Beim ersten Verbinden den angezeigten SSH-Fingerprint unabhängig beim Hoster oder Administrator prüfen und bestätigen.
-3. Links den lokalen Ordner, rechts den Serverordner öffnen. Dateien auswählen und mit **Hochladen →** oder **← Herunterladen** übertragen.
+## Help shape the first-transfer experience
 
-Für SFTP genügt ein SFTP-Zugang; ein VS Code Server ist nicht erforderlich. SCP benötigt einen GNU/Linux-Server mit Shell und installiertem `scp`.
+Try the [10-minute test guide](docs/first-transfer-feedback.md) and tell us where you got stuck. Could you connect, find the destination and transfer your first file? Usability feedback is welcome even when nothing crashes.
 
-**Bitte beachten:** Remote-Löschungen werden standardmäßig als `.bak` gesichert. Bei Websites den Download solcher Sicherungen im Webserver sperren. **Remote-Ordner aktuell halten …** spiegelt den lokalen Ordner einschließlich Entfernungen; ausgeschlossene Dateien und Sicherungen bleiben erhalten. Prüfe die Zielordner vor dem Start. [Ausschlüsse und Sicherungen](docs/ausschlussregeln-und-sicherungen.md) · [Automatischer Upload](docs/automatischer-upload.md).
+[Send first-transfer feedback](https://github.com/DrWhiteLetter/FileTandem/issues/new?template=first-transfer.yml) · [Report a bug](https://github.com/DrWhiteLetter/FileTandem/issues/new?template=bug-report.yml)
 
-## Mitentwickeln
+After using FileTandem, an honest [Marketplace review](https://marketplace.visualstudio.com/items?itemName=RootShellForge.filetandem&ssr=false#review-details) helps others decide whether it fits their workflow.
 
-Mit Node.js ab 22.13.1 und npm:
+## Compatibility and documentation
 
-```sh
-npm ci
-npm start
-```
+Automated local release and installation checks cover macOS on Apple Silicon. The project owner has also reported successful manual desktop tests on Windows and Debian 13.7 / Xfce / ARM64. These are specific test reports, not coverage of every operating system, architecture or remote environment. See the [documented environments](README.de.md#getestete-desktop-umgebungen).
 
-[Hinweise zur Mehrsprachigkeit](docs/mehrsprachigkeit.md).
+[Detailed German guide](README.de.md) · [Operating notes and limitations (German)](docs/release-anleitung.md) · [Security reporting](SECURITY.md)
 
-`npm run quality` prüft den Code und baut die Erweiterung. `npm run package` erstellt die installierbare VSIX unter `out/`.
+### Upgrading from the old extension identity
 
-Für jeden VSIX-Build gilt der [verbindliche Releaseablauf](docs/vsix-releaseprozess.md): Bei Änderungen der Oberfläche Screenshots auf GitHub und Website aktualisieren, bei Versionswechseln alle aktuellen Angaben prüfen und die zugehörigen Änderungen immer committen und pushen.
+Since 1.0.3 the extension ID is `RootShellForge.filetandem`. Older identities are separate extensions: profiles and secrets do not migrate automatically. Before switching, stop transfers and monitoring, export profiles without secrets and disable the old extension. Recreate profiles and credentials in the new extension and verify host keys independently. See [migration details (German)](docs/identitaetswechsel-filetandem.md).
 
-## Bilder öffnen
+## Contributing and support
 
-Bilder (JPG/JPEG, PNG, GIF, WebP, BMP und ICO) öffnet FileTandem in der
-Bildvorschau von VS Code. Lokale Bilder werden direkt gelesen. Remote-Bilder
-werden über SFTP oder SCP in einen privaten System-Tempordner
-(`filetandem-preview-*`) heruntergeladen und schreibgeschützt angezeigt.
-Die Kopie wird beim Schließen des Bild-Tabs oder beim regulären Beenden der
-Erweiterung entfernt. Nach einem Absturz können temporäre Dateien verbleiben.
-Es erfolgt kein automatischer Rückupload. Oberhalb von 10 MiB wird stattdessen
-ein normaler Download angeboten.
+For issues, include FileTandem and VS Code versions, OS, architecture, protocol and reproduction steps. Do not post credentials, private keys or unsanitised logs. Use [SECURITY.md](SECURITY.md) for confidential security reports.
 
-## Viele Dateien per SFTP hochladen
+Development requires Node.js 22.13.1 or later. Run `npm ci`, then `npm start`. `npm run quality` runs the quality checks and builds the extension. Every VSIX build must follow the [release process](docs/vsix-releaseprozess.md).
 
-Ab 0.0.26 werden Queue und Dateilisten sparsamer aktualisiert und SFTP-Datenblöcke parallel übertragen. Unter **Einstellungen → FileTandem → Sicherheitsfeatures → SFTP Upload Verification** (`filetandem.sftpUploadVerification`) stehen zwei Prüfmodi zur Wahl:
-
-- **`sha256`** (optional): Hochgeladene Teil-Datei vollständig zurücklesen und ihren SHA-256-Wert vergleichen.
-- **`size`** (schnell, Voreinstellung): SSH-Transport, Quellenkonsistenz und Dateigröße prüfen, anschließend sicher veröffentlichen. Der gespeicherte Serverinhalt wird nicht per Prüfsumme kontrolliert. Die Queue kennzeichnet diese Abschlüsse mit „SSH + Größe geprüft“.
-
-Die Auswahl gilt für neu startende Dateien manueller SFTP-Uploads, auch beim manuellen Ordnerabgleich. Fortsetzungen, automatische Überwachung und geprüfte Editor-Uploads verwenden immer SHA-256. Downloads, SCP und lokale Kopien behalten ihre vollständige Prüfung.
-
-[Messungen, Grenzen und Recherche](docs/nachweise/SFTP-Performance-0.0.26.md).
-
-## Optional: Dateieigentümer bei Uploads prüfen
-
-Unter **Einstellungen → FileTandem → Sicherheitsfeatures** lässt sich `filetandem.checkUploadOwnership` aktivieren. Die Option ist **standardmäßig aus**.
-
-Beim Ersetzen einer bestehenden Serverdatei vergleicht FileTandem die numerische Eigentümer- und Gruppen-ID mit der hochgeladenen temporären Datei, bevor sie das Ziel ersetzt. Würde die Zuordnung wechseln oder liefert der Server keine vollständigen Angaben, stoppt die betroffene Datei mit einer Erklärung im Transferverlauf. Die bestehende Zieldatei bleibt erhalten; eine eigene Teil-Datei kann zur Bereinigung zurückbleiben. Verwende den passenden Serverbenutzer oder prüfe die Rechte mit dem Serverbetreiber. FileTandem ändert keine Eigentümer automatisch.
-
-Die Prüfung verwendet bereits benötigte Metadatenabfragen und benötigt keine zusätzliche Serveranfrage pro Datei. Sie gilt für neu startende Datei-Uploads über die Transferwarteschlange mit SFTP/SCP, einschließlich automatischer Uploads und SFTP-Fortsetzungen. Neue Dateien haben keinen bisherigen Eigentümer zum Vergleich; Ordner und direkte SFTP-Editor-Speichervorgänge werden nicht geprüft. Die Option prüft keine ACLs oder Zugriffsrechte der Serveranwendung und kann spätere Änderungen durch Serverprozesse nicht verhindern.
-
-## Transferverlauf aufräumen
-
-In der aufgeklappten Transferliste blendet **Erfolgreiche entfernen** abgeschlossene Einträge direkt aus. **Transferverlauf leeren …** entfernt nach Bestätigung auch fehlgeschlagene, abgebrochene, unterbrochene und übersprungene Einträge aus der Anzeige. Laufende und wartende Transfers bleiben erhalten. Die Änderung gilt für das aktuelle Profil in allen Sitzungen und wird gespeichert.
-
-Dateien und Teil-Dateien werden nicht gelöscht. Für ausgeblendete Einträge stehen Wiederholung und Teil-Dateibereinigung nicht mehr in der Oberfläche zur Verfügung; bei Bedarf vorher bereinigen. Interne Auftragsdaten bleiben für Ordnerabhängigkeiten und Transferfortschritt im Journal erhalten; diese Funktion gibt keinen Journalspeicher frei.
-
-## Support und Sicherheit
-
-Fehler und Verbesserungsvorschläge bitte über [GitHub Issues](https://github.com/DrWhiteLetter/FileTandem/issues) melden. Nenne FileTandem-Version, Betriebssystem, Architektur, VS-Code-Version, Protokoll und reproduzierbare Schritte. Zugangsdaten, private Schlüssel und unbereinigte Transferjournale gehören nicht in Issues.
-
-Für vertrauliche Sicherheitsmeldungen siehe [SECURITY.md](SECURITY.md). Bekannte Funktionsgrenzen und Installationshinweise stehen in der [Bedienungsanleitung](docs/release-anleitung.md).
-
-## Unterstützen & Lizenz
-
-FileTandem hilft dir? [Unterstütze die Weiterentwicklung über PayPal](https://paypal.me/TobiasKohlhepp).
-
-[MIT-Lizenz](LICENSE) · [Drittanbieterhinweise](THIRD_PARTY_NOTICES.md)
+[Support development via PayPal](https://paypal.me/TobiasKohlhepp) · [MIT licence](LICENSE) · [Third-party notices](THIRD_PARTY_NOTICES.md)

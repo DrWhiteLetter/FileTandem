@@ -19,3 +19,24 @@ Neue Texte mit ihrer deutschen Übersetzung in `source-messages.json` aufnehmen,
 Nach `npm run package` prüft `npm run test:localization` die installierte VSIX in normalen, isolierten VS-Code-Fenstern auf Englisch und Deutsch. Dafür wird das offizielle deutsche Sprachpaket in das temporäre Testprofil installiert. Die Prüfung verwendet `vscode.l10n` im Kontext der installierten Erweiterung und prüft außerdem den Webview-Handshake.
 
 Grundlage: [Microsofts Lokalisierungsanleitung](https://github.com/microsoft/vscode-l10n) und [VS Code l10n API](https://code.visualstudio.com/api/references/vscode-api#l10n).
+
+## Englische Einstellungstexte bei deutscher VS-Code-Oberfläche
+
+Die Überschriften einzelner Einstellungen werden von VS Code aus technischen IDs
+gebildet und können englisch bleiben. Die Beschreibungen, Kategorie
+„Sicherheitsfeatures“ und übersetzbaren Auswahllabels müssen dagegen bei deutscher
+VS-Code-Anzeigesprache deutsch erscheinen. `filetandem.language` steuert diese
+Manifest-Texte nicht.
+
+Falls auch die Beschreibungen englisch bleiben, zunächst nach dem Beenden laufender
+Transfers **Developer: Reload Window / Entwickler: Fenster neu laden** ausführen.
+Bleibt das Problem bestehen, VS-Code-Version, FileTandem-Version und Startart
+(normales Fenster oder Extension Development Host) für die Untersuchung notieren.
+Keine Profile oder gespeicherten Zugangsdaten zur Fehlerbehebung löschen.
+
+Am 09.11.2026 wurde das vorhandene Paket 1.0.3 in isolierten normalen Fenstern der
+lokal installierten VS-Code-Anwendung auf Englisch und Deutsch geprüft. Beide
+Durchläufe bestanden einschließlich der neu ergänzten Prüfung aller übersetzbaren
+Manifest-Beiträge (Einstellungsbeschreibungen, Kategorien, Befehle und Auswahllabels).
+Das erklärt noch nicht den beobachteten englischen Zustand im vorhandenen Nutzerfenster;
+ein Cache-/Ladezustand ist eine Hypothese, kein nachgewiesener Fehlergrund.

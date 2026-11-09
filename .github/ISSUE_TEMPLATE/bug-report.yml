@@ -1,0 +1,34 @@
+name: Bug report / Fehler melden
+description: Report a reproducible problem. Deutsch willkommen.
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: "Do not attach credentials, private keys or unsanitised logs. For confidential security reports, follow SECURITY.md. Antworten auf Deutsch sind willkommen."
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment / Umgebung
+      description: FileTandem version, VS Code version, OS, architecture, SFTP or SCP.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / Schritte zum Nachstellen
+      description: Include the command or action and a minimal example using disposable test files.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result / Erwartetes Ergebnis
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result / Tatsächliches Ergebnis
+      description: Include sanitised error text if available. Say whether the issue is repeatable.
+    validations:
+      required: true

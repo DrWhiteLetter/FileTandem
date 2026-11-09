@@ -676,5 +676,13 @@
   "Clear history": "Clear history",
   "Only finished entries for this profile are removed from the history in all sessions. Running and queued transfers remain. Files and partial files are not deleted. Retry and partial-file cleanup actions for removed entries will no longer be available.": "Only finished entries for this profile are removed from the history in all sessions. Running and queued transfers remain. Files and partial files are not deleted. Retry and partial-file cleanup actions for removed entries will no longer be available.",
   "Ownership check unavailable: Owner and group IDs are incomplete. The existing file is preserved. Restart the upload or check the login and server; clean up the transfer’s partial file if needed.": "Ownership check unavailable: Owner and group IDs are incomplete. The existing file is preserved. Restart the upload or check the login and server; clean up the transfer’s partial file if needed.",
-  "Upload stopped: Replacing the file would change its owner or group. The existing file is preserved. Connect as the appropriate server user or check server permissions; clean up the transfer’s partial file if needed.": "Upload stopped: Replacing the file would change its owner or group. The existing file is preserved. Connect as the appropriate server user or check server permissions; clean up the transfer’s partial file if needed."
+  "Upload stopped: Replacing the file would change its owner or group. The existing file is preserved. Connect as the appropriate server user or check server permissions; clean up the transfer’s partial file if needed.": "Upload stopped: Replacing the file would change its owner or group. The existing file is preserved. Connect as the appropriate server user or check server permissions; clean up the transfer’s partial file if needed.",
+  "Transfer controls": "Transfer controls",
+  "Resume queue globally": "Resume queue globally",
+  "Pause new starts globally; active transfers continue.": "Pause new starts globally; active transfers continue.",
+  "Stop automatic uploads before retrying.": "Stop automatic uploads before retrying.",
+  "Retry failed, interrupted or cancelled transfers.": "Retry failed, interrupted or cancelled transfers.",
+  "{0} retryable transfers": "{0} retryable transfers",
+  "History": "History",
+  "Hide successful entries": "Hide successful entries"
 }

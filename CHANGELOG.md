@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.4 – 09.11.2026
+
+- Englischer Marketplace-Einstieg mit separater deutscher Anleitung, kurzer Demo und klarerem Ablauf für den ersten Transfer.
+- Suchbegriffe und Kurzbeschreibung verbessert; Feedback-Vorlagen und Testeinladungen vorbereitet.
+- Transfersteuerung auf eine zustandsabhängige Zeile reduziert: Pause/Fortsetzen als beschrifteter Symbolbutton, Wiederholen mit Anzahl und Aufräumen im Menü „Verlauf“. Nach Abschluss entfallen Fortschrittsbalken und Geschwindigkeit.
+- Installierter Lokalisierungstest prüft zusätzlich Manifest-Texte einschließlich Einstellungen.
+
 ## 1.0.3 – 08.11.2026
 
 - Paketname und Ziel-ID auf `filetandem` / `RootShellForge.filetandem` umstellen; Installationshinweise und Testwerkzeuge nachziehen. Dieser Identitätswechsel übernimmt Profile und Secrets nicht automatisch aus bisherigen Installationen.

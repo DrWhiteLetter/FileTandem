@@ -1,6 +1,6 @@
 # Öffentliche Produktdaten – M6-08 vorgezogen
 
-> **Aktueller Stand, 08.11.2026:** Paketname `filetandem`, Publisher `RootShellForge`, Ziel-ID `RootShellForge.filetandem`. Version 1.0.3; Veröffentlichungsstatus im [Release-Nachweis](nachweise/Release-1.0.3.md). Übergang und Altkennungen: [Identitätswechsel](identitaetswechsel-filetandem.md). Die folgenden Planungsstände bleiben historisch.
+> **Aktueller Stand, 09.11.2026:** Paketname `filetandem`, Publisher `RootShellForge`, Ziel-ID `RootShellForge.filetandem`. Version 1.0.4; Veröffentlichungsstatus im [Release-Nachweis](nachweise/Release-1.0.4.md). Übergang und Altkennungen: [Identitätswechsel](identitaetswechsel-filetandem.md). Die folgenden Planungsstände bleiben historisch.
 
 Stand: 8. Oktober 2026. **Name übernommen und juristisches Okay durch den Benutzer bestätigt; Publisher noch offen.** Technische Release-Abnahmen bleiben davon unberührt. Keine Veröffentlichung beauftragt.
 

@@ -151,21 +151,20 @@ function TransferList({summary,jobs,paused,send,watching,localMode,open,setOpen}
   const icons={queued:'clock',running:'sync',completed:'check',skipped:'debug-step-over',failed:'error',cancelled:'circle-slash',interrupted:'warning'};
   return <section className="queue" aria-label={t("Transfer queue")}>
     <button className="queue-toggle" aria-expanded={open} aria-controls={open ? 'transfer-content':undefined} onClick={() => setOpen(!open)}><Icon name={open ? 'chevron-down':'chevron-right'} /><strong>Transfers</strong><span className="count-badge">{total}</span><span className="queue-summary">{paused ? t("Queue paused"):active ? t(`${active} active or queued`):t("No active transfers")}{failures>0 && <span className="queue-failures"> · {t(`${failures} failed`)}</span>}</span></button>
-    {progress.total>0 && <div className={`queue-progress ${progress.running ? 'is-running':''}`}>
+    {active>0 && progress.total>0 && <div className={`queue-progress ${progress.running ? 'is-running':''}`}>
       <div className="queue-progress-heading"><strong>{progress.settled===progress.total ? t('Transfer batch finished'):paused && !progress.running ? t('Queue paused'):t('Transferring files …')}</strong><span>{percent}% · {progress.settled.toLocaleString(getLanguage())} / {progress.total.toLocaleString(getLanguage())} {t('entries processed')}</span></div>
       <progress max={progress.total} value={progress.settled} aria-label={t('Transfer progress by entries')} />
       <div className="queue-progress-details"><span>{progress.completed} {t('successful')} · {dataSize(progress.bytes)} · {dataSize(progress.rate)}/s</span><span>{progress.skipped>0 && <>{progress.skipped} {t('skipped')} · </>}{progress.cancelled>0 && <>{progress.cancelled} {t('cancelled')} · </>}{progress.failed>0 && <span className="queue-failures">{progress.failed} {t('failed')}</span>}</span></div>
     </div>}
     {open && <div id="transfer-content" className="queue-content">
-      <div className="queue-toolbar">
-        <button onClick={() => send('queuePause',{paused:!paused})}><Icon name={paused ? 'debug-continue':'debug-pause'} /> {paused ? t("Resume queue"):t("Pause queue")}</button>
-        <button disabled={watching || !retryIds.length} onClick={() => action('retry',retryIds)}>{t("Retry failed jobs")}</button>
-        <span className="badge">{paused ? t(" New starts paused; active transfers continue."):t(" Pause applies globally to new starts.")}</span>
-      </div>
-      <div className="queue-history-toolbar" role="group" aria-label={t("Manage transfer history")}>
-        <button disabled={!successful} onClick={() => send('queueClear',{mode:'successful'})}>{t("Remove successful entries")}</button>
-        <button disabled={!settled} onClick={() => send('queueClear',{mode:'all'})}>{t("Clear transfer history …")}</button>
-        <span className="badge">{t("History only · Current profile · Files are kept.")}</span>
+      <div className="queue-toolbar" role="group" aria-label={t("Transfer controls")}>
+        <div className="queue-outcome" role="status">
+          {!active && progress.total>0 && <><span><Icon name={progress.failed ? 'warning':progress.completed===progress.total ? 'check':'circle-outline'} /> {progress.completed.toLocaleString(getLanguage())} {t('successful')} · {dataSize(progress.bytes)}</span>{progress.failed>0 && <span className="queue-failures">{progress.failed} {t('failed')}</span>}{progress.skipped>0 && <span>{progress.skipped} {t('skipped')}</span>}{progress.cancelled>0 && <span>{progress.cancelled} {t('cancelled')}</span>}</>}
+          {paused && <span>{t("Queue paused")}</span>}
+        </div>
+        {(active>0 || paused) && <button className="icon-button queue-pause" aria-label={paused ? t("Resume queue"):t("Pause queue")} title={paused ? t("Resume queue globally"):t("Pause new starts globally; active transfers continue.")} onClick={() => send('queuePause',{paused:!paused})}><Icon name={paused ? 'debug-continue':'debug-pause'} /></button>}
+        {retryIds.length>0 && <button className="queue-retry" disabled={watching} title={watching ? t("Stop automatic uploads before retrying."):t("Retry failed, interrupted or cancelled transfers.")} onClick={() => action('retry',retryIds)}><Icon name="refresh" /> {t(`${retryIds.length} retryable transfers`)}</button>}
+        {settled>0 && <HistoryActions successful={successful} send={send} />}
       </div>
       <div className="queue-scroll" tabIndex={0} role="region" aria-label={t("Transfer history")}>
         {!jobs.length ? <p className="queue-empty">{localMode ? t('No copies yet. Select files and copy them to the opposite folder.'):t("No transfers yet. Select files, then upload or download them.")}</p>:<table aria-label={t("Transfer queue")} className="transfer-table"><colgroup><col className="transfer-path-column" /><col className="transfer-direction-column" /><col className="transfer-status-column" /><col className="transfer-bytes-column" /></colgroup><thead><tr><th scope="col">{t("File / destination")}</th><th scope="col">{t("Direction")}</th><th scope="col">{t('Status')}</th><th scope="col" className="numeric">Bytes / Rate</th></tr></thead><tbody>
@@ -182,7 +181,7 @@ function TransferList({summary,jobs,paused,send,watching,localMode,open,setOpen}
                 </div>
                 {job.verification==='size' && job.state==='completed' && <span className="transfer-error">{t('SSH + size verified')}</span>}
                 {(job.error || job.reason) && <span className="transfer-error">{t(job.error || job.reason)}</span>}
-              </td><td className="numeric"><span>{job.bytes.toLocaleString(getLanguage())} B</span><span className="transfer-rate">{(job.rate/1024).toFixed(1)} KiB/s</span></td>
+              </td><td className="numeric"><span>{job.bytes.toLocaleString(getLanguage())} B</span>{job.state==='running' && <span className="transfer-rate">{(job.rate/1024).toFixed(1)} KiB/s</span>}</td>
             </tr>;
           })}
         </tbody></table>}
@@ -190,4 +189,23 @@ function TransferList({summary,jobs,paused,send,watching,localMode,open,setOpen}
       <div className="queue-footer"><span>{t("Newest first · For this profile across all sessions.")}</span>{total>200 && <span>{t("Showing the last 200 jobs.")}</span>}</div>
     </div>}
   </section>;
+}
+
+function HistoryActions({successful,send}) {
+  const container=useRef(null);
+  const close=focus => {if (!container.current) return;container.current.open=false;if (focus) container.current.querySelector('summary')?.focus();};
+  useEffect(() => {
+    const outside=event => {if (!container.current?.contains(event.target)) close(false);};
+    document.addEventListener('pointerdown',outside);
+    return () => document.removeEventListener('pointerdown',outside);
+  },[]);
+  const clear=mode => {close(true);send('queueClear',{mode});};
+  return <details ref={container} className="queue-history" onKeyDown={event => {if (event.key==='Escape') {event.preventDefault();event.stopPropagation();close(true);}}} onBlur={event => {if (!event.currentTarget.contains(event.relatedTarget)) close(false);}}>
+    <summary>{t("History")} <Icon name="chevron-down" /></summary>
+    <div className="queue-history-panel" role="group" aria-label={t("Manage transfer history")}>
+      <button disabled={!successful} onClick={() => clear('successful')}>{t("Hide successful entries")}</button>
+      <button onClick={() => clear('all')}>{t("Clear transfer history …")}</button>
+      <p>{t("History only · Current profile · Files are kept.")}</p>
+    </div>
+  </details>;
 }

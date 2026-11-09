@@ -2,7 +2,7 @@
   "name": "filetandem",
   "displayName": "FileTandem – SFTP/SCP File Manager",
   "description": "%description%",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": true,
   "publisher": "RootShellForge",
   "type": "module",
@@ -530,8 +530,12 @@
     "sftp",
     "scp",
     "ssh",
+    "file manager",
     "file transfer",
-    "dual pane"
+    "dual pane",
+    "remote",
+    "upload",
+    "download"
   ],
   "l10n": "./l10n",
   "overrides": {
