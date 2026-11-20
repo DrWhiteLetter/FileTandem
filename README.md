@@ -20,7 +20,7 @@ Free and open source · MIT licence · English and German interface · Version 1
 
 *Historical 27-second silent montage from the real FileTandem 1.0.1 recording (transfer toolbar predates 1.0.4) on an isolated test server. German interface; cuts between connection, upload and editor scenes. [Text walkthrough](docs/first-transfer-feedback.md).*
 
-Beta 1.0.5 is a local test VSIX, not a Marketplace release. Install `out/FileTandem-1.0.5.vsix` using **Extensions → … → Install from VSIX…**. [Beta test notes (German)](docs/nachweise/Beta-1.0.5.md).
+Beta 1.0.5 is a pre-release. In VS Code, choose **Switch to Pre-Release Version** on the Marketplace extension page when available, or download `FileTandem-1.0.5.vsix` from the [GitHub pre-release](https://github.com/DrWhiteLetter/FileTandem/releases/tag/v1.0.5) and use **Extensions → … → Install from VSIX…**. [Beta test notes (German)](docs/nachweise/Beta-1.0.5.md).
 
 ## Why FileTandem?
 

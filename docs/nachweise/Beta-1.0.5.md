@@ -1,6 +1,6 @@
 # FileTandem 1.0.5 Beta
 
-Stand: 20.11.2026. Lokales Testpaket, keine Marketplace-Veröffentlichung.
+Stand: 20.11.2026. Vorabversion; Veröffentlichung auf GitHub und im Marketplace vom Benutzer beauftragt.
 Identität unverändert: `RootShellForge.filetandem`, Paketversion `1.0.5`,
 VSIX mit `--pre-release` als Vorabversion gekennzeichnet.
 
@@ -36,5 +36,6 @@ keine vollständige Screenreader-Abnahme und keine erneute SSH-Protokollmatrix.
 
 Website separat lokal vorbereitet und committed; kein Remote eingerichtet,
 also kein Website-Push möglich. Kein Website-Deployment. Die Erweiterungsquellen
-werden nach `origin/main` gepusht; das lokale Paket wird nicht als GitHub-Release
-oder Marketplace-Release veröffentlicht.
+werden nach `origin/main` gepusht. GitHub: [Pre-Release v1.0.5](https://github.com/DrWhiteLetter/FileTandem/releases/tag/v1.0.5).
+Marketplace-Upload und abgeschlossene Validierung werden getrennt im lokalen
+Build-Nachweis dokumentiert; ein Upload allein beweist keine Freischaltung.

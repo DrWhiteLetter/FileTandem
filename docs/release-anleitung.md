@@ -2,7 +2,7 @@
 
 Ab 0.0.21: [Ausschlussregeln und Löschsicherungen](ausschlussregeln-und-sicherungen.md) beachten. Remote-Löschungen werden standardmäßig als `.bak` aufbewahrt; Aussagen über endgültige Löschungen gelten nur bei deaktivierter Sicherungsoption.
 
-Stand: 20.11.2026, Version **1.0.5 Beta** als lokales Testpaket, nicht im Marketplace veröffentlicht. Plattformnachweise und verbleibende Grenzen stehen in der [README](../README.de.md#getestete-desktop-umgebungen) und im [Beta-Nachweis](nachweise/Beta-1.0.5.md). Seit Version 1.0.3 lautet die Extension-ID `RootShellForge.filetandem`; der Veröffentlichungsstatus steht im Release-Nachweis. Siehe [Identitätswechsel](identitaetswechsel-filetandem.md).
+Stand: 20.11.2026, Version **1.0.5 Beta** als Vorabversion. Plattformnachweise und verbleibende Grenzen stehen in der [README](../README.de.md#getestete-desktop-umgebungen) und im [Beta-Nachweis](nachweise/Beta-1.0.5.md). Seit Version 1.0.3 lautet die Extension-ID `RootShellForge.filetandem`; der Veröffentlichungsstatus steht im Release-Nachweis. Siehe [Identitätswechsel](identitaetswechsel-filetandem.md).
 
 ## Installation und erster Transfer
 
@@ -18,7 +18,7 @@ Passwort, Schlüssel mit optionaler Passphrase, expliziter SSH-Agent und Keyboar
 
 FileTandem migriert alte `xscp`-Einstellungen automatisch nach `filetandem`; bereits gesetzte neue Werte bleiben erhalten. Für Commander-Tasten in den VS-Code-Einstellungen nach `@id:filetandem.commanderKeys` suchen. Alte Befehl-IDs bleiben für eigene Tastenkürzel kompatibel. Die neue Extension-ID übernimmt keinen Speicher der bisherigen Identität; nach dem Update offene Remote-Editoren erneut aus dem Dateimanager öffnen.
 
-Die Beta mit `npm run package -- --pre-release` bauen. Das Testpaket liegt unter `out/FileTandem-1.0.5.vsix`; über **Erweiterungen → … → Aus VSIX installieren …** installieren. Der Marketplace-Link bleibt der öffentliche Installationsweg und liefert diese lokale Beta nicht.
+Die Beta mit `npm run package -- --pre-release` bauen. Das Paket liegt unter `out/FileTandem-1.0.5.vsix`; über **Erweiterungen → … → Aus VSIX installieren …** installieren. Öffentliche VSIX: [GitHub-Pre-Release 1.0.5](https://github.com/DrWhiteLetter/FileTandem/releases/tag/v1.0.5). Im Marketplace in VS Code **Zur Vorabversion wechseln** wählen, sobald verfügbar. Der Veröffentlichungsnachweis steht im verlinkten Beta-Nachweis.
 
 ## Installation prüfen und aktualisieren
 

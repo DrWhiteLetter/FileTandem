@@ -20,7 +20,7 @@ Lokale Dateien und Serverdateien nebeneinander – direkt in Visual Studio Code.
 
 *Historische Aufnahme: 27 Sekunden, ohne Ton; Ausschnitte aus Version 1.0.1 (Transferleiste vor der Überarbeitung in 1.0.4), deutsche Oberfläche. [Ablauf als Text](docs/first-transfer-feedback.md).*
 
-Beta 1.0.5 ist ein lokales Testpaket, kein Marketplace-Release. `out/FileTandem-1.0.5.vsix` über **Erweiterungen → … → Aus VSIX installieren …** installieren. [Beta-Testhinweise](docs/nachweise/Beta-1.0.5.md).
+Beta 1.0.5 ist eine Vorabversion. In VS Code auf der Marketplace-Erweiterungsseite **Zur Vorabversion wechseln** wählen, sobald verfügbar, oder `FileTandem-1.0.5.vsix` aus dem [GitHub-Pre-Release](https://github.com/DrWhiteLetter/FileTandem/releases/tag/v1.0.5) herunterladen und über **Erweiterungen → … → Aus VSIX installieren …** installieren. [Beta-Testhinweise](docs/nachweise/Beta-1.0.5.md).
 
 ## Was kann FileTandem?
 
