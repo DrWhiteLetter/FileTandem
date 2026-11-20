@@ -345,3 +345,48 @@ test('Pane divider resizes, clamps, resets and persists in demo and file manager
     dom.window.close();
   }
 });
+
+test('Initial-letter navigation stays in the clicked pane and reaches virtualized files and folders',async t=>{
+  const {dom,doc,act,model,render,messages}=await polishFixture(t);
+  const entry=(name,kind='file')=>({id:'/local/'+name,path:'/local/'+name,name,kind,size:0,modified:0,mode:0o644});
+  model.local.entries=[entry('Alpha','directory'),entry('alpha.txt'),entry('Äpfel.txt'),entry('9.txt'),...Array.from({length:300},(_,i)=>entry('middle-'+String(i).padStart(3,'0'))),entry('Zebra.txt')];
+  model.remote.entries=[entry('Start'),entry('Ziel','directory'),entry('zwei.txt')];await render();
+  const key=async (value,options={})=>{let event;await act(()=>{event=new dom.window.KeyboardEvent('keydown',{key:value,bubbles:true,cancelable:true,...options});doc.activeElement.dispatchEvent(event);});return event;};
+  await act(()=>doc.querySelector('.pane:first-child tr[data-entry-id]').click());
+  assert.equal(doc.activeElement.dataset.entryId,'/local/Alpha','click focuses the row');
+  await key('a');assert.equal(doc.activeElement.dataset.entryId,'/local/alpha.txt');
+  await key('A',{shiftKey:true});assert.equal(doc.activeElement.dataset.entryId,'/local/Alpha','same letter wraps through folders and files');
+  await key('ä');assert.equal(doc.activeElement.dataset.entryId,'/local/Äpfel.txt');
+  await key('9');assert.equal(doc.activeElement.dataset.entryId,'/local/9.txt');
+  await key('z');assert.equal(doc.activeElement.dataset.entryId,'/local/Zebra.txt');
+  assert.equal(doc.activeElement.getAttribute('aria-selected'),'true');
+  assert.ok(doc.querySelector('.pane:first-child .file-scroll').scrollTop>0);
+  assert.ok(doc.querySelectorAll('.pane:first-child tr[data-entry-id]').length<80);
+  for (const options of [{ctrlKey:true},{metaKey:true},{altKey:true},{isComposing:true}]) {
+    const event=await key('a',options);assert.equal(event.defaultPrevented,options.ctrlKey || options.metaKey || false);assert.equal(doc.activeElement.dataset.entryId,'/local/Zebra.txt');
+  }
+  const missing=await key('q');assert.equal(missing.defaultPrevented,false);assert.equal(doc.activeElement.dataset.entryId,'/local/Zebra.txt');
+  await act(()=>doc.querySelector('.pane:last-child tr[data-entry-id="/local/zwei.txt"]').click());
+  await key('z');assert.equal(doc.activeElement.dataset.entryId,'/local/Ziel');
+  await key('z');assert.equal(doc.activeElement.dataset.entryId,'/local/zwei.txt');
+  assert.equal(doc.querySelector('.pane:first-child tr[data-entry-id="/local/Zebra.txt"]').getAttribute('aria-selected'),'true');
+  const filter=doc.querySelector('input[aria-label="Remote: Namensfilter"]');
+  await act(()=>{Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype,'value').set.call(filter,'Ziel');filter.dispatchEvent(new dom.window.Event('input',{bubbles:true}));filter.focus();});
+  await key('a');assert.equal(doc.activeElement,filter,'typing in filter does not navigate');
+  await act(()=>doc.querySelector('.pane:last-child tr[data-entry-id]').click());
+  await key('s');assert.equal(doc.activeElement.dataset.entryId,'/local/Ziel','filtered-out entries are skipped');
+  assert.equal(messages.length,1,'letter navigation sends no file operations');
+});
+
+test('Demo initial-letter navigation follows a clicked row in either pane',async t=>{
+  const dom=new JSDOM('<html lang="de"><div id="root"></div></html>',{runScripts:'outside-only',url:'https://filetandem.test'});
+  t.after(()=>dom.window.close());dom.window.MessageChannel=class {constructor(){this.port1={onmessage:null};this.port2={postMessage:()=>setTimeout(()=>this.port1.onmessage?.(),0)};}};
+  dom.window.IS_REACT_ACT_ENVIRONMENT=true;dom.window.eval(result.outputFiles.find(f=>f.path.endsWith('.js')).text);
+  await dom.window.testMount({postMessage:()=>{}},'letters');const act=action=>dom.window.testAct(action),doc=dom.window.document;
+  await act(()=>dom.window.dispatchEvent(new dom.window.MessageEvent('message',{data:dom.window.JSON.parse(JSON.stringify({version:1,type:'model',id:'response',sessionId:'letters',location:{local:true,remoteWindow:false},scenario:'ready'}))})));
+  for (const pane of doc.querySelectorAll('.pane')) {
+    await act(()=>pane.querySelector('tbody tr').click());
+    await act(()=>doc.activeElement.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'I',bubbles:true,cancelable:true})));
+    assert.ok(pane.contains(doc.activeElement));assert.match(doc.activeElement.textContent,/index.html/);assert.equal(doc.activeElement.getAttribute('aria-selected'),'true');
+  }
+});

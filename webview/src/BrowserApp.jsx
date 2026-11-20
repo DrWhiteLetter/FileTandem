@@ -1,4 +1,5 @@
 import { SplitView } from './SplitView.jsx';
+import { nextInitialMatch } from '../../src/shared/file-navigation.js';
 import { transferProgress } from '../../src/shared/transfer-view.js';
 import { FileIcon } from './FileIcon.jsx';
 import { translate as t,setLanguage,getLanguage } from '../../src/shared/localization.js';
@@ -50,6 +51,7 @@ function FilePane({side,model,send,prefs,update,defaultHidden,connected,commande
   const closeMenu=() => {pendingFocus.current=true;setMenu(null);};
   useEffect(() => {setSelection(current => {const next=current.filter(id => ids.has(id));return next.length === current.length ? current:next;});},[model?.entries,prefs.filter,hidden]);
   const choose=(entry,event) => {
+    event.currentTarget.focus();
     activate?.(side);
     if (event.shiftKey && entries.some(e => e.id === anchor)) {const a=entries.findIndex(e => e.id === anchor),b=entries.findIndex(e => e.id === entry.id);setSelection(entries.slice(Math.min(a,b),Math.max(a,b)+1).map(e => e.id));}
     else {setAnchor(entry.id);setSelection(current => event.ctrlKey || event.metaKey ? current.includes(entry.id) ? current.filter(id => id !== entry.id):[...current,entry.id]:[entry.id]);}
@@ -65,6 +67,11 @@ function FilePane({side,model,send,prefs,update,defaultHidden,connected,commande
     else if (event.key === ' ') {event.preventDefault();choose(entry,event);}
     else if (!watching && event.key === 'Backspace') {event.preventDefault();send('history',{side,direction:'up'});}
     else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'a') {event.preventDefault();setSelection(entries.map(e => e.id));}
+    else {
+      const target=nextInitialMatch(entries,entry.id,event,locale);
+      if (target<0) return;
+      event.preventDefault();setSelection([entries[target].id]);setAnchor(entries[target].id);activate?.(side);focusIndex(target);
+    }
   };
   const columns=[['name',t('Name')],...(prefs.columns.size ? [['size',t("Size")]]:[]),...(prefs.columns.modified ? [['modified',t("Modified")]]:[]),...(prefs.columns.mode ? [['mode',t("Permissions")]]:[])];
   const order=column => update({...prefs,sort:{column,direction:prefs.sort.column === column && prefs.sort.direction === 'asc' ? 'desc':'asc'}});

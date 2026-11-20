@@ -6,19 +6,21 @@
 
 [English](README.md) · **Deutsche Anleitung**
 
-**Version 1.0.4** · SFTP- und SCP-Dateimanager für VS Code Desktop · MIT-Lizenz
+**Version 1.0.5 Beta** · SFTP- und SCP-Dateimanager für VS Code Desktop · MIT-Lizenz
 
 Lokale Dateien und Serverdateien nebeneinander – direkt in Visual Studio Code. Mit FileTandem verwaltest du Dateien über **SFTP und SCP**, überträgst ganze Ordner und bearbeitest Remote-Dateien im Editor.
 
 **[Im Marketplace installieren](https://marketplace.visualstudio.com/items?itemName=RootShellForge.filetandem)** · [Änderungen](CHANGELOG.md) · [Fehler melden](https://github.com/DrWhiteLetter/FileTandem/issues)
 
-![FileTandem 1.0.4: kompakte Transfersteuerung und Verlaufsmenü](media/filetandem-1.0.4.png)
+![FileTandem 1.0.5 Beta: verstellbare Dateibereiche und Transferverlauf](media/filetandem-1.0.5-beta.png)
 
-*Aktuelle Oberfläche mit synthetischen Testdaten; kein echter Transfer in dieser Aufnahme.*
+*Beta-Oberfläche mit synthetischen Testdaten; kein echter Transfer. Trennlinie zum Verstellen ziehen; nach Klick auf Datei oder Ordner per Buchstabe zum nächsten passenden Namen springen.*
 
 ![Kurzdemo: Verbindung, Upload und Remote-Editor auf einem isolierten Testserver](media/filetandem-quick-tour.gif)
 
 *Historische Aufnahme: 27 Sekunden, ohne Ton; Ausschnitte aus Version 1.0.1 (Transferleiste vor der Überarbeitung in 1.0.4), deutsche Oberfläche. [Ablauf als Text](docs/first-transfer-feedback.md).*
+
+Beta 1.0.5 ist ein lokales Testpaket, kein Marketplace-Release. `out/FileTandem-1.0.5.vsix` über **Erweiterungen → … → Aus VSIX installieren …** installieren. [Beta-Testhinweise](docs/nachweise/Beta-1.0.5.md).
 
 ## Was kann FileTandem?
 

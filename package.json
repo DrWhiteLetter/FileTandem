@@ -2,7 +2,7 @@
   "name": "filetandem",
   "displayName": "FileTandem – SFTP/SCP File Manager",
   "description": "%description%",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "private": true,
   "publisher": "RootShellForge",
   "type": "module",

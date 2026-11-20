@@ -2,7 +2,7 @@
 
 Ab 0.0.21: [Ausschlussregeln und Löschsicherungen](ausschlussregeln-und-sicherungen.md) beachten. Remote-Löschungen werden standardmäßig als `.bak` aufbewahrt; Aussagen über endgültige Löschungen gelten nur bei deaktivierter Sicherungsoption.
 
-Stand: 09.11.2026, Version **1.0.4** für den Marketplace. Plattformnachweise und verbleibende Grenzen stehen in der [README](../README.de.md#getestete-desktop-umgebungen) und im [Release-Nachweis](nachweise/Release-1.0.4.md). Seit Version 1.0.3 lautet die Extension-ID `RootShellForge.filetandem`; der Veröffentlichungsstatus steht im Release-Nachweis. Siehe [Identitätswechsel](identitaetswechsel-filetandem.md).
+Stand: 20.11.2026, Version **1.0.5 Beta** als lokales Testpaket, nicht im Marketplace veröffentlicht. Plattformnachweise und verbleibende Grenzen stehen in der [README](../README.de.md#getestete-desktop-umgebungen) und im [Beta-Nachweis](nachweise/Beta-1.0.5.md). Seit Version 1.0.3 lautet die Extension-ID `RootShellForge.filetandem`; der Veröffentlichungsstatus steht im Release-Nachweis. Siehe [Identitätswechsel](identitaetswechsel-filetandem.md).
 
 ## Installation und erster Transfer
 
@@ -18,9 +18,11 @@ Passwort, Schlüssel mit optionaler Passphrase, expliziter SSH-Agent und Keyboar
 
 FileTandem migriert alte `xscp`-Einstellungen automatisch nach `filetandem`; bereits gesetzte neue Werte bleiben erhalten. Für Commander-Tasten in den VS-Code-Einstellungen nach `@id:filetandem.commanderKeys` suchen. Alte Befehl-IDs bleiben für eigene Tastenkürzel kompatibel. Die neue Extension-ID übernimmt keinen Speicher der bisherigen Identität; nach dem Update offene Remote-Editoren erneut aus dem Dateimanager öffnen.
 
+Die Beta mit `npm run package -- --pre-release` bauen. Das Testpaket liegt unter `out/FileTandem-1.0.5.vsix`; über **Erweiterungen → … → Aus VSIX installieren …** installieren. Der Marketplace-Link bleibt der öffentliche Installationsweg und liefert diese lokale Beta nicht.
+
 ## Installation prüfen und aktualisieren
 
-Nach der Installation in der Erweiterungsansicht den Titel **FileTandem – SFTP/SCP File Manager** und Version **1.0.4** prüfen. Den Dateimanager öffnen und eine eigene kleine Testdatei in einen dafür angelegten Serverordner hochladen, wieder unter anderem lokalen Namen herunterladen und den Inhalt vergleichen. Erst danach mit wichtigen Dateien arbeiten. Die Queue muss den Auftrag als erfolgreich anzeigen; bei einem Fehler zunächst die Diagnose unten verwenden.
+Nach der Installation in der Erweiterungsansicht den Titel **FileTandem – SFTP/SCP File Manager** und Version **1.0.5** und die Vorabversions-Kennzeichnung prüfen. Den Dateimanager öffnen und eine eigene kleine Testdatei in einen dafür angelegten Serverordner hochladen, wieder unter anderem lokalen Namen herunterladen und den Inhalt vergleichen. Erst danach mit wichtigen Dateien arbeiten. Die Queue muss den Auftrag als erfolgreich anzeigen; bei einem Fehler zunächst die Diagnose unten verwenden.
 
 Für ein Update laufende Transfers abschließen oder bewusst abbrechen, die neue VSIX über **Aus VSIX installieren…** installieren und den angebotenen Reload ausführen. Version und Testtransfer erneut prüfen. Ein Reload nimmt unterbrochene Aufträge nicht automatisch wieder auf. Eine ältere geprüfte VSIX aufbewahren; ein Downgrade ist keine Zusage der Kompatibilität zukünftiger Profil-/Journalformate.
 

@@ -1,4 +1,5 @@
 import { SplitView } from './SplitView.jsx';
+import { nextInitialMatch } from '../../src/shared/file-navigation.js';
 import { FileIcon } from './FileIcon.jsx';
 import { translate as t,setLanguage,getLanguage } from '../../src/shared/localization.js';
 import { useEffect, useState } from 'react';
@@ -15,7 +16,7 @@ function Pane({side,path,onNavigate,mode,hidden,sort,setSort}) {
   const source = mode === 'ready' ? DEMO_FOLDERS[side][path] ?? [] : [];
   const entries = sortEntries(source.filter(e => (hidden || !e.name.startsWith('.')) && e.name.toLocaleLowerCase().includes(filter.toLocaleLowerCase())),sort.column,sort.direction,getLanguage());
   const order = column => setSort(value => ({column,direction: value.column === column && value.direction === 'asc' ? 'desc':'asc'}));
-  const select = (entry,event) => setSelection(value => event.ctrlKey || event.metaKey ? value.includes(entry.id) ? value.filter(id => id !== entry.id) : [...value,entry.id] : [entry.id]);
+  const select = (entry,event) => {event.currentTarget.focus();setSelection(value => event.ctrlKey || event.metaKey ? value.includes(entry.id) ? value.filter(id => id !== entry.id) : [...value,entry.id] : [entry.id]);};
   const [focused,setFocused] = useState(null);
   const keyboard = (entry,event) => {
     const index = entries.findIndex(value => value.id === entry.id);
@@ -24,9 +25,14 @@ function Pane({side,path,onNavigate,mode,hidden,sort,setSort}) {
     if (event.key === 'ArrowUp') target = Math.max(index - 1,0);
     if (event.key === 'Home') target = 0;
     if (event.key === 'End') target = entries.length - 1;
+    if (target === undefined) {
+      const match=nextInitialMatch(entries,entry.id,event,getLanguage());
+      if (match>=0) target=match;
+    }
     if (target !== undefined) {
       event.preventDefault(); setSelection([entries[target].id]);
       event.currentTarget.parentElement.children[target].focus();
+      event.currentTarget.parentElement.children[target].scrollIntoView?.({block:'nearest'});
     } else if (event.key === 'Enter') { event.preventDefault(); navigate(entry); }
     else if (event.key === ' ') { event.preventDefault(); select(entry,event); }
     else if (event.key === 'Backspace') { event.preventDefault(); onNavigate(demoParent(side,path)); }

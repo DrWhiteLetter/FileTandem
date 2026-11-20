@@ -10,15 +10,17 @@ Transfer folders over SFTP/SCP, compare changes and edit remote files without le
 
 **[Install from Marketplace](https://marketplace.visualstudio.com/items?itemName=RootShellForge.filetandem)** · [Deutsche Anleitung](README.de.md) · [Changes](CHANGELOG.md) · [Report an issue](https://github.com/DrWhiteLetter/FileTandem/issues)
 
-Free and open source · MIT licence · English and German interface · Version 1.0.4
+Free and open source · MIT licence · English and German interface · Version 1.0.5 Beta
 
-![FileTandem 1.0.4: compact transfer controls and history menu](media/filetandem-1.0.4.png)
+![FileTandem 1.0.5 Beta: resizable file panes and transfer history](media/filetandem-1.0.5-beta.png)
 
-*Current interface with synthetic test data; no real transfer in this screenshot.*
+*Beta interface with synthetic test data; no real transfer. German interface shown. Drag the pane divider to resize; click a file or folder and press a letter to jump to the next matching name.*
 
 ![FileTandem quick tour: connection, upload and remote editor on an isolated test server](media/filetandem-quick-tour.gif)
 
 *Historical 27-second silent montage from the real FileTandem 1.0.1 recording (transfer toolbar predates 1.0.4) on an isolated test server. German interface; cuts between connection, upload and editor scenes. [Text walkthrough](docs/first-transfer-feedback.md).*
+
+Beta 1.0.5 is a local test VSIX, not a Marketplace release. Install `out/FileTandem-1.0.5.vsix` using **Extensions → … → Install from VSIX…**. [Beta test notes (German)](docs/nachweise/Beta-1.0.5.md).
 
 ## Why FileTandem?
 
