@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Bereichsbreite direkt an der Trennlinie zwischen den Dateibereichen ändern; Doppelklick setzt auf 50:50 zurück. Die Aufteilung bleibt gespeichert und ist per Tastatur bedienbar.
+
 ## 1.0.4 – 09.11.2026
 
 - Englischer Marketplace-Einstieg mit separater deutscher Anleitung, kurzer Demo und klarerem Ablauf für den ersten Transfer.

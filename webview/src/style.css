@@ -56,10 +56,13 @@ strong { font-weight: 600; }
 .connection-status > span:last-child { color: var(--vscode-descriptionForeground); }
 .connection-actions { margin-left: auto; }
 .toolbar label, .checkbox-label { display: inline-flex; align-items: center; gap: 6px; min-height: 24px; }
-.split-control { padding: 0 16px 6px; color: var(--vscode-descriptionForeground); }
-.split-control label { display: flex; align-items: center; gap: 8px; }
-.split-control input { width: 112px; }
-.panes { display: flex; flex: 1; min-height: 180px; margin: 0 16px 10px; border: 1px solid var(--vscode-panel-border, var(--vscode-widget-border)); }
+.split-view { position: relative; display: flex; flex: 1; min-height: 180px; margin: 0 16px 10px; border: 1px solid var(--vscode-panel-border, var(--vscode-widget-border)); }
+.panes { display: flex; flex: 1; min-width: 0; }
+.pane-divider { position: absolute; z-index: 5; top: 0; bottom: 0; left: var(--local-width, 50%); width: 8px; transform: translateX(-50%); cursor: col-resize; touch-action: none; }
+.pane-divider::after { content: ''; position: absolute; top: 0; bottom: 0; left: 3px; width: 2px; }
+.pane-divider:hover::after, .pane-divider:focus-visible::after, .is-resizing .pane-divider::after { background: var(--vscode-sash-hoverBorder, var(--vscode-focusBorder)); }
+.pane-divider:focus-visible { outline: 1px solid var(--vscode-focusBorder); outline-offset: -1px; }
+.is-resizing, .is-resizing * { cursor: col-resize !important; user-select: none; }
 .pane { flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; }
 .pane:first-child { flex: 0 0 var(--local-width, 50%); border-right: 1px solid var(--vscode-panel-border); }
 .pane-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 8px; background: var(--vscode-sideBar-background, var(--vscode-editor-background)); }
@@ -161,7 +164,7 @@ td:first-child { max-width: 30rem; overflow: hidden; text-overflow: ellipsis; }
 /* Demo-only filter shares the same scale as the connected Commander. */
 .filter { display: flex; gap: 8px; align-items: center; padding: 8px; }
 .filter input { width: 100%; min-width: 48px; }
-body.vscode-high-contrast .panes, body.vscode-high-contrast-light .panes,
+body.vscode-high-contrast .split-view, body.vscode-high-contrast-light .split-view,
 body.vscode-high-contrast .queue, body.vscode-high-contrast-light .queue,
 body.vscode-high-contrast .auto-upload-status, body.vscode-high-contrast-light .auto-upload-status { border-color: var(--vscode-contrastBorder, var(--vscode-focusBorder)); }
 body.vscode-high-contrast .selected, body.vscode-high-contrast-light .selected { outline: 1px solid var(--vscode-contrastActiveBorder, var(--vscode-focusBorder)); outline-offset: -1px; }
@@ -170,7 +173,7 @@ body.vscode-high-contrast .selected, body.vscode-high-contrast-light .selected {
   .panes { flex-direction: column; }
   .pane:first-child { flex-basis: auto; border-right: 0; border-bottom: 1px solid var(--vscode-panel-border); }
   .file-scroll { min-height: 144px; max-height: 288px; }
-  .split-control { display: none; }
+  .pane-divider { display: none; }
   .connection-actions { margin-left: 0; }
   .queue { max-height: 360px; }
   .auto-upload-status { grid-template-columns: minmax(0, 1fr); }
@@ -182,7 +185,7 @@ body.vscode-high-contrast .selected, body.vscode-high-contrast-light .selected {
   .demo-note { margin-left: 0; }
 }
 @media (max-width: 420px) {
-  .panes, .queue { margin-inline: 8px; }
+  .split-view, .queue { margin-inline: 8px; }
   .toolbar, .appbar { padding-inline: 8px; }
   .auto-upload-status, .watch-error { margin-inline: 8px; }
   .pathbar { flex-wrap: wrap; }

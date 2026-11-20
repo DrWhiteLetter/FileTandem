@@ -687,5 +687,6 @@
   "Fehlgeschlagene, unterbrochene oder abgebrochene Transfers wiederholen.": "Retry failed, interrupted or cancelled transfers.",
   "{0} erneut versuchen": "{0} retryable transfers",
   "Verlauf": "History",
-  "Erfolgreiche Einträge ausblenden": "Hide successful entries"
+  "Erfolgreiche Einträge ausblenden": "Hide successful entries",
+  "Zum Ändern der Bereichsbreite ziehen. Doppelklick zum Zurücksetzen.": "Drag to resize panes. Double-click to reset."
 }

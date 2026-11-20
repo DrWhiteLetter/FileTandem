@@ -1,3 +1,4 @@
+import { SplitView } from './SplitView.jsx';
 import { transferProgress } from '../../src/shared/transfer-view.js';
 import { FileIcon } from './FileIcon.jsx';
 import { translate as t,setLanguage,getLanguage } from '../../src/shared/localization.js';
@@ -130,8 +131,7 @@ export function BrowserApp({bridge,sessionId}) {
       <p className="watch-note">{t("Manual transfers and folder navigation are disabled.")}</p>
     </section>}
     {model?.autoUpload?.error && <div className="watch-error error-message" role="alert"><Icon name="error" /><span><strong>{t("Monitoring stopped:")}</strong> {t(model.autoUpload.error)}</span></div>}
-    <div className="split-control"><label>{t("Pane width")}<input type="range" min={30} max={70} value={state.split} aria-valuetext={localMode ? t(`Left ${state.split}%, Right ${100-state.split}%`):t(`Local ${state.split}%, Remote ${100-state.split}%`)} onChange={e => setState({...state,split:Number(e.target.value)})} /></label></div>
-    <div className="panes" style={{'--local-width':`${state.split}%`}}>{sides.map(side => <FilePane key={side} side={side} activate={activate} model={model?.[side]} send={send} prefs={state.panes[side]} watching={watching} connectionId={model?.connection.id} localMode={localMode} connected={!watching && (localMode ? model?.local.status==='ready' && model?.remote.status==='ready':model?.connection.state==='connected' && ['sftp','scp'].includes(model?.connection.protocol))} defaultHidden={model?.showHiddenFiles} commanderKeys={model?.commanderKeys} sessionId={sessionId} drag={drag} setDrag={setDrag} oppositePath={model?.[side==='local' ? 'remote':'local'].path} update={value => setState(current => ({...current,panes:{...current.panes,[side]:value}}))} />)}</div>
+    <SplitView split={state.split} localMode={localMode} onChange={split => setState(current => ({...current,split}))}>{sides.map(side => <FilePane key={side} side={side} activate={activate} model={model?.[side]} send={send} prefs={state.panes[side]} watching={watching} connectionId={model?.connection.id} localMode={localMode} connected={!watching && (localMode ? model?.local.status==='ready' && model?.remote.status==='ready':model?.connection.state==='connected' && ['sftp','scp'].includes(model?.connection.protocol))} defaultHidden={model?.showHiddenFiles} commanderKeys={model?.commanderKeys} sessionId={sessionId} drag={drag} setDrag={setDrag} oppositePath={model?.[side==='local' ? 'remote':'local'].path} update={value => setState(current => ({...current,panes:{...current.panes,[side]:value}}))} />)}</SplitView>
     <TransferList summary={model?.queueSummary} jobs={model?.queue ?? []} paused={model?.queuePaused} watching={watching} localMode={localMode} send={send} open={state.queueOpen} setOpen={queueOpen => setState(current => ({...current,queueOpen}))} />
     <footer className="status">{localMode ? t('Local copies · Desktop computer'):t("Local: Desktop computer · SFTP / SCP")}</footer>
   </main>;

@@ -684,5 +684,6 @@
   "Retry failed, interrupted or cancelled transfers.": "Retry failed, interrupted or cancelled transfers.",
   "{0} retryable transfers": "{0} retryable transfers",
   "History": "History",
-  "Hide successful entries": "Hide successful entries"
+  "Hide successful entries": "Hide successful entries",
+  "Drag to resize panes. Double-click to reset.": "Drag to resize panes. Double-click to reset."
 }

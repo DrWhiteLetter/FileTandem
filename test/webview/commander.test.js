@@ -292,3 +292,56 @@ test('transfer toolbar follows state and history actions remain keyboard accessi
  assert.ok(doc.querySelector('.queue-retry').disabled);assert.match(doc.querySelector('.queue-outcome').textContent,/fehlgeschlagen/);
  dom.window.close();
 });
+
+test('Pane divider resizes, clamps, resets and persists in demo and file manager',async () => {
+  for (const mount of ['testMount','testMountBrowser']) {
+    const dom=new JSDOM('<html lang="de"><div id="root"></div></html>',{runScripts:'outside-only',url:'https://filetandem.test'});
+    dom.window.MessageChannel=class {constructor() {this.port1={onmessage:null};this.port2={postMessage:() => setTimeout(() => this.port1.onmessage?.(),0)};}};
+    dom.window.IS_REACT_ACT_ENVIRONMENT=true;
+    dom.window.eval(result.outputFiles.find(f => f.path.endsWith('.js')).text);
+    let saved;
+    await dom.window[mount]({getState:() => ({version:1,split:55}),setState:value => {saved=value;},postMessage:() => {}},'split-session');
+    const act=action => dom.window.testAct(action),doc=dom.window.document;
+    const divider=doc.querySelector('[role="separator"]'),container=doc.querySelector('.split-view');
+    assert.equal(divider.getAttribute('aria-valuenow'),'55');
+    assert.equal(doc.querySelector('.split-control'),null);
+    Object.defineProperty(container,'clientWidth',{value:1000});
+    Object.defineProperty(container,'clientLeft',{value:1});
+    container.getBoundingClientRect=() => ({left:99});
+    let captured;
+    divider.setPointerCapture=id => {captured=id;};
+    const pointer=(type,x,id=1,button=0) => {
+      const event=new dom.window.MouseEvent(type,{bubbles:true,cancelable:true,clientX:x,button});
+      Object.defineProperty(event,'pointerId',{value:id});
+      return act(() => divider.dispatchEvent(event));
+    };
+    await pointer('pointerdown',650,1,2);await pointer('pointermove',700);
+    assert.equal(saved.split,55,'secondary button never resizes');
+    await pointer('pointerdown',650);assert.equal(captured,1);assert.equal(doc.activeElement,divider);
+    await pointer('pointermove',700,2);assert.equal(saved.split,55,'other pointer ignored');
+    await pointer('pointermove',700);assert.equal(saved.split,60);
+    assert.equal(container.style.getPropertyValue('--local-width'),'60%');
+    await pointer('pointermove',1200);assert.equal(saved.split,70);
+    await pointer('pointermove',0);assert.equal(saved.split,30);
+    await pointer('pointerup',740);assert.equal(saved.split,64);
+    assert.equal(container.classList.contains('is-resizing'),false);
+    await pointer('pointermove',700);assert.equal(saved.split,64,'movement after release ignored');
+    await pointer('pointerdown',740);await pointer('pointercancel',740);
+    await pointer('pointermove',700);assert.equal(saved.split,64);
+    assert.equal(container.classList.contains('is-resizing'),false);
+    await pointer('pointerdown',740);await pointer('lostpointercapture',740);
+    assert.equal(container.classList.contains('is-resizing'),false);
+    const key=(key,shiftKey=false) => act(() => divider.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key,shiftKey,bubbles:true,cancelable:true})));
+    await key('ArrowLeft');assert.equal(saved.split,63);
+    await key('ArrowRight',true);assert.equal(saved.split,70);
+    await key('Home');assert.equal(saved.split,30);
+    await key('End');assert.equal(saved.split,70);
+    await key('Enter');assert.equal(saved.split,50);
+    await key('ArrowRight');
+    await act(() => divider.dispatchEvent(new dom.window.MouseEvent('dblclick',{bubbles:true})));
+    assert.equal(saved.split,50);
+    assert.equal(divider.getAttribute('aria-valuenow'),'50');
+    assert.equal(divider.getAttribute('aria-orientation'),'vertical');
+    dom.window.close();
+  }
+});
