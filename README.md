@@ -10,17 +10,17 @@ Transfer folders over SFTP/SCP, compare changes and edit remote files without le
 
 **[Install from Marketplace](https://marketplace.visualstudio.com/items?itemName=RootShellForge.filetandem)** · [Deutsche Anleitung](README.de.md) · [Changes](CHANGELOG.md) · [Report an issue](https://github.com/DrWhiteLetter/FileTandem/issues)
 
-Free and open source · MIT licence · English and German interface · Version 1.0.5 Beta
+Free and open source · MIT licence · English and German interface · Version 1.0.6
 
 ![FileTandem 1.0.5 Beta: resizable file panes and transfer history](media/filetandem-1.0.5-beta.png)
 
-*Beta interface with synthetic test data; no real transfer. German interface shown. Drag the pane divider to resize; click a file or folder and press a letter to jump to the next matching name.*
+*Screenshot from 1.0.5 Beta; the interface is unchanged in stable 1.0.6. Synthetic test data; no real transfer. German interface shown. Drag the pane divider to resize; click a file or folder and press a letter to jump to the next matching name.*
 
 ![FileTandem quick tour: connection, upload and remote editor on an isolated test server](media/filetandem-quick-tour.gif)
 
 *Historical 27-second silent montage from the real FileTandem 1.0.1 recording (transfer toolbar predates 1.0.4) on an isolated test server. German interface; cuts between connection, upload and editor scenes. [Text walkthrough](docs/first-transfer-feedback.md).*
 
-Beta 1.0.5 is a pre-release. In VS Code, choose **Switch to Pre-Release Version** on the Marketplace extension page when available, or download `FileTandem-1.0.5.vsix` from the [GitHub pre-release](https://github.com/DrWhiteLetter/FileTandem/releases/tag/v1.0.5) and use **Extensions → … → Install from VSIX…**. [Beta test notes (German)](docs/nachweise/Beta-1.0.5.md).
+Version 1.0.6 is the stable release of the tested 1.0.5 Beta functionality. Install or update through the Marketplace, or download `FileTandem-1.0.6.vsix` from [GitHub Releases](https://github.com/DrWhiteLetter/FileTandem/releases/tag/v1.0.6) and use **Extensions → … → Install from VSIX…**. [Release notes and checks (German)](docs/nachweise/Release-1.0.6.md).
 
 ## Why FileTandem?
 

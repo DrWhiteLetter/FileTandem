@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.6 – 23.11.2026
+
+- Den am 23.11.2026 vom Projektinhaber erfolgreich getesteten Funktionsstand der 1.0.5 Beta als stabile Ausgabe veröffentlichen.
+- Buchstabennavigation und verstellbare Dateibereiche unverändert übernehmen.
+- Neue Versionsnummer für den stabilen Marketplace-Kanal; Installation ohne Wechsel zur Vorabversion.
+
 ## 1.0.5 Beta – 20.11.2026
 
 - In der aktiven Dateiliste per Buchstabe oder Ziffer zum nächsten passenden Dateinamen oder Ordner springen; wiederholtes Drücken wechselt durch die Treffer.
