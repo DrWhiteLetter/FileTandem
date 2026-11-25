@@ -1,3 +1,4 @@
+import { TransferSport } from './TransferSport.jsx';
 import { SplitView } from './SplitView.jsx';
 import { nextInitialMatch } from '../../src/shared/file-navigation.js';
 import { transferProgress } from '../../src/shared/transfer-view.js';
@@ -139,12 +140,12 @@ export function BrowserApp({bridge,sessionId}) {
     </section>}
     {model?.autoUpload?.error && <div className="watch-error error-message" role="alert"><Icon name="error" /><span><strong>{t("Monitoring stopped:")}</strong> {t(model.autoUpload.error)}</span></div>}
     <SplitView split={state.split} localMode={localMode} onChange={split => setState(current => ({...current,split}))}>{sides.map(side => <FilePane key={side} side={side} activate={activate} model={model?.[side]} send={send} prefs={state.panes[side]} watching={watching} connectionId={model?.connection.id} localMode={localMode} connected={!watching && (localMode ? model?.local.status==='ready' && model?.remote.status==='ready':model?.connection.state==='connected' && ['sftp','scp'].includes(model?.connection.protocol))} defaultHidden={model?.showHiddenFiles} commanderKeys={model?.commanderKeys} sessionId={sessionId} drag={drag} setDrag={setDrag} oppositePath={model?.[side==='local' ? 'remote':'local'].path} update={value => setState(current => ({...current,panes:{...current.panes,[side]:value}}))} />)}</SplitView>
-    <TransferList summary={model?.queueSummary} jobs={model?.queue ?? []} paused={model?.queuePaused} watching={watching} localMode={localMode} send={send} open={state.queueOpen} setOpen={queueOpen => setState(current => ({...current,queueOpen}))} />
+    <TransferList animation={model?.transferAnimation ?? 'off'} summary={model?.queueSummary} jobs={model?.queue ?? []} paused={model?.queuePaused} watching={watching} localMode={localMode} send={send} open={state.queueOpen} setOpen={queueOpen => setState(current => ({...current,queueOpen}))} />
     <footer className="status">{localMode ? t('Local copies · Desktop computer'):t("Local: Desktop computer · SFTP / SCP")}</footer>
   </main>;
 }
 
-function TransferList({summary,jobs,paused,send,watching,localMode,open,setOpen}) {
+function TransferList({animation,summary,jobs,paused,send,watching,localMode,open,setOpen}) {
   const retryIds=summary?.retryIds ?? jobs.filter(j => ['failed','cancelled','interrupted'].includes(j.state)).slice(0,1000).map(j=>j.id);
   const total=summary?.total ?? jobs.length;
   const failures=summary?.failures ?? jobs.filter(j => ['failed','interrupted'].includes(j.state)).length;
@@ -152,6 +153,15 @@ function TransferList({summary,jobs,paused,send,watching,localMode,open,setOpen}
   const successful=summary?.successful ?? jobs.filter(job=>job.state==='completed').length;
   const settled=summary?.settled ?? jobs.filter(job=>['completed','skipped','failed','cancelled','interrupted'].includes(job.state)).length;
   const progress=summary?.progress ?? transferProgress(jobs);
+  const playing=animation!=='off' && !paused && progress.running>0;
+  const immediate=progress.total>200 || watching;
+  const [longRunning,setLongRunning]=useState(false);
+  useEffect(() => {
+    if (!playing || immediate) {setLongRunning(false);return;}
+    const timer=setTimeout(() => setLongRunning(true),3000);
+    return () => clearTimeout(timer);
+  },[playing,immediate]);
+  const showSport=playing && (immediate || longRunning);
   const percent=progress.total ? Math.floor(100*progress.settled/progress.total):0;
   const dataSize=value=>value>=1048576 ? `${(value/1048576).toFixed(1)} MiB`:`${(value/1024).toFixed(1)} KiB`;
   const action=(action,ids) => send('queueAction',{action,ids});
@@ -159,6 +169,7 @@ function TransferList({summary,jobs,paused,send,watching,localMode,open,setOpen}
   return <section className="queue" aria-label={t("Transfer queue")}>
     <button className="queue-toggle" aria-expanded={open} aria-controls={open ? 'transfer-content':undefined} onClick={() => setOpen(!open)}><Icon name={open ? 'chevron-down':'chevron-right'} /><strong>Transfers</strong><span className="count-badge">{total}</span><span className="queue-summary">{paused ? t("Queue paused"):active ? t(`${active} active or queued`):t("No active transfers")}{failures>0 && <span className="queue-failures"> · {t(`${failures} failed`)}</span>}</span></button>
     {active>0 && progress.total>0 && <div className={`queue-progress ${progress.running ? 'is-running':''}`}>
+      {showSport && <TransferSport mode={animation} />}
       <div className="queue-progress-heading"><strong>{progress.settled===progress.total ? t('Transfer batch finished'):paused && !progress.running ? t('Queue paused'):t('Transferring files …')}</strong><span>{percent}% · {progress.settled.toLocaleString(getLanguage())} / {progress.total.toLocaleString(getLanguage())} {t('entries processed')}</span></div>
       <progress max={progress.total} value={progress.settled} aria-label={t('Transfer progress by entries')} />
       <div className="queue-progress-details"><span>{progress.completed} {t('successful')} · {dataSize(progress.bytes)} · {dataSize(progress.rate)}/s</span><span>{progress.skipped>0 && <>{progress.skipped} {t('skipped')} · </>}{progress.cancelled>0 && <>{progress.cancelled} {t('cancelled')} · </>}{progress.failed>0 && <span className="queue-failures">{progress.failed} {t('failed')}</span>}</span></div>

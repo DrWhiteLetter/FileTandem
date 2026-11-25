@@ -6,11 +6,17 @@
 
 [English](README.md) · **Deutsche Anleitung**
 
-**Version 1.0.6** · SFTP- und SCP-Dateimanager für VS Code Desktop · MIT-Lizenz
+**Stabil 1.0.6 · Vorabversion 1.0.7** · SFTP- und SCP-Dateimanager für VS Code Desktop · MIT-Lizenz
 
 Lokale Dateien und Serverdateien nebeneinander – direkt in Visual Studio Code. Mit FileTandem verwaltest du Dateien über **SFTP und SCP**, überträgst ganze Ordner und bearbeitest Remote-Dateien im Editor.
 
 **[Im Marketplace installieren](https://marketplace.visualstudio.com/items?itemName=RootShellForge.filetandem)** · [Änderungen](CHANGELOG.md) · [Fehler melden](https://github.com/DrWhiteLetter/FileTandem/issues)
+
+**[Sportanimationen bei Transfers · 1.0.7 Beta](https://github.com/DrWhiteLetter/FileTandem/releases/tag/v1.0.7)**
+
+Vorabversion 1.0.7. Wähle in den FileTandem-Einstellungen unter „Transferanimation“ Fußball, Basketball, Skateboard oder Zufällig. Standardmäßig deaktiviert.
+
+![Miniramp neben dem Fortschrittsbalken eines simulierten Uploads](media/sports-1.0.7-beta-de.png)
 
 ![FileTandem 1.0.5 Beta: verstellbare Dateibereiche und Transferverlauf](media/filetandem-1.0.5-beta.png)
 

@@ -1,4 +1,11 @@
 {
+  "filetandem.transferAnimation.title": "Transfer Animation",
+  "filetandem.transferAnimation.off": "Disabled",
+  "filetandem.transferAnimation.football": "Football",
+  "filetandem.transferAnimation.basketball": "Basketball",
+  "filetandem.transferAnimation.skateboard": "Skateboard",
+  "filetandem.transferAnimation.random": "Random",
+  "filetandem.transferAnimation.description": "Show a sports animation beside the progress bar during long transfers.",
   "description": "Local files and your server, side by side in VS Code. Transfer folders over SFTP/SCP and edit remote files. No VS Code Server required for SFTP.",
   "filetandem.openManager.title": "FileTandem: Open file manager",
   "filetandem.verifyLocalFile.title": "FileTandem: Verify local file access",

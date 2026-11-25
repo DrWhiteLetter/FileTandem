@@ -10,7 +10,13 @@ Transfer folders over SFTP/SCP, compare changes and edit remote files without le
 
 **[Install from Marketplace](https://marketplace.visualstudio.com/items?itemName=RootShellForge.filetandem)** · [Deutsche Anleitung](README.de.md) · [Changes](CHANGELOG.md) · [Report an issue](https://github.com/DrWhiteLetter/FileTandem/issues)
 
-Free and open source · MIT licence · English and German interface · Version 1.0.6
+Free and open source · MIT licence · English and German interface · Stable 1.0.6 · Pre-release 1.0.7
+
+**[Sports animations during transfers · 1.0.7 Beta](https://github.com/DrWhiteLetter/FileTandem/releases/tag/v1.0.7)**
+
+Pre-release 1.0.7. Choose Football, Basketball, Skateboard or Random under Transfer Animation in FileTandem settings. Disabled by default.
+
+![A basketball player dribbling beside the progress bar of a simulated upload](media/sports-1.0.7-beta-en.png)
 
 ![FileTandem 1.0.5 Beta: resizable file panes and transfer history](media/filetandem-1.0.5-beta.png)
 

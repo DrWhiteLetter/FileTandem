@@ -18,7 +18,9 @@ Passwort, Schlüssel mit optionaler Passphrase, expliziter SSH-Agent und Keyboar
 
 FileTandem migriert alte `xscp`-Einstellungen automatisch nach `filetandem`; bereits gesetzte neue Werte bleiben erhalten. Für Commander-Tasten in den VS-Code-Einstellungen nach `@id:filetandem.commanderKeys` suchen. Alte Befehl-IDs bleiben für eigene Tastenkürzel kompatibel. Die neue Extension-ID übernimmt keinen Speicher der bisherigen Identität; nach dem Update offene Remote-Editoren erneut aus dem Dateimanager öffnen.
 
-Die stabile Ausgabe mit `npm run package` bauen. Das Paket liegt unter `out/FileTandem-1.0.6.vsix`; über **Erweiterungen → … → Aus VSIX installieren …** installieren. Öffentliche VSIX: [GitHub Release 1.0.6](https://github.com/DrWhiteLetter/FileTandem/releases/tag/v1.0.6). Im Marketplace die stabile Version installieren oder aktualisieren; ein Wechsel zur Vorabversion ist nicht erforderlich. Der Veröffentlichungsnachweis steht im verlinkten Release-Nachweis.
+Die Vorabversion 1.0.7 mit `npm run package -- --pre-release` bauen. Das Paket liegt unter `out/FileTandem-1.0.7.vsix`. In VS Code auf der Erweiterungsseite zur Vorabversion wechseln oder die VSIX aus dem [GitHub Pre-Release](https://github.com/DrWhiteLetter/FileTandem/releases/tag/v1.0.7) installieren.
+
+Stabile VSIX: [GitHub Release 1.0.6](https://github.com/DrWhiteLetter/FileTandem/releases/tag/v1.0.6). Im Marketplace die stabile Version installieren oder aktualisieren; ein Wechsel zur Vorabversion ist nicht erforderlich. Der Veröffentlichungsnachweis steht im verlinkten Release-Nachweis.
 
 ## Installation prüfen und aktualisieren
 

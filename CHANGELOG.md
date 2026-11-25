@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.7 Beta – 25.11.2026
+
+- Optionale Transferanimationen mit Fußball, Basketball und Skateboard auf einer Miniramp. „Zufällig“ wählt eine Sportart je Anzeige.
+- Standardmäßig deaktiviert. Bei reduzierter Bewegung erscheint ein Standbild.
+
 ## 1.0.6 – 23.11.2026
 
 - Den am 23.11.2026 vom Projektinhaber erfolgreich getesteten Funktionsstand der 1.0.5 Beta als stabile Ausgabe veröffentlichen.

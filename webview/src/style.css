@@ -234,3 +234,36 @@ body.vscode-high-contrast .entry-icon, body.vscode-high-contrast-light .entry-ic
 .queue-history:not([open]) > .queue-history-panel { display: none; }
 .queue-history-panel button { display: block; width: 100%; text-align: left; white-space: normal; margin-bottom: 4px; }
 .queue-history-panel p { margin: 8px 4px 4px; color: var(--vscode-descriptionForeground); font-size: 12px; }
+
+.queue-progress:has(.transfer-sport) {
+  display: grid;
+  grid-template-columns: clamp(78px, 11vw, 112px) minmax(0, 1fr);
+  column-gap: 14px;
+  align-content: center;
+}
+.transfer-sport {
+  grid-row: 1 / span 3;
+  position: relative;
+  overflow: hidden;
+  align-self: center;
+  height: 70px;
+  border-radius: 5px;
+  background: radial-gradient(ellipse at 55% 100%, #244f40, #142c29 78%);
+  border: 1px solid var(--vscode-contrastBorder, #34564a);
+}
+.transfer-sport::before {
+  content: "";
+  position: absolute;
+  inset: 62% -20% -40%;
+  transform: perspective(70px) rotateX(45deg);
+  border: 1px solid #48705c;
+  background: repeating-linear-gradient(90deg, transparent 0 20px, #72ae8510 20px 40px);
+}
+.transfer-sport canvas { position: relative; display: block; width: 100%; height: 100%; object-fit: contain; }
+.queue-progress:has(.transfer-sport) .queue-progress-heading { align-self: end; }
+.queue-progress:has(.transfer-sport) progress { align-self: center; animation: none; }
+
+.sport-basketball { background: radial-gradient(ellipse at bottom, #66442e, #322721 80%); border-color: var(--vscode-contrastBorder, #675141); }
+.sport-basketball::before { border-color: #986e49; background: repeating-linear-gradient(90deg, transparent 0 23px, #e7b18c15 23px 25px); }
+.sport-skateboard { background: radial-gradient(ellipse at bottom, #4d446b, #252332 80%); border-color: var(--vscode-contrastBorder, #554f68); }
+.sport-skateboard::before { inset-block-start: 90%; border-color: #817c91; background: #494552; }

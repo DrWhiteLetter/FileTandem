@@ -1,5 +1,7 @@
+export const transferSports=['football','basketball','skateboard'];
 export function browserSettings(read) {
-  return {showHiddenFiles:read('showHiddenFiles')===true,commanderKeys:read('commanderKeys')===true};
+  const animation=read('transferAnimation');
+  return {transferAnimation:animation==='random' || transferSports.includes(animation) ? animation:'off',showHiddenFiles:read('showHiddenFiles')===true,commanderKeys:read('commanderKeys')===true};
 }
 export const DRAG_TYPE='application/x-filetandem-selection';
 export function browserDrag(value,sessionId) {

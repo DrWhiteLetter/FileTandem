@@ -2,7 +2,7 @@
   "name": "filetandem",
   "displayName": "FileTandem – SFTP/SCP File Manager",
   "description": "%description%",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "private": true,
   "publisher": "RootShellForge",
   "type": "module",
@@ -314,6 +314,15 @@
             "scope": "application",
             "description": "%filetandem.editorPollInterval.description%",
             "title": "%filetandem.editorPollInterval.title%"
+          },
+          "filetandem.transferAnimation": {
+            "type": "string",
+            "enum": ["off", "football", "basketball", "skateboard", "random"],
+            "enumItemLabels": ["%filetandem.transferAnimation.off%", "%filetandem.transferAnimation.football%", "%filetandem.transferAnimation.basketball%", "%filetandem.transferAnimation.skateboard%", "%filetandem.transferAnimation.random%"],
+            "default": "off",
+            "scope": "application",
+            "title": "%filetandem.transferAnimation.title%",
+            "description": "%filetandem.transferAnimation.description%"
           },
           "filetandem.commanderKeys": {
             "type": "boolean",
